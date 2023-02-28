@@ -6,6 +6,7 @@ from scipy.interpolate import LinearNDInterpolator
 from scipy.interpolate import RegularGridInterpolator
 from scipy.special import jv
 from classy import Class
+from pathlib import Path
 
 #linear p(k)
 #Start by specifying the cosmology
@@ -17,6 +18,11 @@ A_s = 2.1e-9
 n_s = 0.968
 
 k_max = 30 #UNITS: h/Mpc
+
+data_dir = "./data/"
+
+plots_dir = "./plots/"
+Path(plots_dir).mkdir(parents=True, exist_ok=True)
 
 params = {
              'output':'mPk',
@@ -181,7 +187,9 @@ class bispectrum:
         def_int = np.trapz(nvals, chivals)
         nvals /= def_int
         plt.plot(chivals, nvals)
-        plt.show()
+        # plt.show()
+        plt.savefig(plots_dir + "chivals_nvals1.pdf", dpi=300)
+        plt.close()
         lensing_kernel = np.zeros_like(chivals)
         for chii in range(len(chivals)-1):
             integrand = nvals[chii:]*(chivals[chii:]-chivals[chii]*np.ones_like(chivals[chii:]))/chivals[chii:]
@@ -190,7 +198,9 @@ class bispectrum:
         print("did lensing kernel")
         self.lensing_kernel  = interp1d(chivals, lensing_kernel)
         plt.plot(chivals, lensing_kernel)
-        plt.show()
+        # plt.show()
+        plt.savefig(plots_dir + "chivals_nvals2.pdf", dpi=300)
+        plt.close()
         print("interpolated lensing kernel")
 
     def compute_kappa_bispectrum(self, l1, l2, l3, chimax, npoints):
@@ -464,7 +474,7 @@ class tree_level_bispectrum(bispectrum):
         return(2*(self.compute_kernel(k1,k2,k3)*self.PL(k1,0.55)*self.PL(k2, 0.55) + self.compute_kernel(k2,k3,k1)*self.PL(k2, 0.55)*self.PL(k3, 0.55) + self.compute_kernel(k3,k1,k2)*self.PL(k3, 0.55)*self.PL(k1, 0.55)))
 
 
-#bitree = tree_level_bispectrum(params, my_k, my_z_simple)
+# bitree = tree_level_bispectrum(params, my_k, my_z_simple)
 #bi = bihalofit(params, my_k, my_z_simple)
 
 count = 0
@@ -488,7 +498,7 @@ model = bihalofit(params, my_k, my_kgrid, my_z_new)
 #x1 = bi.compute_one_halo(my_k,my_k,my_k)
 #x2 = bi.compute_three_halo(my_k,my_k,my_k)
 #x3 = bi.compute_all_halo(my_k,my_k,my_k)
-#x4 = bitree.compute_tree_level(my_k,my_k,my_k)
+# x4 = bitree.compute_tree_level(my_k,my_k,my_k)
 
 mo1 = model.compute_one_halo(my_kgrid)
 mo3 = model.compute_three_halo(my_kgrid)
@@ -497,10 +507,12 @@ mo4 = model.compute_all_halo(my_kgrid)
 l = np.logspace(2,np.log10(9000), 10)
 
 maximum_distance = 3500
-mynz = np.loadtxt("bin_04_desy3_source_nz.dat")
+mynz = np.loadtxt(data_dir + "bin_04_desy3_source_nz.dat")
 
 plt.plot(mynz[:,0], mynz[:,1])
 plt.show()
+plt.savefig(plots_dir + "desy3-source-nz.pdf", dpi=300)
+plt.close()
 #aaa = time.time()
 #model.create_interpolated_bispectrum(my_kgrid, my_k_reduced)
 #bbb = time.time()
@@ -549,13 +561,15 @@ plt.grid()
 plt.legend()
 plt.xscale("log")
 plt.yscale("log")
-plt.show()
+plt.savefig(plots_dir+"convergence_bispectrum.pdf", dpi=300)
+plt.close()
+
 
 #mo1 = np.load("bihalofit_test_on_grid_1halo.npy")
 #mo3 = np.load("bihalofit_test_on_grid_3halo.npy")
 #mo4 = np.load("bihalofit_test_on_grid.npy")
 equilat = mo4[17][diag]
-x3 = np.load("bihalofit_newz_newk_test_allhalo.npy")
+x3 = np.load(data_dir + "bihalofit_newz_newk_test_allhalo.npy")
 
 plt.title("Matter bispectrum for equilateral triangles")
 plt.xlabel("k (h/Mpc)")
@@ -568,20 +582,21 @@ plt.ylim(1, 3*10**7)
 plt.legend()
 plt.xscale("log")
 plt.yscale("log")
-plt.show()
+plt.savefig(plots_dir+"Matter_bispectrum_grid_nogrid.pdf", dpi=300)
+plt.close()
 
 #x = bi.compute_all_halo(my_k,my_k,my_k)
 #np.save("bihalofit_test", x)
-x1 = np.load("bihalofit_newz_newk_test_onehalo.npy")
-x2 = np.load("bihalofit_newz_newk_test_threehalo.npy")
-x3 = np.load("bihalofit_newz_newk_test_allhalo.npy")
+x1 = np.load(data_dir + "bihalofit_newz_newk_test_onehalo.npy")
+x2 = np.load(data_dir + "bihalofit_newz_newk_test_threehalo.npy")
+x3 = np.load(data_dir + "bihalofit_newz_newk_test_allhalo.npy")
 #print(np.shape(x))
-y = np.loadtxt("/Users/gchgomes/Documents/bispectrum_new_modeling/one_halo_bispectrum_full_actual_newk_3")
-ydiv = np.loadtxt("/Users/gchgomes/Documents/bispectrum_new_modeling/one_halo_bispectrum_full_actual_newk_3_CDIV2")
-ytimes = np.loadtxt("/Users/gchgomes/Documents/bispectrum_new_modeling/one_halo_bispectrum_full_actual_newk_3_CTIMES2")
-yy = np.loadtxt("/Users/gchgomes/Documents/bispectrum_new_modeling/one_halo_bispectrum_full_m99")
-yydiv = np.loadtxt("/Users/gchgomes/Documents/bispectrum_new_modeling/one_halo_bispectrum_full_m99_CDIV2")
-yytimes = np.loadtxt("/Users/gchgomes/Documents/bispectrum_new_modeling/one_halo_bispectrum_full_m99_CTIMES2")
+y = np.loadtxt(data_dir + "one_halo_bispectrum_full_actual_newk_3")
+ydiv = np.loadtxt(data_dir + "one_halo_bispectrum_full_actual_newk_3_CDIV2")
+ytimes = np.loadtxt(data_dir + "one_halo_bispectrum_full_actual_newk_3_CTIMES2")
+yy = np.loadtxt(data_dir + "one_halo_bispectrum_full_m99")
+yydiv = np.loadtxt(data_dir + "one_halo_bispectrum_full_m99_CDIV2")
+yytimes = np.loadtxt(data_dir + "one_halo_bispectrum_full_m99_CTIMES2")
 
 plt.title("Matter bispectrum for equilateral triangles")
 plt.xlabel("k (h/Mpc)")
@@ -589,7 +604,7 @@ plt.ylabel("B(k,k,k)*k**3")
 plt.plot(my_k,x3[:,1]*my_k**3, color='g', ls = '-', label="Bihalofit (full)")
 plt.plot(my_k, x1[:,1]*my_k**3, color = 'g', ls=':', label="Bihalofit (one halo term)")
 plt.plot(my_k, x2[:,1]*my_k**3, color='g', ls='--', label="Bihalofit (three halo term)")
-plt.plot(my_k, x4*my_k**3, color='darkorange', label = "Tree level bispectrum")
+# plt.plot(my_k, x4*my_k**3, color='darkorange', label = "Tree level bispectrum")
 plt.plot(yy[0],yy[1]*2*np.pi**2, color='c', ls = '-', label="One halo term (m99 profile)")
 plt.plot(yydiv[0],yydiv[1]*2*np.pi**2, color='c', ls = '--', label="One halo term (m99 profile, c'=c/2)")
 plt.plot(yytimes[0],yytimes[1]*2*np.pi**2, color='c', ls = ':', label="One halo term (m99 profile, c'=2c)")
@@ -602,14 +617,15 @@ plt.ylim(1, 3*10**7)
 plt.legend()
 plt.xscale("log")
 plt.yscale("log")
-plt.show()
-#plt.savefig("Matter_bispectrum_many_models_2.pdf", dpi=500)
+# plt.show()
+plt.savefig(plots_dir+"Matter_bispectrum_many_models_2.pdf", dpi=300)
+plt.close()
 
-plt.plot(my_z, bi.neff)
-plt.show()
+# plt.plot(my_z, bi.neff)
+# plt.show()
 
-plt.plot(my_z, np.exp(bi.logsigma8))
-plt.show()
+# plt.plot(my_z, np.exp(bi.logsigma8))
+# plt.show()
 print("done")
 
 
