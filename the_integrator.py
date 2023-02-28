@@ -6,7 +6,6 @@ from scipy.interpolate import LinearNDInterpolator
 from scipy.interpolate import RegularGridInterpolator
 from scipy.special import jv
 from classy import Class
-from pathlib import Path
 
 #linear p(k)
 #Start by specifying the cosmology
@@ -18,11 +17,6 @@ A_s = 2.1e-9
 n_s = 0.968
 
 k_max = 30 #UNITS: h/Mpc
-
-data_dir = "./data/"
-
-plots_dir = "./plots/"
-Path(plots_dir).mkdir(parents=True, exist_ok=True)
 
 params = {
              'output':'mPk',
@@ -187,9 +181,7 @@ class bispectrum:
         def_int = np.trapz(nvals, chivals)
         nvals /= def_int
         plt.plot(chivals, nvals)
-        # plt.show()
-        plt.savefig(plots_dir + "chivals_nvals1.pdf", dpi=300)
-        plt.close()
+        plt.show()
         lensing_kernel = np.zeros_like(chivals)
         for chii in range(len(chivals)-1):
             integrand = nvals[chii:]*(chivals[chii:]-chivals[chii]*np.ones_like(chivals[chii:]))/chivals[chii:]
@@ -198,9 +190,7 @@ class bispectrum:
         print("did lensing kernel")
         self.lensing_kernel  = interp1d(chivals, lensing_kernel)
         plt.plot(chivals, lensing_kernel)
-        # plt.show()
-        plt.savefig(plots_dir + "chivals_nvals2.pdf", dpi=300)
-        plt.close()
+        plt.show()
         print("interpolated lensing kernel")
 
     def compute_kappa_bispectrum(self, l1, l2, l3, chimax, npoints):
@@ -248,18 +238,21 @@ class bispectrum:
 
         self.kappa_bispectrum = constant*integral
 
-    def interpolated_kappa_bispectrum(self, lvec, npoints_phi):
+    def create_interpolated_kappa_bispectrum(self, lvec):
 
-        return(0)
+        before = time.time()
+        self.interpolated_kappa_bispectrum = RegularGridInterpolator((lvec, lvec, lvec), self.kappa_bispectrum)
+        after = time.time()
+        print("time to interpolate kappa bispectrum:", after - before)
 
     def gamma0_real_part_integrand(self, x1, x2, x3, phi, psi, R):
 
         outside_term =  1/(6*32*np.pi**5)*np.sin(2*psi)*(np.cos(phi)+2*np.cos(psi)*np.sin(psi))*R**3*jv(6,R)
 
         '''internal angles of the triangle'''
-        phi1 = np.arccos((x1**2-x2**2-x3**2)/(2*x2*x3))
-        phi2 = np.arccos((x2**2-x3**2-x1**2)/(2*x3*x1))
-        phi3 = np.arccos((x3**2-x1**2-x2**2)/(2*x1*x2))
+        phi1 = np.arccos((x1**2-x2**2-x3**2)/(-2*x2*x3))
+        phi2 = np.arccos((x2**2-x3**2-x1**2)/(-2*x3*x1))
+        phi3 = np.arccos((x3**2-x1**2-x2**2)/(-2*x1*x2))
 
         """inside terms:"""
         A1_prime = np.sqrt(x3*np.cos(psi)**2+x2*np.sin(psi)**2+x2*x3*np.sin(2*psi)*np.cos(phi+phi1))
@@ -283,12 +276,16 @@ class bispectrum:
         cos_6alpha3 = 1 - 2*sin_alpha3**2*(4*cos_alpha3**2-1)**2
         E3 = np.cos(phi1-phi2)*cos_6alpha3+np.sin(phi1-phi2)*sin_6alpha3
 
-        first_term = E1 / A1_prime ** 4 * interpolated_kappa_bispectrum(R * np.cos(psi) / A1_prime,
-                                                                        R * np.sin(psi) / A1_prime, phi)
-        second_term = E2 / A2_prime ** 4 * interpolated_kappa_bispectrum(R * np.cos(psi) / A2_prime,
-                                                                        R * np.sin(psi) / A2_prime, phi)
-        third_term = E3 / A3_prime ** 4 * interpolated_kappa_bispectrum(R * np.cos(psi) / A3_prime,
-                                                                        R * np.sin(psi) / A3_prime, phi)
+        l3_1 = np.sqrt((R/A1_prime)**2*(1 - 2*np.cos(psi)*np.sin(psi)*np.cos(phi)))
+        l3_2 = np.sqrt((R / A2_prime) ** 2 * (1 - 2 * np.cos(psi) * np.sin(psi) * np.cos(phi)))
+        l3_3 = np.sqrt((R / A3_prime) ** 2 * (1 - 2 * np.cos(psi) * np.sin(psi) * np.cos(phi)))
+
+        first_term = E1 / A1_prime ** 4 * self.interpolated_kappa_bispectrum(R * np.cos(psi) / A1_prime,
+                                                                        R * np.sin(psi) / A1_prime, l3_1)
+        second_term = E2 / A2_prime ** 4 * self.interpolated_kappa_bispectrum(R * np.cos(psi) / A2_prime,
+                                                                        R * np.sin(psi) / A2_prime, l3_2)
+        third_term = E3 / A3_prime ** 4 * self.interpolated_kappa_bispectrum(R * np.cos(psi) / A3_prime,
+                                                                        R * np.sin(psi) / A3_prime, l3_3)
 
         complete_integrand = outside_term*(first_term+second_term+third_term)
 
@@ -466,16 +463,14 @@ class bihalofit(bispectrum):
 
 class tree_level_bispectrum(bispectrum):
 
-    def __init__(self, cosmo_params, k, z):
+    def __init__(self, cosmo_params, k, kgrid, z):
 
-        bispectrum.__init__(self, cosmo_params, k, z)
+        bispectrum.__init__(self, cosmo_params, k, kgrid, z)
 
     def compute_tree_level(self, k1,k2,k3):
-        return(2*(self.compute_kernel(k1,k2,k3)*self.PL(k1,0.55)*self.PL(k2, 0.55) + self.compute_kernel(k2,k3,k1)*self.PL(k2, 0.55)*self.PL(k3, 0.55) + self.compute_kernel(k3,k1,k2)*self.PL(k3, 0.55)*self.PL(k1, 0.55)))
-
-
-# bitree = tree_level_bispectrum(params, my_k, my_z_simple)
-#bi = bihalofit(params, my_k, my_z_simple)
+        return(2*(self.compute_kernel(k1,k2,k3)*self.PL((k1,0.55))*self.PL((k2, 0.55)) +
+                  self.compute_kernel(k2,k3,k1)*self.PL((k2, 0.55))*self.PL((k3, 0.55)) +
+                  self.compute_kernel(k3,k1,k2)*self.PL((k3, 0.55))*self.PL((k1, 0.55))))
 
 count = 0
 diag = []
@@ -491,6 +486,8 @@ my_kgrid = np.array(my_kgrid)
 print("my shape is", np.shape(my_kgrid))
 
 print("diag=", diag)
+
+bitree = tree_level_bispectrum(params, my_k, my_kgrid, my_z_simple)
 model = bihalofit(params, my_k, my_kgrid, my_z_new)
 
 #neee = bi.neff[:,1]
@@ -498,7 +495,8 @@ model = bihalofit(params, my_k, my_kgrid, my_z_new)
 #x1 = bi.compute_one_halo(my_k,my_k,my_k)
 #x2 = bi.compute_three_halo(my_k,my_k,my_k)
 #x3 = bi.compute_all_halo(my_k,my_k,my_k)
-# x4 = bitree.compute_tree_level(my_k,my_k,my_k)
+x4 = bitree.compute_tree_level(my_k,my_k,my_k)
+print(x4)
 
 mo1 = model.compute_one_halo(my_kgrid)
 mo3 = model.compute_three_halo(my_kgrid)
@@ -507,12 +505,10 @@ mo4 = model.compute_all_halo(my_kgrid)
 l = np.logspace(2,np.log10(9000), 10)
 
 maximum_distance = 3500
-mynz = np.loadtxt(data_dir + "bin_04_desy3_source_nz.dat")
+mynz = np.loadtxt("bin_04_desy3_source_nz.dat")
 
 plt.plot(mynz[:,0], mynz[:,1])
 plt.show()
-plt.savefig(plots_dir + "desy3-source-nz.pdf", dpi=300)
-plt.close()
 #aaa = time.time()
 #model.create_interpolated_bispectrum(my_kgrid, my_k_reduced)
 #bbb = time.time()
@@ -521,6 +517,8 @@ plt.close()
 #model.compute_kappa_bispectrum(l,l,l,maximum_distance,500)
 #ddd = time.time()
 #print("the times are", bbb-aaa, ccc-bbb, ddd-ccc)
+#model.create_interpolated_kappa_bispectrum()
+
 aaa = time.time()
 model.create_interpolated_bispectrum(my_kgrid, my_k_reduced)
 bbb = time.time()
@@ -561,15 +559,13 @@ plt.grid()
 plt.legend()
 plt.xscale("log")
 plt.yscale("log")
-plt.savefig(plots_dir+"convergence_bispectrum.pdf", dpi=300)
-plt.close()
-
+plt.show()
 
 #mo1 = np.load("bihalofit_test_on_grid_1halo.npy")
 #mo3 = np.load("bihalofit_test_on_grid_3halo.npy")
 #mo4 = np.load("bihalofit_test_on_grid.npy")
 equilat = mo4[17][diag]
-x3 = np.load(data_dir + "bihalofit_newz_newk_test_allhalo.npy")
+x3 = np.load("bihalofit_newz_newk_test_allhalo.npy")
 
 plt.title("Matter bispectrum for equilateral triangles")
 plt.xlabel("k (h/Mpc)")
@@ -582,21 +578,20 @@ plt.ylim(1, 3*10**7)
 plt.legend()
 plt.xscale("log")
 plt.yscale("log")
-plt.savefig(plots_dir+"Matter_bispectrum_grid_nogrid.pdf", dpi=300)
-plt.close()
+plt.show()
 
 #x = bi.compute_all_halo(my_k,my_k,my_k)
 #np.save("bihalofit_test", x)
-x1 = np.load(data_dir + "bihalofit_newz_newk_test_onehalo.npy")
-x2 = np.load(data_dir + "bihalofit_newz_newk_test_threehalo.npy")
-x3 = np.load(data_dir + "bihalofit_newz_newk_test_allhalo.npy")
+x1 = np.load("bihalofit_newz_newk_test_onehalo.npy")
+x2 = np.load("bihalofit_newz_newk_test_threehalo.npy")
+x3 = np.load("bihalofit_newz_newk_test_allhalo.npy")
 #print(np.shape(x))
-y = np.loadtxt(data_dir + "one_halo_bispectrum_full_actual_newk_3")
-ydiv = np.loadtxt(data_dir + "one_halo_bispectrum_full_actual_newk_3_CDIV2")
-ytimes = np.loadtxt(data_dir + "one_halo_bispectrum_full_actual_newk_3_CTIMES2")
-yy = np.loadtxt(data_dir + "one_halo_bispectrum_full_m99")
-yydiv = np.loadtxt(data_dir + "one_halo_bispectrum_full_m99_CDIV2")
-yytimes = np.loadtxt(data_dir + "one_halo_bispectrum_full_m99_CTIMES2")
+y = np.loadtxt("/Users/gchgomes/Documents/bispectrum_new_modeling/one_halo_bispectrum_full_actual_newk_3")
+ydiv = np.loadtxt("/Users/gchgomes/Documents/bispectrum_new_modeling/one_halo_bispectrum_full_actual_newk_3_CDIV2")
+ytimes = np.loadtxt("/Users/gchgomes/Documents/bispectrum_new_modeling/one_halo_bispectrum_full_actual_newk_3_CTIMES2")
+yy = np.loadtxt("/Users/gchgomes/Documents/bispectrum_new_modeling/one_halo_bispectrum_full_m99")
+yydiv = np.loadtxt("/Users/gchgomes/Documents/bispectrum_new_modeling/one_halo_bispectrum_full_m99_CDIV2")
+yytimes = np.loadtxt("/Users/gchgomes/Documents/bispectrum_new_modeling/one_halo_bispectrum_full_m99_CTIMES2")
 
 plt.title("Matter bispectrum for equilateral triangles")
 plt.xlabel("k (h/Mpc)")
@@ -604,7 +599,7 @@ plt.ylabel("B(k,k,k)*k**3")
 plt.plot(my_k,x3[:,1]*my_k**3, color='g', ls = '-', label="Bihalofit (full)")
 plt.plot(my_k, x1[:,1]*my_k**3, color = 'g', ls=':', label="Bihalofit (one halo term)")
 plt.plot(my_k, x2[:,1]*my_k**3, color='g', ls='--', label="Bihalofit (three halo term)")
-# plt.plot(my_k, x4*my_k**3, color='darkorange', label = "Tree level bispectrum")
+plt.plot(my_k, x4*my_k**3, color='darkorange', label = "Tree level bispectrum")
 plt.plot(yy[0],yy[1]*2*np.pi**2, color='c', ls = '-', label="One halo term (m99 profile)")
 plt.plot(yydiv[0],yydiv[1]*2*np.pi**2, color='c', ls = '--', label="One halo term (m99 profile, c'=c/2)")
 plt.plot(yytimes[0],yytimes[1]*2*np.pi**2, color='c', ls = ':', label="One halo term (m99 profile, c'=2c)")
@@ -617,15 +612,14 @@ plt.ylim(1, 3*10**7)
 plt.legend()
 plt.xscale("log")
 plt.yscale("log")
-# plt.show()
-plt.savefig(plots_dir+"Matter_bispectrum_many_models_2.pdf", dpi=300)
-plt.close()
+plt.show()
+#plt.savefig("Matter_bispectrum_many_models_2.pdf", dpi=500)
 
-# plt.plot(my_z, bi.neff)
-# plt.show()
+plt.plot(my_z, bi.neff)
+plt.show()
 
-# plt.plot(my_z, np.exp(bi.logsigma8))
-# plt.show()
+plt.plot(my_z, np.exp(bi.logsigma8))
+plt.show()
 print("done")
 
 
