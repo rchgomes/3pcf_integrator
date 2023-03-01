@@ -67,7 +67,7 @@ args = zip(lhs_cosmology, repeat(l), repeat(my_k), repeat(my_kgrid), \
 
 p0s = my_pool.map(get_convergence_wrapper, args)
 
-np.save(outdata_dir + "data.npy", l)
+np.save(outdata_dir + "l.npy", l)
 np.save(outdata_dir + "data.npy", p0s)
 np.save(outdata_dir + "cosmology.npy", lhs_cosmology)
 

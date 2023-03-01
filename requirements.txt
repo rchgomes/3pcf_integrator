@@ -5,3 +5,4 @@ classy
 pathlib
 pyDOE
 itertools
+cosmopower
