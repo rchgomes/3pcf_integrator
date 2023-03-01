@@ -20,7 +20,7 @@ num_threads = 16
 k_max = 30 #UNITS: h/Mpc
 
 data_dir = "../data/"
-subdir = "20230301_test"
+subdir = "20230301_test_5000"
 plots_dir = f"./plots/{subdir}/"
 outdata_dir = f"./training_data/{subdir}/"
 
@@ -28,10 +28,10 @@ Path(plots_dir).mkdir(parents=True, exist_ok=True)
 Path(outdata_dir).mkdir(parents=True, exist_ok=True)
 
 # parameter ranges for (Omega_b, Omega_m, h, ln(10^10 A_s), n_s)
-ranges = np.array([[0.018, 0.026], [0.2, 0.8], [0.6, 0.9], [1.7, 3.9], [0.8, 1.2]])
+ranges = np.array([[0.01, 0.05], [0.1, 0.5], [0.6, 0.9], [1.7, 3.9], [0.8, 1.2]])
 
 # Generate the LHS sample using pyDOE
-sample_size = 50 #int(5e5)
+sample_size = 5000 #int(5e5)
 lhs_sample = pyDOE.lhs(len(ranges), samples=sample_size, criterion='c')
 
 # Scale the LHS sample to the desired parameter ranges
@@ -39,8 +39,8 @@ lhs_cosmology = lhs_sample * (ranges[:,1] - ranges[:,0]) + ranges[:,0]
 
 print(lhs_cosmology.shape)
 
-for lhs in lhs_cosmology:
-    print(lhs)
+# for lhs in lhs_cosmology:
+#     print(lhs)
 
 # Plot the samples in a corner plot
 fig = corner.corner(lhs_cosmology, labels=[r'$\Omega_b$', r'$\Omega_b$', r'$h$', r'$\ln(10^10 A_s)$', r'$n_s$'], \
@@ -63,10 +63,12 @@ my_pool = mp.Pool(processes=num_threads)
 
 lhs_cosmology[:, 3] = np.exp(lhs_cosmology[:, 3]) / 1e10
 args = zip(lhs_cosmology, repeat(l), repeat(my_k), repeat(my_kgrid), \
-                   repeat(my_nz), repeat(my_z_new), repeat(my_z_new), repeat(k_max))
+                   repeat(my_k_reduced), repeat(my_nz), repeat(my_z_new), repeat(k_max))
 
 p0s = my_pool.map(get_convergence_wrapper, args)
 
+np.save(outdata_dir + "data.npy", l)
 np.save(outdata_dir + "data.npy", p0s)
+np.save(outdata_dir + "cosmology.npy", lhs_cosmology)
 
 print("done", time.time() - start)

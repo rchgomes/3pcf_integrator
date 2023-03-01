@@ -11,6 +11,8 @@ from pathlib import Path
 from bispectrum import bispectrum
 from bihalofit import bihalofit, tree_level_bispectrum
 
+np.set_printoptions(precision=3)
+
 def get_convergence(cosmology, l, k, kgrid, k_reduced, nz, z, k_max, maximum_distance=3500, timed=True, verbose=1):
     if timed:
         start = time.time()
@@ -29,7 +31,7 @@ def get_convergence(cosmology, l, k, kgrid, k_reduced, nz, z, k_max, maximum_dis
     model = bihalofit(params, k, kgrid, z)
     model.compute_all_halo(kgrid)
     model.create_interpolated_bispectrum(kgrid, k_reduced)
-    model.compute_lensing_kernel(90, maximum_distance, 10000, mynz)
+    model.compute_lensing_kernel(90, maximum_distance, 10000, nz)
     model.compute_kappa_bispectrum_equilateral(l,maximum_distance,1000)
     if timed:
         print(time.time() - start)
@@ -49,7 +51,7 @@ if __name__ == "__main__":
 
     data_dir = "../data/"
 
-    plots_dir = "./plots/"
+    plots_dir = "./plots/convergence_test/"
     Path(plots_dir).mkdir(parents=True, exist_ok=True)
 
     my_k = np.logspace(-3, np.log10(k_max), num=10000) #h/Mpc^-1
@@ -67,11 +69,11 @@ if __name__ == "__main__":
 
     plt.title("Convergence bispectrum for equilateral triangles")
     plt.xlabel("l")
-    plt.ylabel("B(l,l,l)*l**3")
-    plt.plot(l,kbsp_equi*l**3, color='m', ls = '--', label="Bihalofit (kappa)")
+    plt.ylabel("B(l,l,l)")
+    plt.plot(l,kbsp_equi, color='m', ls = '--', label="Bihalofit (kappa)")
     plt.grid()
     plt.legend()
     plt.xscale("log")
     plt.yscale("log")
-    plt.savefig(plots_dir+"convergence_bispectrum_new.pdf", dpi=300)
+    plt.savefig(plots_dir+"convergence_bispectrum_nol3.pdf", dpi=300)
     plt.close()
