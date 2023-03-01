@@ -11,21 +11,21 @@ from pathlib import Path
 from bispectrum import bispectrum
 from bihalofit import bihalofit, tree_level_bispectrum
 
-def get_convergence(cosmology, l, k, kgrid, k_reduced, nz, z, timed=True, verbose=1, maximum_distance=3500):
+def get_convergence(cosmology, l, k, kgrid, k_reduced, nz, z, k_max, maximum_distance=3500, timed=True, verbose=1):
     if timed:
         start = time.time()
     Omega_b, Omega_m, h, A_s, n_s = cosmology
     if verbose == 1:
         print("starting", cosmology)
-    params = {'output':'mPk',
-             'non linear':'halofit',
-             'Omega_b':Omega_b,
-             'Omega_cdm':Omega_cdm,
-             'h':h,
-             'A_s':A_s,
-             'n_s':n_s,
-             'P_k_max_1/Mpc':k_max*h,
-             'z_max_pk':10.}
+    params = {'output': 'mPk',
+             'non linear': 'halofit',
+             'Omega_b': Omega_b,
+             'Omega_cdm': Omega_m - Omega_b,
+             'h': h,
+             'A_s': A_s,
+             'n_s': n_s,
+             'P_k_max_1/Mpc': k_max*h,
+             'z_max_pk': 10.}
     model = bihalofit(params, k, kgrid, z)
     model.compute_all_halo(kgrid)
     model.create_interpolated_bispectrum(kgrid, k_reduced)
@@ -41,7 +41,6 @@ if __name__ == "__main__":
     
     Omega_b = 0.05
     Omega_m = 0.308
-    Omega_cdm = Omega_m - Omega_b
     h = 0.678
     A_s = 2.1e-9
     n_s = 0.968
@@ -64,7 +63,7 @@ if __name__ == "__main__":
     mynz = np.loadtxt(data_dir + "bin_04_desy3_source_nz.dat")
     
     kbsp_equi = get_convergence((Omega_b, Omega_m, h, A_s, n_s), \
-                               l, my_k, my_kgrid, my_k_reduced, mynz, my_z_new)
+                               l, my_k, my_kgrid, my_k_reduced, mynz, my_z_new, k_max)
 
     plt.title("Convergence bispectrum for equilateral triangles")
     plt.xlabel("l")

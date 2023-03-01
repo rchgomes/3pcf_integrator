@@ -3,3 +3,5 @@ scipy
 matplotlib
 classy
 pathlib
+pyDOE
+itertools
