@@ -6,7 +6,12 @@ from scipy.interpolate import LinearNDInterpolator
 from scipy.interpolate import RegularGridInterpolator
 from scipy.special import jv
 from classy import Class
+from vegas import Integrator
+import functools
+from inspect import signature
 
+def fff(x):
+    return(x[0]**2-x[1]**2+np.log(x[2]))
 #linear p(k)
 #Start by specifying the cosmology
 Omega_b = 0.05
@@ -16,7 +21,8 @@ h = 0.678
 A_s = 2.1e-9
 n_s = 0.968
 
-k_max = 30 #UNITS: h/Mpc
+#k_max = 30 #UNITS: h/Mpc
+k_max = 150
 
 params = {
              'output':'mPk',
@@ -35,10 +41,11 @@ params = {
 #cosmo.compute()
 
 my_k = np.logspace(-3, np.log10(k_max), num=10000) #h/Mpc^-1
-my_k_reduced = np.logspace(-2, np.log10(k_max), num=40) #h/Mpc^-1
+my_k_reduced = np.logspace(-2, np.log10(k_max), num=100) #h/Mpc^-1
 my_z = np.linspace(0,5,1000)
 my_z_simple = np.array([0,0.55])
-my_z_new = np.linspace(0,2.5,100)
+#my_z_new = np.linspace(0,2.5,100)
+my_z_new = np.linspace(0,3,100)
 #z = 0.55
 
 #plin = np.array([cosmo.pk_lin(ki, z) for ki in k])
@@ -165,7 +172,7 @@ class bispectrum:
         print("into lensing kernel")
         chivals = np.linspace(chimin, chimax, npoints)
         zvals = self.z_from_r_func(chivals)
-        nz = interp1d(dndz[:, 0], dndz[:, 1])
+        nz = interp1d(dndz[:, 0], dndz[:, 1], bounds_error = False, fill_value = 0)
 
         def_z = np.trapz(dndz[:,1], dndz[:,0])
         print(def_z)
@@ -197,7 +204,8 @@ class bispectrum:
 
         print("into kappa bispectrum")
         constant = 27*(100/299792)**6*self.omegam**3/8
-        chivals_simple = np.linspace(350, chimax, npoints)
+        #chivals_simple = np.linspace(350, chimax, npoints)
+        chivals_simple = np.linspace(100, chimax, npoints)
         chivals = np.ndarray(shape=(len(l1), len(l2), len(l3), len(chivals_simple)))
         for l1i in range(len(l1)):
             for l2i in range(len(l2)):
@@ -238,52 +246,209 @@ class bispectrum:
 
         self.kappa_bispectrum = constant*integral
 
-    def interpolated_kappa_bispectrum(self, lvec, npoints_phi):
+    def create_interpolated_kappa_bispectrum(self, lvec):
 
-        return(0)
+        before = time.time()
+        print(np.shape(self.kappa_bispectrum))
+        print(np.shape(lvec))
+        self.interpolated_kappa_bispectrum = RegularGridInterpolator((lvec, lvec, lvec), self.kappa_bispectrum, bounds_error = False, fill_value = 0)
+        after = time.time()
+        print("time to interpolate kappa bispectrum:", after - before)
+        x = signature(self.interpolated_kappa_bispectrum)
+        print(x)
 
-    def gamma0_real_part_integrand(self, x1, x2, x3, phi, psi, R):
+    def gamma0_real_part_integrand(self, r, u, v, y):
 
-        outside_term =  1/(6*32*np.pi**5)*np.sin(2*psi)*(np.cos(phi)+2*np.cos(psi)*np.sin(psi))*R**3*jv(6,R)
+        x2 = r*np.pi/(60*180)
+        x3 = u*x2
+        x1 = v*x3+x2
+        #print(v[0])
+        #print(x1[0])
+        #print(x2[0])
+        #print(x3[0])
+
+        phi = y[0]
+        psi = y[1]
+        R = y[2]
+
+        #outside_term = 1/(6*32*np.pi**5)*np.sin(2*psi)*(np.cos(phi)+2*np.cos(psi)*np.sin(psi))*R**3*jv(6,R)
+        outside_term = 1 / (6 * 32 * np.pi ** 5) * np.sin(2 * psi) * (
+                    np.cos(phi) + 2 * np.cos(psi) * np.sin(psi) + 1j*np.sin(phi)*(2*np.cos(psi)**2-1)) * R ** 3 * jv(6, R)
 
         '''internal angles of the triangle'''
-        phi1 = np.arccos((x1**2-x2**2-x3**2)/(2*x2*x3))
-        phi2 = np.arccos((x2**2-x3**2-x1**2)/(2*x3*x1))
-        phi3 = np.arccos((x3**2-x1**2-x2**2)/(2*x1*x2))
+        phi1 = np.arccos((x1**2-x2**2-x3**2)/(-2*x2*x3))
+        phi2 = np.arccos((x2**2-x3**2-x1**2)/(-2*x3*x1))
+        phi3 = np.arccos((x3**2-x1**2-x2**2)/(-2*x1*x2))
 
+        #print(x3)
         """inside terms:"""
-        A1_prime = np.sqrt(x3*np.cos(psi)**2+x2*np.sin(psi)**2+x2*x3*np.sin(2*psi)*np.cos(phi+phi1))
+        #print(psi, phi, phi1)
+        #print((x3*np.cos(psi))**2+(x2*np.sin(psi))**2+x2*x3*np.sin(2*psi)*np.cos(phi+phi1))
+        A1_prime = np.sqrt((x3*np.cos(psi))**2+(x2*np.sin(psi))**2+x2*x3*np.sin(2*psi)*np.cos(phi+phi1))
+        #print(A1_prime)
         sin_alpha1 = (x3*np.cos(psi)-x2*np.sin(psi))*np.sin((phi+phi1)/2)/A1_prime
         cos_alpha1 = (x3*np.cos(psi)+x2*np.sin(psi))*np.sin((phi+phi1)/2)/A1_prime
         sin_6alpha1 = 2*sin_alpha1*cos_alpha1*(4*cos_alpha1**2-1)*(4*cos_alpha1**2-3)
         cos_6alpha1 = 1 - 2*sin_alpha1**2*(4*cos_alpha1**2-1)**2
-        E1 = np.cos(phi2-phi3)*cos_6alpha1+np.sin(phi2-phi3)*sin_6alpha1
+        #E1 = np.cos(phi2-phi3)*cos_6alpha1+np.sin(phi2-phi3)*sin_6alpha1
+        E1 = np.cos(phi2 - phi3) * cos_6alpha1 + np.sin(phi2 - phi3) * sin_6alpha1 + \
+             1j*(np.sin(phi2 - phi3)*cos_6alpha1 - np.cos(phi2 - phi3) * sin_6alpha1)
 
-        A2_prime = np.sqrt(x1*np.cos(psi)**2+x3*np.sin(psi)**2+x3*x1*np.sin(2*psi)*np.cos(phi+phi2))
+
+        A2_prime = np.sqrt((x1*np.cos(psi))**2+(x3*np.sin(psi))**2+x3*x1*np.sin(2*psi)*np.cos(phi+phi2))
         sin_alpha2 = (x1*np.cos(psi)-x3*np.sin(psi))*np.sin((phi+phi2)/2)/A2_prime
         cos_alpha2 = (x1*np.cos(psi)+x3*np.sin(psi))*np.sin((phi+phi2)/2)/A2_prime
         sin_6alpha2 = 2*sin_alpha2*cos_alpha2*(4*cos_alpha2**2-1)*(4*cos_alpha2**2-3)
         cos_6alpha2 = 1 - 2*sin_alpha2**2*(4*cos_alpha2**2-1)**2
-        E2 = np.cos(phi3-phi1)*cos_6alpha2+np.sin(phi3-phi1)*sin_6alpha2
+        #E2 = np.cos(phi3-phi1)*cos_6alpha2+np.sin(phi3-phi1)*sin_6alpha2
+        E2 = np.cos(phi3 - phi1) * cos_6alpha2 + np.sin(phi3 - phi1) * sin_6alpha2 + \
+             1j * (np.sin(phi3 - phi1) * cos_6alpha2 - np.cos(phi3 - phi1) * sin_6alpha2)
 
-        A3_prime = np.sqrt(x2*np.cos(psi)**2+x1*np.sin(psi)**2+x1*x2*np.sin(2*psi)*np.cos(phi+phi3))
+        A3_prime = np.sqrt((x2*np.cos(psi))**2+(x1*np.sin(psi))**2+x1*x2*np.sin(2*psi)*np.cos(phi+phi3))
         sin_alpha3 = (x2*np.cos(psi)-x1*np.sin(psi))*np.sin((phi+phi3)/2)/A3_prime
         cos_alpha3 = (x2*np.cos(psi)+x1*np.sin(psi))*np.sin((phi+phi3)/2)/A3_prime
         sin_6alpha3 = 2*sin_alpha3*cos_alpha3*(4*cos_alpha3**2-1)*(4*cos_alpha3**2-3)
         cos_6alpha3 = 1 - 2*sin_alpha3**2*(4*cos_alpha3**2-1)**2
-        E3 = np.cos(phi1-phi2)*cos_6alpha3+np.sin(phi1-phi2)*sin_6alpha3
+        #E3 = np.cos(phi1-phi2)*cos_6alpha3+np.sin(phi1-phi2)*sin_6alpha3
+        E3 = np.cos(phi1 - phi2) * cos_6alpha3 + np.sin(phi1 - phi2) * sin_6alpha3 + \
+             1j * (np.sin(phi1 - phi2) * cos_6alpha3 - np.cos(phi1 - phi2) * sin_6alpha3)
 
-        first_term = E1 / A1_prime ** 4 * interpolated_kappa_bispectrum(R * np.cos(psi) / A1_prime,
-                                                                        R * np.sin(psi) / A1_prime, phi)
-        second_term = E2 / A2_prime ** 4 * interpolated_kappa_bispectrum(R * np.cos(psi) / A2_prime,
-                                                                        R * np.sin(psi) / A2_prime, phi)
-        third_term = E3 / A3_prime ** 4 * interpolated_kappa_bispectrum(R * np.cos(psi) / A3_prime,
-                                                                        R * np.sin(psi) / A3_prime, phi)
+        l1_1 = R*np.cos(psi)/A1_prime
+        l1_2 = R*np.cos(psi)/A2_prime
+        l1_3 = R*np.cos(psi)/A3_prime
+
+        l2_1 = R*np.sin(psi)/A1_prime
+        l2_2 = R*np.sin(psi)/A2_prime
+        l2_3 = R*np.sin(psi)/A3_prime
+
+        l3_1 = np.sqrt((R/A1_prime)**2*(1 + 2*np.cos(psi)*np.sin(psi)*np.cos(phi)))
+        l3_2 = np.sqrt((R / A2_prime) ** 2 * (1 + 2 * np.cos(psi) * np.sin(psi) * np.cos(phi)))
+        l3_3 = np.sqrt((R / A3_prime) ** 2 * (1 + 2 * np.cos(psi) * np.sin(psi) * np.cos(phi)))
+
+        #print("(phi, psi, R, l):", phi, psi, R, A1_prime, R * np.cos(psi) / A1_prime, R * np.sin(psi) / A1_prime, l3_1)
+
+        #print(l1_1, l2_1, l3_1)
+        first_term = E1 / A1_prime ** 4 * self.interpolated_kappa_bispectrum((l1_1,l2_1, l3_1))
+        second_term = E2 / A2_prime ** 4 * self.interpolated_kappa_bispectrum((l1_2, l2_2, l3_2))
+        third_term = E3 / A3_prime ** 4 * self.interpolated_kappa_bispectrum((l1_3, l2_3, l3_3))
+
+        complete_integrand = outside_term*(first_term+second_term+third_term)
+        #print(complete_integrand)
+
+        return(complete_integrand)
+
+    def gamma0(self, integ_limits, r, u, v):
+
+        timenow = time.time()
+        int_obj = Integrator(integ_limits)
+        result = int_obj(functools.partial(self.gamma0_real_part_integrand, r, u, v), nitn=20, neval=20000)
+        #result = int_obj(fff, nitn=10, neval=10000)
+        #result = int_obj(self.gamma0_real_part_integrand, nitn=10, neval=10000)
+        timeafter = time.time()
+        print("the time to integrate is", timeafter-timenow)
+
+        return(result)
+
+    def gamma1_integrand(self, r, u, v, y):
+
+        x2 = r*np.pi/(60*180)
+        x3 = u*x2
+        x1 = v*x3+x2
+
+        phi = y[0]
+        psi = y[1]
+        R = y[2]
+
+        outside_term = 1 / (6 * 32 * np.pi ** 5) * np.sin(2 * psi) * R ** 3 * jv(2, R)
+
+        '''internal angles of the triangle'''
+        phi1 = np.arccos((x1**2-x2**2-x3**2)/(-2*x2*x3))
+        phi2 = np.arccos((x2**2-x3**2-x1**2)/(-2*x3*x1))
+        phi3 = np.arccos((x3**2-x1**2-x2**2)/(-2*x1*x2))
+
+        beta_bar_times2 = np.arcsin((2*np.cos(psi)**2-1)*np.sin(phi))
+
+        """inside terms:"""
+
+        A1_prime = np.sqrt((x3*np.cos(psi))**2+(x2*np.sin(psi))**2+x2*x3*np.sin(2*psi)*np.cos(phi+phi1))
+        alpha1 = np.arcsin((x3*np.cos(psi)-x2*np.sin(psi))*np.sin((phi+phi1)/2)/A1_prime)
+        E1 = np.exp(1j*(phi3-phi2-2*alpha1-beta_bar_times2))
+
+        A2_prime = np.sqrt((x1*np.cos(psi))**2+(x3*np.sin(psi))**2+x3*x1*np.sin(2*psi)*np.cos(phi+phi2))
+        alpha2 = np.arcsin((x1*np.cos(psi)-x3*np.sin(psi))*np.sin((phi+phi2)/2)/A2_prime)
+        E2 = np.exp(1j*(2*phi-2*alpha2+beta_bar_times2+phi3-phi2-2*phi2))
+
+        A3_prime = np.sqrt((x2*np.cos(psi))**2+(x1*np.sin(psi))**2+x1*x2*np.sin(2*psi)*np.cos(phi+phi3))
+        alpha3 = np.arcsin((x2*np.cos(psi)-x1*np.sin(psi))*np.sin((phi+phi3)/2)/A3_prime)
+        E3 = np.exp(1j*(-2*phi-2*alpha3+beta_bar_times2+phi1-phi2+2*phi3))
+
+        l1_1 = R*np.cos(psi)/A1_prime
+        l1_2 = R*np.cos(psi)/A2_prime
+        l1_3 = R*np.cos(psi)/A3_prime
+
+        l2_1 = R*np.sin(psi)/A1_prime
+        l2_2 = R*np.sin(psi)/A2_prime
+        l2_3 = R*np.sin(psi)/A3_prime
+
+        l3_1 = np.sqrt((R/A1_prime)**2*(1 + 2*np.cos(psi)*np.sin(psi)*np.cos(phi)))
+        l3_2 = np.sqrt((R / A2_prime) ** 2 * (1 + 2 * np.cos(psi) * np.sin(psi) * np.cos(phi)))
+        l3_3 = np.sqrt((R / A3_prime) ** 2 * (1 + 2 * np.cos(psi) * np.sin(psi) * np.cos(phi)))
+
+        first_term = E1 / A1_prime ** 4 * self.interpolated_kappa_bispectrum((l1_1,l2_1, l3_1))
+        second_term = E2 / A2_prime ** 4 * self.interpolated_kappa_bispectrum((l1_2, l2_2, l3_2))
+        third_term = E3 / A3_prime ** 4 * self.interpolated_kappa_bispectrum((l1_3, l2_3, l3_3))
 
         complete_integrand = outside_term*(first_term+second_term+third_term)
 
         return(complete_integrand)
 
+    def gamma1(self, integ_limits, r, u, v):
+
+        timenow = time.time()
+        int_obj = Integrator(integ_limits)
+        result = int_obj(functools.partial(self.gamma1_integrand, r, u, v), nitn=20, neval=20000)
+        #result = int_obj(fff, nitn=10, neval=10000)
+        #result = int_obj(self.gamma0_real_part_integrand, nitn=10, neval=10000)
+        timeafter = time.time()
+        print("the time to integrate is", timeafter-timenow)
+
+        return(result)
+
+    def gamma2(self, integ_limits, r, u, v):
+
+        x2 = r*np.pi/(60*180)
+        x3 = u*x2
+        x1 = v*x3+x2
+
+        new_r = x3*(60*180)/np.pi
+        new_u = x1/x3
+        new_v = (x2-x3)/x1
+
+        timenow = time.time()
+        int_obj = Integrator(integ_limits)
+        result = int_obj(functools.partial(self.gamma1_integrand, new_r, new_u, new_v), nitn=20, neval=20000)
+        timeafter = time.time()
+        print("the time to integrate is", timeafter-timenow)
+
+        return(result)
+
+    def gamma3(self, integ_limits, r, u, v):
+
+        x2 = r * np.pi / (60 * 180)
+        x3 = u * x2
+        x1 = v * x3 + x2
+
+        new_r = x1 * (60 * 180) / np.pi
+        new_u = x2 / x1
+        new_v = (x3 - x1) / x2
+
+        timenow = time.time()
+        int_obj = Integrator(integ_limits)
+        result = int_obj(functools.partial(self.gamma1_integrand, new_r, new_u, new_v), nitn=20, neval=20000)
+        timeafter = time.time()
+        print("the time to integrate is", timeafter - timenow)
+
+        return (result)
 
 class bihalofit(bispectrum):
 
@@ -456,16 +621,14 @@ class bihalofit(bispectrum):
 
 class tree_level_bispectrum(bispectrum):
 
-    def __init__(self, cosmo_params, k, z):
+    def __init__(self, cosmo_params, k, kgrid, z):
 
-        bispectrum.__init__(self, cosmo_params, k, z)
+        bispectrum.__init__(self, cosmo_params, k, kgrid, z)
 
     def compute_tree_level(self, k1,k2,k3):
-        return(2*(self.compute_kernel(k1,k2,k3)*self.PL(k1,0.55)*self.PL(k2, 0.55) + self.compute_kernel(k2,k3,k1)*self.PL(k2, 0.55)*self.PL(k3, 0.55) + self.compute_kernel(k3,k1,k2)*self.PL(k3, 0.55)*self.PL(k1, 0.55)))
-
-
-#bitree = tree_level_bispectrum(params, my_k, my_z_simple)
-#bi = bihalofit(params, my_k, my_z_simple)
+        return(2*(self.compute_kernel(k1,k2,k3)*self.PL((k1,0.55))*self.PL((k2, 0.55)) +
+                  self.compute_kernel(k2,k3,k1)*self.PL((k2, 0.55))*self.PL((k3, 0.55)) +
+                  self.compute_kernel(k3,k1,k2)*self.PL((k3, 0.55))*self.PL((k1, 0.55))))
 
 count = 0
 diag = []
@@ -481,6 +644,8 @@ my_kgrid = np.array(my_kgrid)
 print("my shape is", np.shape(my_kgrid))
 
 print("diag=", diag)
+
+bitree = tree_level_bispectrum(params, my_k, my_kgrid, my_z_simple)
 model = bihalofit(params, my_k, my_kgrid, my_z_new)
 
 #neee = bi.neff[:,1]
@@ -489,19 +654,24 @@ model = bihalofit(params, my_k, my_kgrid, my_z_new)
 #x2 = bi.compute_three_halo(my_k,my_k,my_k)
 #x3 = bi.compute_all_halo(my_k,my_k,my_k)
 #x4 = bitree.compute_tree_level(my_k,my_k,my_k)
+#print(x4)
 
-mo1 = model.compute_one_halo(my_kgrid)
-mo3 = model.compute_three_halo(my_kgrid)
-mo4 = model.compute_all_halo(my_kgrid)
+#mo1 = model.compute_one_halo(my_kgrid)
+#mo3 = model.compute_three_halo(my_kgrid)
+#mo4 = model.compute_all_halo(my_kgrid)
 
-l = np.logspace(2,np.log10(9000), 10)
+#l = np.logspace(2,np.log10(9000), 60)
+l = np.logspace(2,np.log10(15000), 60)
 
-maximum_distance = 3500
+#maximum_distance = 3500
+maximum_distance = 4400
 mynz = np.loadtxt("bin_04_desy3_source_nz.dat")
 
 plt.plot(mynz[:,0], mynz[:,1])
 plt.show()
 #aaa = time.time()
+#model.all_halo = np.load("matter_bispectum_100_kbins.npy")
+#np.save("matter_bispectum_100_kbins", model.all_halo)
 #model.create_interpolated_bispectrum(my_kgrid, my_k_reduced)
 #bbb = time.time()
 #model.compute_lensing_kernel(90, maximum_distance, 10000, mynz)
@@ -509,15 +679,70 @@ plt.show()
 #model.compute_kappa_bispectrum(l,l,l,maximum_distance,500)
 #ddd = time.time()
 #print("the times are", bbb-aaa, ccc-bbb, ddd-ccc)
-aaa = time.time()
-model.create_interpolated_bispectrum(my_kgrid, my_k_reduced)
-bbb = time.time()
-model.compute_lensing_kernel(90, maximum_distance, 10000, mynz)
-ccc = time.time()
-model.compute_kappa_bispectrum_equilateral(l,maximum_distance,1000)
-ddd = time.time()
-print("the times are", bbb-aaa, ccc-bbb, ddd-ccc)
-kbsp_equi = model.kappa_bispectrum
+model.kappa_bispectrum = np.load("kappa_bispectum_60_lbins_100_kbins_extended_ranges.npy")
+#np.save("kappa_bispectum_60_lbins_100_kbins_extended_ranges", model.kappa_bispectrum)
+kbsp = model.kappa_bispectrum
+model.create_interpolated_kappa_bispectrum(l)
+
+'''input in acrmins'''
+my_equilateral_xs = np.logspace(np.log10(3),np.log10(35), num=15)
+my_u_values = 1*np.ones_like(my_equilateral_xs)
+my_v_values = np.zeros_like(my_equilateral_xs)
+#my_v_values = 0.532*np.ones_like(my_equilateral_xs)
+#my_v_values = 0*np.ones_like(my_equilateral_xs)
+
+my_angles = np.linspace(2,179, num=20)
+u_2 = np.ones_like(my_angles)
+v_2 = np.zeros_like(my_angles)
+new_d2 = 21.4*np.ones_like(u_2)
+for i in range(len(my_angles)):
+    if my_angles[i] < 60:
+        u_2[i] = np.sqrt(2*(1-np.cos(my_angles[i]*np.pi/180)))
+    else:
+        v_2[i] = np.sqrt(2*(1-np.cos(my_angles[i]*np.pi/180)))-1
+
+
+
+limits = [[0, np.pi/2],[0, 2*np.pi],[0,100]]
+test_integration_0 = model.gamma0(limits, my_equilateral_xs, my_u_values, my_v_values)
+test_integration_1 = model.gamma1(limits, my_equilateral_xs, my_u_values, my_v_values)
+test_integration_2 = model.gamma2(limits, my_equilateral_xs, my_u_values, my_v_values)
+test_integration_3 = model.gamma3(limits, my_equilateral_xs, my_u_values, my_v_values)
+print(test_integration_0)
+print(np.shape(test_integration_0))
+print(test_integration_0[0])
+print(test_integration_0[0].mean)
+print(test_integration_0.mean)
+result_array_0 = np.ones_like(test_integration_0)
+result_array_1 = np.ones_like(test_integration_1)
+result_array_2 = np.ones_like(test_integration_2)
+result_array_3 = np.ones_like(test_integration_3)
+for i in range(len(test_integration_0)):
+    result_array_0[i] = np.real(test_integration_0[i].mean)
+    result_array_1[i] = np.real(test_integration_1[i].mean)
+    result_array_2[i] = np.real(test_integration_2[i].mean)
+    result_array_3[i] = np.real(test_integration_3[i].mean)
+
+#print(result_array_0)
+
+#np.save("Gamma0_real_newtest_angles", result_array_0)
+#np.save("Gamma1_real_newtest_angles", result_array_1)
+#np.save("Gamma2_real_newtest_angles", result_array_2)
+#np.save("Gamma3_real_newtest_angles", result_array_3)
+
+result_ttt = (result_array_0+result_array_1+result_array_2+result_array_3)/4
+
+#np.save("gamma_ttt_newtest_angles", result_ttt)
+
+#aaa = time.time()
+#model.create_interpolated_bispectrum(my_kgrid, my_k_reduced)
+#bbb = time.time()
+#model.compute_lensing_kernel(90, maximum_distance, 10000, mynz)
+#ccc = time.time()
+#model.compute_kappa_bispectrum_equilateral(l,maximum_distance,1000)
+#ddd = time.time()
+#print("the times are", bbb-aaa, ccc-bbb, ddd-ccc)
+#kbsp_equi = model.kappa_bispectrum
 #np.save("test_kappa_bispectum_to9000_morez", model.kappa_bispectrum)
 
 #kbsp = np.load("test_kappa_bispectum.npy")
@@ -526,22 +751,22 @@ kbsp_equi = model.kappa_bispectrum
 #np.save("bihalofit_test_on_grid_3halo", mo3)
 #np.save("bihalofit_test_on_grid", mo4)
 
-#kbspl = []
-#print(np.shape(kbsp))
-#for i in range(len(l)):
-#    for j in range(len(l)):
-#        for k in range(len(l)):
-#            if i==j and i==k:
-#                kbspl.append(kbsp[i][j][k])
-#kbspl = np.array(kbspl)
-#print(len(kbspl))
+kbspl = []
+print(np.shape(kbsp))
+for i in range(len(l)):
+    for j in range(len(l)):
+        for k in range(len(l)):
+            if i==j and i==k:
+                kbspl.append(kbsp[i][j][k])
+kbspl = np.array(kbspl)
+print(len(kbspl))
 
 
 plt.title("Convergence bispectrum for equilateral triangles")
 plt.xlabel("l")
 plt.ylabel("B(l,l,l)*l**3")
-#plt.plot(l,kbspl*l**3, color='m', ls = '--', label="Bihalofit (kappa)")
-plt.plot(l,kbsp_equi*l**3, color='m', ls = '--', label="Bihalofit (kappa)")
+plt.plot(l,kbspl*l**3, color='m', ls = '--', label="Bihalofit (kappa)")
+#plt.plot(l,kbsp_equi*l**3, color='m', ls = '--', label="Bihalofit (kappa)")
 #plt.plot(my_k_reduced,equilat*my_k_reduced**3, color='g', ls = '--', label="Bihalofit (full) - in grid")
 plt.grid()
 #plt.xlim(10**(-2),20)
