@@ -740,7 +740,6 @@ aa_vals = [test_integration_0[i].mean for i in range(len(test_integration_0))]
 result_array_0 = transform_gamma(aa_vals, 0, my_equilateral_xs, my_u_values, my_v_values)
 np.save("Gamma0_15bins_d2min3_d2max35_phi60_no_interps_small", np.real(result_array_0))
 
-print(lsf)
 test_integration_1 = model.gamma1(limits, my_equilateral_xs, my_u_values, my_v_values)
 bb_vals = [test_integration_1[i].mean for i in range(len(test_integration_1))]
 result_array_1 = transform_gamma(bb_vals, 1, my_equilateral_xs, my_u_values, my_v_values)
