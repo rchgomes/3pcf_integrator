@@ -33,15 +33,7 @@ my_k_reduced = np.logspace(-4, np.log10(k_max), num=1000) #h/Mpc^-1
 my_z = np.linspace(0,5,1000)
 my_z_simple = np.array([0,0.55])
 my_z_new = np.linspace(0,3,1000)
-
 model = bihalofit(params, my_k, my_z_new)
-othermodel = bihalofit(params, my_k, my_z_new)
-
-la = np.linspace(100,999,30)
-lb = np.logspace(3, np.log10(9000), 10)
-lmixed = np.concatenate((la,lb))
-l = np.linspace(2,4000,400)
-lbb = np.logspace(np.log10(100),np.log10(9000),100)
 
 maximum_distance = 4400
 mynz = np.loadtxt("bin_04_desy3_source_nz.dat")
@@ -56,18 +48,18 @@ print(my_equilateral_xs)
 my_u_values = 1*np.ones_like(my_equilateral_xs)
 my_v_values = np.zeros_like(my_equilateral_xs)
 
-limits = [[0, 2*np.pi/2],[0, np.pi/2],[0,50]]
+limits = [[0, 2*np.pi],[0, np.pi/2],[0,50]]
 
 test_integration_0 = model.gamma0(limits, my_equilateral_xs, my_u_values, my_v_values)
 aa_vals = [test_integration_0[i].mean for i in range(len(test_integration_0))]
 result_array_0 = transform_gamma(aa_vals, 0, my_equilateral_xs, my_u_values, my_v_values)
-np.save("Gamma0_15bins_d2min3_d2max35_phi60_no_interps_small", np.real(result_array_0))
+np.save("Gamma0_15bins_d2min3_d2max35_phi60_no_interps", np.real(result_array_0))
 
 test_integration_1 = model.gamma1(limits, my_equilateral_xs, my_u_values, my_v_values)
 bb_vals = [test_integration_1[i].mean for i in range(len(test_integration_1))]
 result_array_1 = transform_gamma(bb_vals, 1, my_equilateral_xs, my_u_values, my_v_values)
 np.save("Gamma1_15bins_d2min3_d2max35_phi60_centroid_no_linterp_no_kinterp", np.real(result_array_1))
-print(asdg)
+
 test_integration_2 = model.gamma2(limits, my_equilateral_xs, my_u_values, my_v_values)
 cc_vals = [test_integration_2[i].mean for i in range(len(test_integration_2))]
 result_array_2 = transform_gamma(cc_vals, 2, my_equilateral_xs, my_u_values, my_v_values)
