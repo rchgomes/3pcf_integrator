@@ -1,8 +1,8 @@
 numpy
 scipy
 matplotlib
-classy
+cython
 pathlib
 pyDOE
-itertools
 cosmopower
+vegas
