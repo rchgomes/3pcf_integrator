@@ -23,7 +23,7 @@ class bispectrum:
         self.z = z
 
         self.omegam = self.cosmo_params['Omega_b'] + self.cosmo_params['Omega_cdm']
-
+        h = self.cosmo_params['h']
         knl = self.my_cosmo.nonlinear_scale(z, len(z))
 
         self.knl_interp = interp1d(z, knl, bounds_error = False, fill_value = knl[-1])
@@ -108,11 +108,17 @@ class bispectrum:
 
         constant = 27*(100/299792)**6*self.omegam**3/8
         chivals_simple = np.linspace(1, chimax, npoints)
-        integral = np.ndarray(shape=(len(l1)))
-        for l1i in range(len(l1)):
-            integrand = (self.lensing_kernel(chivals_simple) * (1 + self.z_from_r_func(chivals_simple))) ** 3 / chivals_simple * self.b_of_l(
-                l1[l1i], l2[l1i], l3[l1i], chivals_simple)
-            integral[l1i] = np.trapz(integrand, chivals_simple)
+        if type(l1) == np.float64:
+            integrand = (self.lensing_kernel(chivals_simple) * (
+                        1 + self.z_from_r_func(chivals_simple))) ** 3 / chivals_simple * self.b_of_l(
+                l1, l2, l3, chivals_simple)
+            integral = np.trapz(integrand, chivals_simple)
+        else:
+            integral = np.ndarray(shape=(len(l1)))
+            for l1i in range(len(l1)):
+                integrand = (self.lensing_kernel(chivals_simple) * (1 + self.z_from_r_func(chivals_simple))) ** 3 / chivals_simple * self.b_of_l(
+                    l1[l1i], l2[l1i], l3[l1i], chivals_simple)
+                integral[l1i] = np.trapz(integrand, chivals_simple)
 
         return(constant*integral)
 
@@ -268,9 +274,9 @@ class bispectrum:
         third_term = E3 / A3_prime ** 4 * self.compute_kappa_bispectrum(l1_3, l2_3, l3_3, 4000, 500)
 
         complete_integrand = outside_term*(first_term+second_term+third_term)
-        if np.abs(complete_integrand[6]) > 10**(-8):
-            print("l values, integral", l1_1, l2_1, l3_1, complete_integrand[6])
-            print("one loop of integrand:", time.time()-measure0)
+        #if np.abs(complete_integrand[6]) > 10**(-8):
+        print("l values, integral", l1_1, l2_1, l3_1)
+        #print("one loop of integrand:", time.time()-measure0)
 
         return(complete_integrand)
 
@@ -278,8 +284,8 @@ class bispectrum:
 
         timenow = time.time()
         int_obj = Integrator(integ_limits)
-        train = int_obj(functools.partial(self.gamma0_integrand, r, u, v), nitn=10, neval=10000)
-        result = int_obj(functools.partial(self.gamma0_integrand, r, u, v), nitn=10, neval=60000)
+        train = int_obj(functools.partial(self.gamma0_integrand, r, u, v), nitn=10, neval=1000)
+        result = int_obj(functools.partial(self.gamma0_integrand, r, u, v), nitn=10, neval=1000)
         timeafter = time.time()
         print("the time to integrate is", timeafter-timenow)
 
