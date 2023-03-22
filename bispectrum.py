@@ -43,12 +43,8 @@ class bispectrum:
             newpkinterp.append([])
             for zi in range(len(self.z)):
                 newpkinterp[kii].append(self.Pk_linear[kii][zi])
-        print("will do")
-        t1 = time.time()
-        self.PL = RegularGridInterpolator((self.k, self.z), newpkinterp, bounds_error = False, fill_value = 0)
-        t2 = time.time()
-        print("time first", t2-t1)
 
+        self.PL = RegularGridInterpolator((self.k, self.z), newpkinterp, bounds_error = False, fill_value = 0)
         self.r_from_z, self.dzdr_of_z = self.my_cosmo.z_of_r(z)
 
         self.r_from_z *= h
@@ -59,20 +55,18 @@ class bispectrum:
 
     def compute_kernel(self, k1, k2, k3):
         dot = (-k3 ** 2 + k1 ** 2 + k2 ** 2) / 2
-        f2 = 5 / 7 + 2 * dot ** 2 / (7 * k1 ** 2 * k2 ** 2) - dot * (1 / k1 ** 2 + 1 / k2 ** 2) / 2  # from Laila
+        f2 = 5 / 7 + 2 * dot ** 2 / (7 * k1 ** 2 * k2 ** 2) - dot * (1 / k1 ** 2 + 1 / k2 ** 2) / 2
         return (f2)
 
     def b_of_l(self, l1, l2, l3, chi):
 
         z_actual = self.z_from_r_func(chi)
         b_of_l_vals = self.matter_bispectrum(z_actual, l1/chi, l2/chi, l3/chi)
-        #print("b of l:", b_of_l_vals)
 
         return (b_of_l_vals)
 
     def compute_lensing_kernel(self, chimin, chimax, npoints, dndz):
 
-        print("into lensing kernel")
         chivals = np.linspace(chimin, chimax, npoints)
         zvals = self.z_from_r_func(chivals)
         nz = interp1d(dndz[:, 0], dndz[:, 1], bounds_error = False, fill_value = 0)
@@ -97,18 +91,16 @@ class bispectrum:
             integrand = nvals[chii:]*(chivals[chii:]-chivals[chii]*np.ones_like(chivals[chii:]))/chivals[chii:]
             lensing_kernel[chii] = np.trapz(integrand, chivals[chii:])
 
-        print("did lensing kernel")
-        self.lensing_kernel  = interp1d(chivals, lensing_kernel)
-        plt.plot(chivals, lensing_kernel)
-        plt.yscale("log")
-        plt.show()
-        print("interpolated lensing kernel")
+        self.lensing_kernel  = interp1d(chivals, lensing_kernel, bounds_error = False, fill_value = 0)
+        #plt.plot(chivals, lensing_kernel)
+        #plt.yscale("log")
+        #plt.show()
 
     def compute_kappa_bispectrum(self, l1, l2, l3, chimax, npoints):
 
         constant = 27*(100/299792)**6*self.omegam**3/8
         chivals_simple = np.linspace(1, chimax, npoints)
-        if type(l1) == np.float64:
+        if type(l1) == np.float64 or type(l1) == float or type(l1) == int:
             integrand = (self.lensing_kernel(chivals_simple) * (
                         1 + self.z_from_r_func(chivals_simple))) ** 3 / chivals_simple * self.b_of_l(
                 l1, l2, l3, chivals_simple)
@@ -124,35 +116,20 @@ class bispectrum:
 
     def compute_kappa_bispectrum_equilateral(self, l0, chimax, npoints):
 
-        print("into kappa bispectrum")
         constant = 27*(100/299792)**6*self.omegam**3/8
         chivals_simple = np.linspace(350, chimax, npoints)
         chivals = np.ndarray(shape=(len(l0), len(chivals_simple)))
         for l0i in range(len(l0)):
             chivals[l0i] = chivals_simple
 
-        print("will compute integrand")
-        aa0 = time.time()
         integrand = (self.lensing_kernel(chivals)*(1+self.z_from_r_func(chivals)))**3/chivals*self.b_of_l_equilateral(l0,chivals_simple)
-
-        aa1 = time.time()
-        print("computed integrand")
         integral = np.trapz(integrand, chivals)
-        aa2 = time.time()
-        print("computed integal. Times:", aa1-aa0, aa2-aa1)
 
         return(constant*integral)
 
     def create_interpolated_kappa_bispectrum(self, lvec):
 
-        before = time.time()
-        print(np.shape(self.kappa_bispectrum))
-        print(np.shape(lvec))
         self.interpolated_kappa_bispectrum = RegularGridInterpolator((lvec, lvec, lvec), self.kappa_bispectrum, bounds_error = False, fill_value = 0)
-        after = time.time()
-        print("time to interpolate kappa bispectrum:", after - before)
-        x = signature(self.interpolated_kappa_bispectrum)
-        print(x)
 
     def gamma0_integrand_adapt(self, r, u, v, phi, psi, R):
 
@@ -274,9 +251,9 @@ class bispectrum:
         third_term = E3 / A3_prime ** 4 * self.compute_kappa_bispectrum(l1_3, l2_3, l3_3, 4000, 500)
 
         complete_integrand = outside_term*(first_term+second_term+third_term)
-        #if np.abs(complete_integrand[6]) > 10**(-8):
-        print("l values, integral", l1_1, l2_1, l3_1)
-        #print("one loop of integrand:", time.time()-measure0)
+        #if np.abs(complete_integrand[0]) > 10**(-8):
+        #print("l values, integral", l1_1, l2_1, l3_1)
+        print("one loop of integrand:", time.time()-measure0)
 
         return(complete_integrand)
 
