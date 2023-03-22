@@ -62,10 +62,13 @@ class bihalofit(bispectrum):
 
     def compute_dependent_params(self, k1, k2, k3):
 
-        kvals = np.ndarray(shape=(3, len(k1)))
-        kvals[0] = k1
-        kvals[1] = k2
-        kvals[2] = k3
+        if type(k1) == float:
+            kvals = np.array([k1,k2,k3])
+        else:
+            kvals = np.ndarray(shape=(3, len(k1)))
+            kvals[0] = k1
+            kvals[1] = k2
+            kvals[2] = k3
 
         sortedlist = np.sort(kvals, axis=0)
         kmin = sortedlist[0]
@@ -84,10 +87,18 @@ class bihalofit(bispectrum):
     def compute_one_halo(self, z, k1, k2, k3):
 
         knl = self.knl_interp(z)
-        qvec = np.ndarray(shape=(3,len(k1)))
-        qvec[0] = k1 / knl
-        qvec[1] = k2 / knl
-        qvec[2] = k3 / knl
+        if type(k1) == float and type(z) == float:
+            qvec = np.array(k1/knl,k2/knl,k3/knl)
+        elif type(k1) == float:
+            qvec = np.ndarray(shape=(3,len(z)))
+            qvec[0] = k1 / knl
+            qvec[1] = k2 / knl
+            qvec[2] = k3 / knl
+        else:
+            qvec = np.ndarray(shape=(3,len(k1)))
+            qvec[0] = k1 / knl
+            qvec[1] = k2 / knl
+            qvec[2] = k3 / knl
         an, alphan, betan = self.compute_dependent_params(k1, k2, k3)
 
         valuetot = 1
