@@ -100,7 +100,9 @@ class bihalofit(bispectrum):
             qvec[1] = k2 / knl
             qvec[2] = k3 / knl
         an, alphan, betan = self.compute_dependent_params(k1, k2, k3)
-
+        #if k1.any() == 0 or k2.any() == 0 or k3.any() == 0:
+            #print("did it")
+            #print(k1,k2,k3)
         valuetot = 1
         for q in qvec:
             value = (1 / (an * q ** alphan + self.bn * q ** betan)) * (1 / (1 + (self.cn * q) ** (-1)))
