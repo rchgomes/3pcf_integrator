@@ -40,3 +40,9 @@ def transform_gamma(gamma, num, r, u, v):
         gamma_transf = gamma * np.exp(2 * 1j * (psi1 + psi2 - psi3))
 
     return(gamma_transf)
+
+def remove_zeros(x):
+
+    x_loc = (x==0)
+    x_val = 10**(-10)*x_loc
+    return(x+x_val)
