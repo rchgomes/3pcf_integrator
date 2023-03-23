@@ -5,8 +5,10 @@ from scipy.interpolate import interp1d
 from scipy.interpolate import RegularGridInterpolator
 from scipy.special import jv
 from classy import Class
+import vegas
 from vegas import Integrator
 import functools
+from funcs import remove_zeros
 from inspect import signature
 
 #Verify dependance of k_nl and n_eff by cosmology
@@ -114,41 +116,35 @@ class bispectrum:
 
         return(constant*integral)
 
-    def compute_kappa_bispectrum_equilateral(self, l0, chimax, npoints):
-
-        constant = 27*(100/299792)**6*self.omegam**3/8
-        chivals_simple = np.linspace(350, chimax, npoints)
-        chivals = np.ndarray(shape=(len(l0), len(chivals_simple)))
-        for l0i in range(len(l0)):
-            chivals[l0i] = chivals_simple
-
-        integrand = (self.lensing_kernel(chivals)*(1+self.z_from_r_func(chivals)))**3/chivals*self.b_of_l_equilateral(l0,chivals_simple)
-        integral = np.trapz(integrand, chivals)
-
-        return(constant*integral)
-
     def create_interpolated_kappa_bispectrum(self, lvec):
 
         self.interpolated_kappa_bispectrum = RegularGridInterpolator((lvec, lvec, lvec), self.kappa_bispectrum, bounds_error = False, fill_value = 0)
 
-    def gamma0_integrand_adapt(self, r, u, v, phi, psi, R):
+    def gamma0_integrand(self, r, u, v, imag, y):
 
         x2 = r*np.pi/(60*180)
         x3 = u*x2
         x1 = v*x3+x2
+
+        phi = y[:,0]
+        psi = y[:,1]
+        R = y[:,2]
 
         sinn = (2 * np.cos(psi) ** 2 - 1) * np.sin(phi)
         coss = np.cos(phi)+np.sin(2*psi)
 
         beta_bar_times2 = np.arctan2(sinn, coss)
 
-        outside_term = 1 / (6 * 32 * np.pi ** 5) * np.sin(2 * psi) * (np.exp(1j*beta_bar_times2)) * R ** 3 * jv(6, R)
+        outside_term = 1 / (6 * 32 * np.pi ** 5) * np.sin(2 * psi) * R ** 3 * jv(6, R)
+
+        exp_re = np.cos(beta_bar_times2)
+        exp_im = np.sin(beta_bar_times2)
 
         '''internal angles of the triangle'''
         phi1 = np.arccos((x1**2-x2**2-x3**2)/(-2*x2*x3))
         phi2 = np.arccos((x2**2-x3**2-x1**2)/(-2*x3*x1))
         phi3 = np.arccos((x3**2-x1**2-x2**2)/(-2*x1*x2))
-
+        print(phi1,phi2,phi3)
         """inside terms:"""
 
         A1_prime = np.sqrt((x3*np.cos(psi))**2+(x2*np.sin(psi))**2+x2*x3*np.sin(2*psi)*np.cos(phi+phi1))
@@ -156,19 +152,34 @@ class bispectrum:
         A1p_sin_alpha1 = (x3*np.cos(psi)-x2*np.sin(psi))*np.sin((phi+phi1)/2)
         A1p_cos_alpha1 = (x3 * np.cos(psi) + x2 * np.sin(psi)) * np.sin((phi + phi1) / 2)
         alpha1 = np.arctan2(A1p_sin_alpha1, A1p_cos_alpha1)
-        E1 = np.exp(1j*(phi2-phi3-6*alpha1))
+        E1_re = np.cos(phi2-phi3-6*alpha1)
+        E1_im = np.sin(phi2-phi3-6*alpha1)
 
         A2_prime = np.sqrt((x1*np.cos(psi))**2+(x3*np.sin(psi))**2+x3*x1*np.sin(2*psi)*np.cos(phi+phi2))
         A2p_sin_alpha2 = (x1*np.cos(psi)-x3*np.sin(psi))*np.sin((phi+phi2)/2)
         A2p_cos_alpha2 = (x1 * np.cos(psi) + x3 * np.sin(psi)) * np.sin((phi + phi2) / 2)
         alpha2 = np.arctan2(A2p_sin_alpha2, A2p_cos_alpha2)
-        E2 = np.exp(1j*(phi3 - phi1 - 6*alpha2))
+        E2_re = np.cos(phi3 - phi1 - 6*alpha2)
+        E2_im = np.sin(phi3 - phi1 - 6*alpha2)
 
         A3_prime = np.sqrt((x2*np.cos(psi))**2+(x1*np.sin(psi))**2+x1*x2*np.sin(2*psi)*np.cos(phi+phi3))
         A3p_sin_alpha3 = (x2*np.cos(psi)-x1*np.sin(psi))*np.sin((phi+phi3)/2)
         A3p_cos_alpha3 = (x2 * np.cos(psi) + x1 * np.sin(psi)) * np.sin((phi + phi3) / 2)
         alpha3 = np.arctan2(A3p_sin_alpha3, A3p_cos_alpha3)
-        E3 = np.exp(1j*(phi1 - phi2 - 6*alpha3))
+        E3_re = np.cos(phi1 - phi2 - 6*alpha3)
+        E3_im = np.sin(phi1 - phi2 - 6*alpha3)
+
+        if imag == False:
+
+            E1 = exp_re * E1_re - exp_im * E1_im
+            E2 = exp_re * E2_re - exp_im * E2_im
+            E3 = exp_re * E3_re - exp_im * E3_im
+
+        if imag == True:
+
+            E1 = exp_re * E1_im + exp_im * E1_re
+            E2 = exp_re * E2_im + exp_im * E2_re
+            E3 = exp_re * E3_im + exp_im * E3_re
 
         l1_1 = R*np.cos(psi)/A1_prime
         l1_2 = R*np.cos(psi)/A2_prime
@@ -182,93 +193,46 @@ class bispectrum:
         l3_2 = np.sqrt((R / A2_prime) ** 2 * (1 + 2 * np.cos(psi) * np.sin(psi) * np.cos(phi)))
         l3_3 = np.sqrt((R / A3_prime) ** 2 * (1 + 2 * np.cos(psi) * np.sin(psi) * np.cos(phi)))
 
-        first_term = E1 / A1_prime ** 4 * self.interpolated_kappa_bispectrum((l1_1,l2_1, l3_1))
-        second_term = E2 / A2_prime ** 4 * self.interpolated_kappa_bispectrum((l1_2, l2_2, l3_2))
-        third_term = E3 / A3_prime ** 4 * self.interpolated_kappa_bispectrum((l1_3, l2_3, l3_3))
+        #print(l1_1, l2_1,l3_1)
+        if l3_1.any() == 0:
+            l3_1 = remove_zeros(l3_1)
+
+        if l3_2.any() == 0:
+            l3_2 = remove_zeros(l3_2)
+
+        if l3_3.any() == 0:
+            l3_3 = remove_zeros(l3_3)
+
+        if np.any(l2_1) == 0 or np.any(l2_2) == 0 or np.any(l2_3) == 0:
+            print("yep")
+            print(R,psi, A1_prime, phi)
+
+        first_term = E1 / A1_prime ** 4 * self.compute_kappa_bispectrum(l1_1,l2_1, l3_1, 4000, 100)
+        second_term = E2 / A2_prime ** 4 * self.compute_kappa_bispectrum(l1_2, l2_2, l3_2, 4000, 100)
+        third_term = E3 / A3_prime ** 4 * self.compute_kappa_bispectrum(l1_3, l2_3, l3_3, 4000, 100)
 
         complete_integrand = outside_term*(first_term+second_term+third_term)
 
         return(complete_integrand)
 
-    def gamma0_integrand(self, r, u, v, y):
-
-        measure0 = time.time()
-        x2 = r*np.pi/(60*180)
-        x3 = u*x2
-        x1 = v*x3+x2
-
-        phi = y[0]
-        psi = y[1]
-        R = y[2]
-
-        sinn = (2 * np.cos(psi) ** 2 - 1) * np.sin(phi)
-        coss = np.cos(phi)+np.sin(2*psi)
-
-        beta_bar_times2 = np.arctan2(sinn, coss)
-
-        outside_term = 1 / (6 * 32 * np.pi ** 5) * np.sin(2 * psi) * (np.exp(1j*beta_bar_times2)) * R ** 3 * jv(6, R)
-
-        '''internal angles of the triangle'''
-        phi1 = np.arccos((x1**2-x2**2-x3**2)/(-2*x2*x3))
-        phi2 = np.arccos((x2**2-x3**2-x1**2)/(-2*x3*x1))
-        phi3 = np.arccos((x3**2-x1**2-x2**2)/(-2*x1*x2))
-
-        """inside terms:"""
-
-        A1_prime = np.sqrt((x3*np.cos(psi))**2+(x2*np.sin(psi))**2+x2*x3*np.sin(2*psi)*np.cos(phi+phi1))
-
-        A1p_sin_alpha1 = (x3*np.cos(psi)-x2*np.sin(psi))*np.sin((phi+phi1)/2)
-        A1p_cos_alpha1 = (x3 * np.cos(psi) + x2 * np.sin(psi)) * np.sin((phi + phi1) / 2)
-        alpha1 = np.arctan2(A1p_sin_alpha1, A1p_cos_alpha1)
-        E1 = np.exp(1j*(phi2-phi3-6*alpha1))
-
-        A2_prime = np.sqrt((x1*np.cos(psi))**2+(x3*np.sin(psi))**2+x3*x1*np.sin(2*psi)*np.cos(phi+phi2))
-        A2p_sin_alpha2 = (x1*np.cos(psi)-x3*np.sin(psi))*np.sin((phi+phi2)/2)
-        A2p_cos_alpha2 = (x1 * np.cos(psi) + x3 * np.sin(psi)) * np.sin((phi + phi2) / 2)
-        alpha2 = np.arctan2(A2p_sin_alpha2, A2p_cos_alpha2)
-        E2 = np.exp(1j*(phi3 - phi1 - 6*alpha2))
-
-        A3_prime = np.sqrt((x2*np.cos(psi))**2+(x1*np.sin(psi))**2+x1*x2*np.sin(2*psi)*np.cos(phi+phi3))
-        A3p_sin_alpha3 = (x2*np.cos(psi)-x1*np.sin(psi))*np.sin((phi+phi3)/2)
-        A3p_cos_alpha3 = (x2 * np.cos(psi) + x1 * np.sin(psi)) * np.sin((phi + phi3) / 2)
-        alpha3 = np.arctan2(A3p_sin_alpha3, A3p_cos_alpha3)
-        E3 = np.exp(1j*(phi1 - phi2 - 6*alpha3))
-
-        l1_1 = R*np.cos(psi)/A1_prime
-        l1_2 = R*np.cos(psi)/A2_prime
-        l1_3 = R*np.cos(psi)/A3_prime
-
-        l2_1 = R*np.sin(psi)/A1_prime
-        l2_2 = R*np.sin(psi)/A2_prime
-        l2_3 = R*np.sin(psi)/A3_prime
-
-        l3_1 = np.sqrt((R/A1_prime)**2*(1 + 2*np.cos(psi)*np.sin(psi)*np.cos(phi)))
-        l3_2 = np.sqrt((R / A2_prime) ** 2 * (1 + 2 * np.cos(psi) * np.sin(psi) * np.cos(phi)))
-        l3_3 = np.sqrt((R / A3_prime) ** 2 * (1 + 2 * np.cos(psi) * np.sin(psi) * np.cos(phi)))
-
-        first_term = E1 / A1_prime ** 4 * self.compute_kappa_bispectrum(l1_1,l2_1, l3_1, 4000, 500)
-        second_term = E2 / A2_prime ** 4 * self.compute_kappa_bispectrum(l1_2, l2_2, l3_2, 4000, 500)
-        third_term = E3 / A3_prime ** 4 * self.compute_kappa_bispectrum(l1_3, l2_3, l3_3, 4000, 500)
-
-        complete_integrand = outside_term*(first_term+second_term+third_term)
-        #if np.abs(complete_integrand[0]) > 10**(-8):
-        #print("l values, integral", l1_1, l2_1, l3_1)
-        print("one loop of integrand:", time.time()-measure0)
-
-        return(complete_integrand)
-
-    def gamma0(self, integ_limits, r, u, v):
+    def gamma0(self, integ_limits, r, u, v, imag = False):
 
         timenow = time.time()
         int_obj = Integrator(integ_limits)
-        train = int_obj(functools.partial(self.gamma0_integrand, r, u, v), nitn=10, neval=1000)
-        result = int_obj(functools.partial(self.gamma0_integrand, r, u, v), nitn=10, neval=1000)
+
+        @vegas.batchintegrand
+        def my_integrand(y):
+            return(functools.partial(self.gamma0_integrand, r, u, v, imag)(y))
+
+        result = int_obj(my_integrand, nitn=5, neval=20000)
+        #train = int_obj(functools.partial(self.gamma0_integrand, r, u, v), nitn=10, neval=1000)
+        #result = int_obj(functools.partial(self.gamma0_integrand, r, u, v), nitn=10, neval=1000)
         timeafter = time.time()
         print("the time to integrate is", timeafter-timenow)
 
         return(result)
 
-    def gamma1_integrand(self, r, u, v, y):
+    def gamma1_integrand(self, r, u, v, imag, y):
 
         measure0 = time.time()
         x2 = r*np.pi/(60*180)
@@ -297,19 +261,32 @@ class bispectrum:
         A1p_sin_alpha1 = (x3*np.cos(psi)-x2*np.sin(psi))*np.sin((phi+phi1)/2)
         A1p_cos_alpha1 = (x3 * np.cos(psi) + x2 * np.sin(psi)) * np.sin((phi + phi1) / 2)
         alpha1 = np.arctan2(A1p_sin_alpha1, A1p_cos_alpha1)
-        E1 = np.exp(1j*(phi3-phi2-2*alpha1-beta_bar_times2))
+        E1_re = np.cos(phi3-phi2-2*alpha1-beta_bar_times2)
+        E1_im = np.sin(phi3-phi2-2*alpha1-beta_bar_times2)
 
         A2_prime = np.sqrt((x1*np.cos(psi))**2+(x3*np.sin(psi))**2+x3*x1*np.sin(2*psi)*np.cos(phi+phi2))
         A2p_sin_alpha2 = (x1*np.cos(psi)-x3*np.sin(psi))*np.sin((phi+phi2)/2)
         A2p_cos_alpha2 = (x1 * np.cos(psi) + x3 * np.sin(psi)) * np.sin((phi + phi2) / 2)
         alpha2 = np.arctan2(A2p_sin_alpha2, A2p_cos_alpha2)
-        E2 = np.exp(1j*(2*phi-2*alpha2+beta_bar_times2+phi3-phi2-2*phi2))
+        E2_re = np.cos(2*phi-2*alpha2+beta_bar_times2+phi3-phi2-2*phi2)
+        E2_im = np.sin(2*phi-2*alpha2+beta_bar_times2+phi3-phi2-2*phi2)
 
         A3_prime = np.sqrt((x2*np.cos(psi))**2+(x1*np.sin(psi))**2+x1*x2*np.sin(2*psi)*np.cos(phi+phi3))
         A3p_sin_alpha3 = (x2*np.cos(psi)-x1*np.sin(psi))*np.sin((phi+phi3)/2)
         A3p_cos_alpha3 = (x2 * np.cos(psi) + x1 * np.sin(psi)) * np.sin((phi + phi3) / 2)
         alpha3 = np.arctan2(A3p_sin_alpha3, A3p_cos_alpha3)
-        E3 = np.exp(1j*(-2*phi-2*alpha3+beta_bar_times2+phi1-phi2+2*phi3))
+        E3_re = np.cos(-2*phi-2*alpha3+beta_bar_times2+phi1-phi2+2*phi3)
+        E3_im = np.sin(-2*phi-2*alpha3+beta_bar_times2+phi1-phi2+2*phi3)
+
+        if imag == False:
+            E1 = E1_re
+            E2 = E2_re
+            E3 = E3_re
+
+        if imag == True:
+            E1 = E1_im
+            E2 = E2_im
+            E3 = E3_im
 
         l1_1 = R*np.cos(psi)/A1_prime
         l1_2 = R*np.cos(psi)/A2_prime
@@ -329,24 +306,26 @@ class bispectrum:
 
         complete_integrand = outside_term*(first_term+second_term+third_term)
 
-        if np.abs(complete_integrand[6]) > 10**(-11):
-            print("l values, integral", l1_1[6], l2_1[6], l3_1[6], complete_integrand[6])
-            print("one loop of integrand:", time.time()-measure0)
-
         return(complete_integrand)
 
-    def gamma1(self, integ_limits, r, u, v):
+    def gamma1(self, integ_limits, r, u, v, imag = False):
 
         timenow = time.time()
         int_obj = Integrator(integ_limits)
-        train = int_obj(functools.partial(self.gamma1_integrand, r, u, v), nitn=10, neval=10000)
-        result = int_obj(functools.partial(self.gamma1_integrand, r, u, v), nitn=10, neval=40000)
+
+        @vegas.batchintegrand
+        def my_integrand(y):
+            return(functools.partial(self.gamma1_integrand, r, u, v, imag)(y))
+
+        result = int_obj(my_integrand, nitn=5, neval=20000)
+        #train = int_obj(functools.partial(self.gamma1_integrand, r, u, v), nitn=10, neval=10000)
+        #result = int_obj(functools.partial(self.gamma1_integrand, r, u, v), nitn=10, neval=40000)
         timeafter = time.time()
         print("the time to integrate is", timeafter-timenow)
 
         return(result)
 
-    def gamma2(self, integ_limits, r, u, v):
+    def gamma2(self, integ_limits, r, u, v, imag = False):
 
         x2 = r*np.pi/(60*180)
         x3 = u*x2
@@ -358,14 +337,20 @@ class bispectrum:
 
         timenow = time.time()
         int_obj = Integrator(integ_limits)
-        train = int_obj(functools.partial(self.gamma1_integrand, new_r, new_u, new_v), nitn=10, neval=10000)
-        result = int_obj(functools.partial(self.gamma1_integrand, new_r, new_u, new_v), nitn=10, neval=40000)
+
+        @vegas.batchintegrand
+        def my_integrand(y):
+            return (functools.partial(self.gamma1_integrand, new_r, new_u, new_v, imag)(y))
+
+        result = int_obj(my_integrand, nitn=5, neval=20000)
+        #train = int_obj(functools.partial(self.gamma1_integrand, new_r, new_u, new_v), nitn=10, neval=10000)
+        #result = int_obj(functools.partial(self.gamma1_integrand, new_r, new_u, new_v), nitn=10, neval=40000)
         timeafter = time.time()
         print("the time to integrate is", timeafter-timenow)
 
         return(result)
 
-    def gamma3(self, integ_limits, r, u, v):
+    def gamma3(self, integ_limits, r, u, v, imag = False):
 
         x2 = r * np.pi / (60 * 180)
         x3 = u * x2
@@ -377,8 +362,14 @@ class bispectrum:
 
         timenow = time.time()
         int_obj = Integrator(integ_limits)
-        train = int_obj(functools.partial(self.gamma1_integrand, new_r, new_u, new_v), nitn=10, neval=10000)
-        result = int_obj(functools.partial(self.gamma1_integrand, new_r, new_u, new_v), nitn=10, neval=40000)
+
+        @vegas.batchintegrand
+        def my_integrand(y):
+            return (functools.partial(self.gamma1_integrand, new_r, new_u, new_v, imag)(y))
+
+        result = int_obj(my_integrand, nitn=5, neval=20000)
+        #train = int_obj(functools.partial(self.gamma1_integrand, new_r, new_u, new_v), nitn=10, neval=10000)
+        #result = int_obj(functools.partial(self.gamma1_integrand, new_r, new_u, new_v), nitn=10, neval=40000)
         timeafter = time.time()
         print("the time to integrate is", timeafter - timenow)
 
