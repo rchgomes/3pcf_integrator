@@ -224,7 +224,7 @@ class bispectrum:
         def my_integrand(y):
             return(functools.partial(self.gamma0_integrand, r, u, v, imag)(y))
 
-        result = int_obj(my_integrand, nitn=5, neval=20000)
+        result = int_obj(my_integrand, nitn=5, neval=25000)
         #train = int_obj(functools.partial(self.gamma0_integrand, r, u, v), nitn=10, neval=1000)
         #result = int_obj(functools.partial(self.gamma0_integrand, r, u, v), nitn=10, neval=1000)
         timeafter = time.time()
@@ -239,9 +239,9 @@ class bispectrum:
         x3 = u*x2
         x1 = v*x3+x2
 
-        phi = y[0]
-        psi = y[1]
-        R = y[2]
+        phi = y[:,0]
+        psi = y[:,1]
+        R = y[:,2]
 
         outside_term = 1 / (6 * 32 * np.pi ** 5) * np.sin(2 * psi) * R ** 3 * jv(2, R)
 
@@ -300,6 +300,15 @@ class bispectrum:
         l3_2 = np.sqrt((R / A2_prime) ** 2 * (1 + 2 * np.cos(psi) * np.sin(psi) * np.cos(phi)))
         l3_3 = np.sqrt((R / A3_prime) ** 2 * (1 + 2 * np.cos(psi) * np.sin(psi) * np.cos(phi)))
 
+        if l3_1.any() == 0:
+            l3_1 = remove_zeros(l3_1)
+
+        if l3_2.any() == 0:
+            l3_2 = remove_zeros(l3_2)
+
+        if l3_3.any() == 0:
+            l3_3 = remove_zeros(l3_3)
+
         first_term = E1 / A1_prime ** 4 * self.compute_kappa_bispectrum(l1_1,l2_1, l3_1, 4000, 500)
         second_term = E2 / A2_prime ** 4 * self.compute_kappa_bispectrum(l1_2, l2_2, l3_2, 4000, 500)
         third_term = E3 / A3_prime ** 4 * self.compute_kappa_bispectrum(l1_3, l2_3, l3_3, 4000, 500)
@@ -317,7 +326,7 @@ class bispectrum:
         def my_integrand(y):
             return(functools.partial(self.gamma1_integrand, r, u, v, imag)(y))
 
-        result = int_obj(my_integrand, nitn=5, neval=20000)
+        result = int_obj(my_integrand, nitn=5, neval=2000)
         #train = int_obj(functools.partial(self.gamma1_integrand, r, u, v), nitn=10, neval=10000)
         #result = int_obj(functools.partial(self.gamma1_integrand, r, u, v), nitn=10, neval=40000)
         timeafter = time.time()
