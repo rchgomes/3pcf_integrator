@@ -43,31 +43,53 @@ plt.show()
 model.compute_lensing_kernel(1, maximum_distance, 10000, mynz)
 
 '''input in acrmins'''
-my_equilateral_xs = np.logspace(np.log10(3),np.log10(35), num=15)
+my_equilateral_xs = np.logspace(np.log10(3),np.log10(35), num=10)
 print(my_equilateral_xs)
 my_u_values = 1*np.ones_like(my_equilateral_xs)
 my_v_values = np.zeros_like(my_equilateral_xs)
 
 limits = [[0, 2*np.pi],[0, np.pi/2],[0,50]]
 
-test_integration_0 = model.gamma0(limits, my_equilateral_xs, my_u_values, my_v_values)
-aa_vals = [test_integration_0[i].mean for i in range(len(test_integration_0))]
+#from mpi4py import MPI
+#def gamma0_mpi(i, model, limits, r, u, v):
+#    np.save("Gamma_0_i="+str(i), model.gamma0(limits, r[i], u[i], v[i]))
+
+#run_count = 0
+#number_or_runs = 15
+#while run_count<number_or_runs:
+#                comm = MPI.COMM_WORLD
+#                if run_count+comm.rank<number_or_runs:
+#                    gamma0_mpi(run_count+comm.rank, model, limits, my_equilateral_xs, my_u_values, my_v_values)
+#                run_count+=comm.size
+#                comm.bcast(run_count,root = 0)
+#                comm.Barrier()
+
+aa_vals = np.ndarray(shape=len(my_equilateral_xs), dtype=complex)
+for i in range(len(my_equilateral_xs)):
+    test_integration_0_re = model.gamma0(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=False)
+    test_integration_0_im = model.gamma0(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=True)
+    aa_vals[i] = test_integration_0_re.mean + 1j*test_integration_0_im.mean
+
 result_array_0 = transform_gamma(aa_vals, 0, my_equilateral_xs, my_u_values, my_v_values)
-np.save("Gamma0_15bins_d2min3_d2max35_phi60_no_interps", np.real(result_array_0))
+np.save("Gamma0_10bins_d2min3_d2max35_phi60_neval25000_Mar24", np.real(result_array_0))
 
-test_integration_1 = model.gamma1(limits, my_equilateral_xs, my_u_values, my_v_values)
-bb_vals = [test_integration_1[i].mean for i in range(len(test_integration_1))]
+bb_vals = np.ndarray(shape=len(my_equilateral_xs), dtype=complex)
+for i in range(len(my_equilateral_xs)):
+    test_integration_1_re = model.gamma1(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=False)
+    test_integration_1_im = model.gamma1(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=True)
+    bb_vals[i] = test_integration_1_re.mean + 1j*test_integration_1_im.mean
+
 result_array_1 = transform_gamma(bb_vals, 1, my_equilateral_xs, my_u_values, my_v_values)
-np.save("Gamma1_15bins_d2min3_d2max35_phi60_centroid_no_linterp_no_kinterp", np.real(result_array_1))
+np.save("Gamma1_10bins_d2min3_d2max35_phi60_neval2000_Mar24", np.real(result_array_1))
 
-test_integration_2 = model.gamma2(limits, my_equilateral_xs, my_u_values, my_v_values)
-cc_vals = [test_integration_2[i].mean for i in range(len(test_integration_2))]
-result_array_2 = transform_gamma(cc_vals, 2, my_equilateral_xs, my_u_values, my_v_values)
-np.save("Gamma2_15bins_d2min3_d2max35_phi60_centroid_no_linterp_no_kinterp", np.real(result_array_2))
+#test_integration_2 = model.gamma2(limits, my_equilateral_xs, my_u_values, my_v_values)
+#cc_vals = [test_integration_2[i].mean for i in range(len(test_integration_2))]
+#result_array_2 = transform_gamma(cc_vals, 2, my_equilateral_xs, my_u_values, my_v_values)
+#np.save("Gamma2_15bins_d2min3_d2max35_phi60_centroid_no_linterp_no_kinterp", np.real(result_array_2))
 
-test_integration_3 = model.gamma3(limits, my_equilateral_xs, my_u_values, my_v_values)
-dd_vals = [test_integration_3[i].mean for i in range(len(test_integration_3))]
-result_array_3 = transform_gamma(dd_vals, 3, my_equilateral_xs, my_u_values, my_v_values)
-np.save("Gamma3_15bins_d2min3_d2max35_phi60_centroid_no_linterp_no_kinterp", np.real(result_array_3))
+#test_integration_3 = model.gamma3(limits, my_equilateral_xs, my_u_values, my_v_values)
+#dd_vals = [test_integration_3[i].mean for i in range(len(test_integration_3))]
+#result_array_3 = transform_gamma(dd_vals, 3, my_equilateral_xs, my_u_values, my_v_values)
+#np.save("Gamma3_15bins_d2min3_d2max35_phi60_centroid_no_linterp_no_kinterp", np.real(result_array_3))
 
-result_ttt = (result_array_0+result_array_1+result_array_2+result_array_3)/4
+#result_ttt = (result_array_0+result_array_1+result_array_2+result_array_3)/4
