@@ -28,16 +28,16 @@ def transform_gamma(gamma, num, r, u, v):
 
     print(psi1, psi2, psi3)
     if num == 0:
-        gamma_transf = gamma * np.exp(2*1j*(psi1+psi2+psi3))
+        gamma_transf = gamma * np.exp(-2*1j*(psi1+psi2+psi3))
 
     if num == 1:
-        gamma_transf = gamma * np.exp(2 * 1j * (-psi1 + psi2 + psi3))
+        gamma_transf = gamma * np.exp(-2 * 1j * (-psi1 + psi2 + psi3))
 
     if num ==2:
-        gamma_transf = gamma * np.exp(2 * 1j * (psi1 - psi2 + psi3))
+        gamma_transf = gamma * np.exp(-2 * 1j * (psi1 - psi2 + psi3))
 
     if num == 3:
-        gamma_transf = gamma * np.exp(2 * 1j * (psi1 + psi2 - psi3))
+        gamma_transf = gamma * np.exp(-2 * 1j * (psi1 + psi2 - psi3))
 
     return(gamma_transf)
 
