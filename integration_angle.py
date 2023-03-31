@@ -46,7 +46,7 @@ model.compute_lensing_kernel(1, maximum_distance, 10000, mynz)
 my_angles = np.linspace(2,178, num=20)
 u_2 = np.ones_like(my_angles)
 v_2 = np.zeros_like(my_angles)
-new_d2 = 2.5*np.ones_like(u_2)
+new_d2 = 21.4*np.ones_like(u_2)
 for i in range(len(my_angles)):
     if my_angles[i] < 60:
         u_2[i] = np.sqrt(2*(1-np.cos(my_angles[i]*np.pi/180)))
@@ -57,7 +57,7 @@ print(new_d2)
 print(u_2)
 print(v_2)
 
-limits = [[0, 2*np.pi],[0, np.pi/2],[0,50]]
+limits = [[0, 2*np.pi],[0, np.pi/2],[0,100]]
 
 #from mpi4py import MPI
 #def gamma0_mpi(i, model, limits, r, u, v):
@@ -75,12 +75,20 @@ limits = [[0, 2*np.pi],[0, np.pi/2],[0,50]]
 
 #print(kal)
 
-aa_vals = np.ones_like(new_d2)
+aa_vals = np.ndarray(shape=len(new_d2), dtype=complex)
 for i in range(len(new_d2)):
-    test_integration_0 = model.gamma0(limits, new_d2[i], u_2[i], v_2[i])
-    aa_vals[i] = test_integration_0.mean
+    test_integration_0_re = model.gamma0(limits, new_d2[i], u_2[i], v_2[i], imag=False)
+    test_integration_0_im = model.gamma0(limits, new_d2[i], u_2[i], v_2[i], imag=True)
+    aa_vals[i] = test_integration_0_re.mean + 1j*test_integration_0_im.mean
+
+#realp = np.load("/Users/gchgomes/Desktop/3pt_analyses/Gamma0_real_orthocenter_20bins_d2val21point4_phimin0_phimax180_neval_25000_mar30.npy")
+#imagp = np.load("/Users/gchgomes/Desktop/3pt_analyses/Gamma0_imag_orthocenter_20bins_d2val21point4_phimin0_phimax180_neval_25000_mar30.npy")
+#np.save("Gamma0_real_orthocenter_20bins_d2val21point4_phimin0_phimax180_neval_25000_mar30", np.real(aa_vals))
+#np.save("Gamma0_imag_orthocenter_20bins_d2val21point4_phimin0_phimax180_neval_25000_mar30", np.imag(aa_vals))
+#aa_vals = realp + 1j*imagp
 result_array_0 = transform_gamma(aa_vals, 0, new_d2, u_2, v_2)
-np.save("Gamma0_20bins_d2val2andhalf_phimin0_phimax180_mar23", np.real(result_array_0))
+np.save("Gamma0_real_20bins_d2val21point4_phimin0_phimax180_neval_60000_niter8_rlim100", np.real(result_array_0))
+np.save("Gamma0_imag_20bins_d2val21point4_phimin0_phimax180_neval_60000_niter8_rlim100", np.imag(result_array_0))
 print(nn)
 test_integration_1 = model.gamma1(limits, my_equilateral_xs, my_u_values, my_v_values)
 bb_vals = [test_integration_1[i].mean for i in range(len(test_integration_1))]

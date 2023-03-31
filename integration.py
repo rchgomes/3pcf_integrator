@@ -3,13 +3,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from bihalofit import bihalofit
 from funcs import f_h3, f_psi3, f_psi1, f_psi2, transform_gamma
+from run_classy import run_classy
 
 '''Specify the cosmology'''
 Omega_b = 0.05
 Omega_m = 0.308
 Omega_cdm = Omega_m - Omega_b
 h = 0.678
-A_s = 2.2e-9
+A_s = 2.1e-9
 n_s = 0.968
 
 "Maximum scale in units of h/Mpc"
@@ -31,6 +32,8 @@ params = {
 my_k = np.logspace(-3, np.log10(k_max), num=10000) #h/Mpc^-1
 my_z_new = np.linspace(0,3,1000)
 model = bihalofit(params, my_k, my_z_new)
+#classy_data = run_classy(my_k, my_z_new, params)
+#model = bihalofit(params, my_k, my_z_new, classy_data)
 
 maximum_distance = 4400
 mynz = np.loadtxt("bin_04_desy3_source_nz.dat")
@@ -41,6 +44,7 @@ my_equilateral_xs = np.logspace(np.log10(3),np.log10(35), num=10)
 my_u_values = 1*np.ones_like(my_equilateral_xs)
 my_v_values = np.zeros_like(my_equilateral_xs)
 
+#limits = [[0, 2*np.pi],[0, np.pi/2],[0,50]]
 limits = [[0, 2*np.pi],[0, np.pi/2],[0,50]]
 
 #from mpi4py import MPI
@@ -64,8 +68,8 @@ for i in range(len(my_equilateral_xs)):
     aa_vals[i] = test_integration_0_re.mean + 1j*test_integration_0_im.mean
 
 result_array_0 = transform_gamma(aa_vals, 0, my_equilateral_xs, my_u_values, my_v_values)
-np.save("Gamma0_real_10bins_d2min3_d2max35_phi60_neval25000", np.real(result_array_0))
-np.save("Gamma0_imag_10bins_d2min3_d2max35_phi60_neval25000", np.imag(result_array_0))
+np.save("Gamma0_real_10bins_d2min3_d2max35_phi60_neval60000_niter8", np.real(result_array_0))
+np.save("Gamma0_imag_10bins_d2min3_d2max35_phi60_neval60000_niter8", np.imag(result_array_0))
 
 bb_vals = np.ndarray(shape=len(my_equilateral_xs), dtype=complex)
 for i in range(len(my_equilateral_xs)):
@@ -74,9 +78,10 @@ for i in range(len(my_equilateral_xs)):
     bb_vals[i] = test_integration_1_re.mean + 1j*test_integration_1_im.mean
 
 result_array_1 = transform_gamma(bb_vals, 1, my_equilateral_xs, my_u_values, my_v_values)
-np.save("Gamma1_real_10bins_d2min3_d2max35_phi60_neval25000", np.real(result_array_1))
-np.save("Gamma1_imag_10bins_d2min3_d2max35_phi60_neval25000", np.imag(result_array_1))
+np.save("Gamma1_real_10bins_d2min3_d2max35_phi60_neval60000_niter8_DEBUG_TAN", np.real(result_array_1))
+np.save("Gamma1_imag_10bins_d2min3_d2max35_phi60_neval60000_niter8_DEBUG_TAN", np.imag(result_array_1))
 
+print(sdva)
 cc_vals = np.ndarray(shape=len(my_equilateral_xs), dtype=complex)
 for i in range(len(my_equilateral_xs)):
     test_integration_2_re = model.gamma2(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=False)

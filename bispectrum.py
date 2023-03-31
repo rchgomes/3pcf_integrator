@@ -153,21 +153,21 @@ class bispectrum:
         A1_prime = np.sqrt((x3*np.cos(psi))**2+(x2*np.sin(psi))**2+x2*x3*np.sin(2*psi)*np.cos(phi+phi1))
 
         A1p_sin_alpha1 = (x3*np.cos(psi)-x2*np.sin(psi))*np.sin((phi+phi1)/2)
-        A1p_cos_alpha1 = (x3 * np.cos(psi) + x2 * np.sin(psi)) * np.sin((phi + phi1) / 2)
+        A1p_cos_alpha1 = (x3 * np.cos(psi) + x2 * np.sin(psi)) * np.cos((phi + phi1) / 2)
         alpha1 = np.arctan2(A1p_sin_alpha1, A1p_cos_alpha1)
         E1_re = np.cos(phi2-phi3-6*alpha1)
         E1_im = np.sin(phi2-phi3-6*alpha1)
 
         A2_prime = np.sqrt((x1*np.cos(psi))**2+(x3*np.sin(psi))**2+x3*x1*np.sin(2*psi)*np.cos(phi+phi2))
         A2p_sin_alpha2 = (x1*np.cos(psi)-x3*np.sin(psi))*np.sin((phi+phi2)/2)
-        A2p_cos_alpha2 = (x1 * np.cos(psi) + x3 * np.sin(psi)) * np.sin((phi + phi2) / 2)
+        A2p_cos_alpha2 = (x1 * np.cos(psi) + x3 * np.sin(psi)) * np.cos((phi + phi2) / 2)
         alpha2 = np.arctan2(A2p_sin_alpha2, A2p_cos_alpha2)
         E2_re = np.cos(phi3 - phi1 - 6*alpha2)
         E2_im = np.sin(phi3 - phi1 - 6*alpha2)
 
         A3_prime = np.sqrt((x2*np.cos(psi))**2+(x1*np.sin(psi))**2+x1*x2*np.sin(2*psi)*np.cos(phi+phi3))
         A3p_sin_alpha3 = (x2*np.cos(psi)-x1*np.sin(psi))*np.sin((phi+phi3)/2)
-        A3p_cos_alpha3 = (x2 * np.cos(psi) + x1 * np.sin(psi)) * np.sin((phi + phi3) / 2)
+        A3p_cos_alpha3 = (x2 * np.cos(psi) + x1 * np.sin(psi)) * np.cos((phi + phi3) / 2)
         alpha3 = np.arctan2(A3p_sin_alpha3, A3p_cos_alpha3)
         E3_re = np.cos(phi1 - phi2 - 6*alpha3)
         E3_im = np.sin(phi1 - phi2 - 6*alpha3)
@@ -227,7 +227,7 @@ class bispectrum:
         def my_integrand(y):
             return(functools.partial(self.gamma0_integrand, r, u, v, imag)(y))
 
-        result = int_obj(my_integrand, nitn=5, neval=25000)
+        result = int_obj(my_integrand, nitn=8, neval=60000)
         timeafter = time.time()
         print("the time to integrate is", timeafter-timenow)
 
@@ -259,21 +259,21 @@ class bispectrum:
 
         A1_prime = np.sqrt((x3*np.cos(psi))**2+(x2*np.sin(psi))**2+x2*x3*np.sin(2*psi)*np.cos(phi+phi1))
         A1p_sin_alpha1 = (x3*np.cos(psi)-x2*np.sin(psi))*np.sin((phi+phi1)/2)
-        A1p_cos_alpha1 = (x3 * np.cos(psi) + x2 * np.sin(psi)) * np.sin((phi + phi1) / 2)
+        A1p_cos_alpha1 = (x3 * np.cos(psi) + x2 * np.sin(psi)) * np.cos((phi + phi1) / 2)
         alpha1 = np.arctan2(A1p_sin_alpha1, A1p_cos_alpha1)
         E1_re = np.cos(phi3-phi2-2*alpha1-beta_bar_times2)
         E1_im = np.sin(phi3-phi2-2*alpha1-beta_bar_times2)
 
         A2_prime = np.sqrt((x1*np.cos(psi))**2+(x3*np.sin(psi))**2+x3*x1*np.sin(2*psi)*np.cos(phi+phi2))
         A2p_sin_alpha2 = (x1*np.cos(psi)-x3*np.sin(psi))*np.sin((phi+phi2)/2)
-        A2p_cos_alpha2 = (x1 * np.cos(psi) + x3 * np.sin(psi)) * np.sin((phi + phi2) / 2)
+        A2p_cos_alpha2 = (x1 * np.cos(psi) + x3 * np.sin(psi)) * np.cos((phi + phi2) / 2)
         alpha2 = np.arctan2(A2p_sin_alpha2, A2p_cos_alpha2)
         E2_re = np.cos(2*phi-2*alpha2+beta_bar_times2+phi3-phi1-2*phi2)
         E2_im = np.sin(2*phi-2*alpha2+beta_bar_times2+phi3-phi1-2*phi2)
 
         A3_prime = np.sqrt((x2*np.cos(psi))**2+(x1*np.sin(psi))**2+x1*x2*np.sin(2*psi)*np.cos(phi+phi3))
         A3p_sin_alpha3 = (x2*np.cos(psi)-x1*np.sin(psi))*np.sin((phi+phi3)/2)
-        A3p_cos_alpha3 = (x2 * np.cos(psi) + x1 * np.sin(psi)) * np.sin((phi + phi3) / 2)
+        A3p_cos_alpha3 = (x2 * np.cos(psi) + x1 * np.sin(psi)) * np.cos((phi + phi3) / 2)
         alpha3 = np.arctan2(A3p_sin_alpha3, A3p_cos_alpha3)
         E3_re = np.cos(-2*phi-2*alpha3+beta_bar_times2+phi1-phi2+2*phi3)
         E3_im = np.sin(-2*phi-2*alpha3+beta_bar_times2+phi1-phi2+2*phi3)
@@ -326,7 +326,7 @@ class bispectrum:
         def my_integrand(y):
             return(functools.partial(self.gamma1_integrand, r, u, v, imag)(y))
 
-        result = int_obj(my_integrand, nitn=5, neval=25000)
+        result = int_obj(my_integrand, nitn=8, neval=60000)
         timeafter = time.time()
         print("the time to integrate is", timeafter-timenow)
 
