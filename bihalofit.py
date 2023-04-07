@@ -17,6 +17,7 @@ class bihalofit(bispectrum):
         self.neff = -1.55
         self.paramns = np.log10(1 - 2 * ns / 3)
         self.logsigma8 = np.log10(self.my_cosmo.sigma(8, 0, h_units = True))
+        print(10**(self.logsigma8))
 
         # bihalofit global params
 

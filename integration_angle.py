@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from bihalofit import bihalofit
 from funcs import f_h3, f_psi3, f_psi1, f_psi2, transform_gamma
+from halo_model import halo_model_bispectrum
 
 '''Specify the cosmology'''
 Omega_b = 0.05
@@ -33,20 +34,19 @@ my_k_reduced = np.logspace(-4, np.log10(k_max), num=1000) #h/Mpc^-1
 my_z = np.linspace(0,5,1000)
 my_z_simple = np.array([0,0.55])
 my_z_new = np.linspace(0,3,1000)
-model = bihalofit(params, my_k, my_z_new)
+
 
 maximum_distance = 4400
 mynz = np.loadtxt("bin_04_desy3_source_nz.dat")
 
 plt.plot(mynz[:,0], mynz[:,1])
 plt.show()
-model.compute_lensing_kernel(1, maximum_distance, 10000, mynz)
 
 '''input in acrmins'''
 my_angles = np.linspace(2,178, num=20)
 u_2 = np.ones_like(my_angles)
 v_2 = np.zeros_like(my_angles)
-new_d2 = 21.4*np.ones_like(u_2)
+new_d2 = 4.0*np.ones_like(u_2)
 for i in range(len(my_angles)):
     if my_angles[i] < 60:
         u_2[i] = np.sqrt(2*(1-np.cos(my_angles[i]*np.pi/180)))
@@ -57,7 +57,52 @@ print(new_d2)
 print(u_2)
 print(v_2)
 
-limits = [[0, 2*np.pi],[0, np.pi/2],[0,100]]
+limits = [[0, 2*np.pi],[0, np.pi/2],[0,50]]
+'''Test halo model'''
+#kless = np.logspace(-2,np.log10(20),10)
+#zless = np.linspace(0,2.7,10)
+#halo = halo_model_bispectrum(params, kless, zless, "/Users/gchgomes/Documents/bispectrum_new_modeling/the_test_CTIMES2_with_zindex_")
+#halo.compute_lensing_kernel(1, maximum_distance, 10000, mynz)
+#aa_vals = np.ndarray(shape=len(new_d2), dtype=complex)
+#for i in range(len(new_d2)):
+#    test_integration_0_re = halo.gamma0(limits, new_d2[i], u_2[i], v_2[i], imag=False)
+#    test_integration_0_im = halo.gamma0(limits, new_d2[i], u_2[i], v_2[i], imag=True)
+#    aa_vals[i] = test_integration_0_re.mean + 1j*test_integration_0_im.mean
+
+#result_array_0 = transform_gamma(aa_vals, 0, new_d2, u_2, v_2)
+#np.save("Gamma0_HALOMODELCTIMES2_real_20bins_d2val4_phimin0_phimax180_neval90000_niter5", np.real(result_array_0))
+#np.save("Gamma0_HALOMODELCTIMES2_imag_20bins_d2val4_phimin0_phimax180_neval90000_niter5", np.imag(result_array_0))
+
+#print(adgg)
+#bb_vals = np.ndarray(shape=len(new_d2), dtype=complex)
+#for i in range(len(new_d2)):
+#    test_integration_1_re = halo.gamma1(limits, new_d2[i], u_2[i], v_2[i], imag=False)
+#    test_integration_1_im = halo.gamma1(limits, new_d2[i], u_2[i], v_2[i], imag=True)
+#    bb_vals[i] = test_integration_1_re.mean + 1j*test_integration_1_im.mean
+
+#result_array_1 = transform_gamma(bb_vals, 1, new_d2, u_2, v_2)
+#np.save("Gamma1_HALOMODEL_real_20bins_d2val4_phimin0_phimax180_neval90000_niter5", np.real(result_array_1))
+#np.save("Gamma1_HALOMODEL_imag_20bins_d2val4_phimin0_phimax180_neval90000_niter5", np.imag(result_array_1))
+
+#print(sdg)
+'''End'''
+model = bihalofit(params, my_k, my_z_new)
+model.compute_lensing_kernel(1, maximum_distance, 10000, mynz)
+
+'''test reverse order'''
+
+#aa_vals = np.ndarray(shape=len(new_d2), dtype=complex)
+#for i in range(len(new_d2)):
+#    test_integration_0_re = model.gamma0_loop(limits, new_d2[i], u_2[i], v_2[i], 1, 4000, 100, imag=False)
+#    test_integration_0_im = model.gamma0_loop(limits, new_d2[i], u_2[i], v_2[i], 1, 4000, 100, imag=True)
+#    aa_vals[i] = test_integration_0_re + 1j*test_integration_0_im
+
+#result_array_0 = transform_gamma(aa_vals, 0, new_d2, u_2, v_2)
+#np.save("Gamma0_real_20bins_d2val4_phimin0_phimax180_neval_90000_niter5_NEWCHI100STEPS", np.real(result_array_0))
+#np.save("Gamma0_real_20bins_d2val4_phimin0_phimax180_neval_90000_niter5_NEWCHI100STEPS", np.imag(result_array_0))
+
+
+#print(sfbf)
 
 #from mpi4py import MPI
 #def gamma0_mpi(i, model, limits, r, u, v):
@@ -81,28 +126,36 @@ for i in range(len(new_d2)):
     test_integration_0_im = model.gamma0(limits, new_d2[i], u_2[i], v_2[i], imag=True)
     aa_vals[i] = test_integration_0_re.mean + 1j*test_integration_0_im.mean
 
-#realp = np.load("/Users/gchgomes/Desktop/3pt_analyses/Gamma0_real_orthocenter_20bins_d2val21point4_phimin0_phimax180_neval_25000_mar30.npy")
-#imagp = np.load("/Users/gchgomes/Desktop/3pt_analyses/Gamma0_imag_orthocenter_20bins_d2val21point4_phimin0_phimax180_neval_25000_mar30.npy")
-#np.save("Gamma0_real_orthocenter_20bins_d2val21point4_phimin0_phimax180_neval_25000_mar30", np.real(aa_vals))
-#np.save("Gamma0_imag_orthocenter_20bins_d2val21point4_phimin0_phimax180_neval_25000_mar30", np.imag(aa_vals))
-#aa_vals = realp + 1j*imagp
 result_array_0 = transform_gamma(aa_vals, 0, new_d2, u_2, v_2)
-np.save("Gamma0_real_20bins_d2val21point4_phimin0_phimax180_neval_60000_niter8_rlim100", np.real(result_array_0))
-np.save("Gamma0_imag_20bins_d2val21point4_phimin0_phimax180_neval_60000_niter8_rlim100", np.imag(result_array_0))
-print(nn)
-test_integration_1 = model.gamma1(limits, my_equilateral_xs, my_u_values, my_v_values)
-bb_vals = [test_integration_1[i].mean for i in range(len(test_integration_1))]
-result_array_1 = transform_gamma(bb_vals, 1, my_equilateral_xs, my_u_values, my_v_values)
-np.save("Gamma1_15bins_d2min3_d2max35_phi60_centroid_no_linterp_no_kinterp", np.real(result_array_1))
+np.save("Gamma0_real_20bins_d2val4_phimin0_phimax180_neval_500000_niter5_nchi10", np.real(result_array_0))
+np.save("Gamma0_imag_20bins_d2val4_phimin0_phimax180_neval_500000_niter5_nchi10", np.imag(result_array_0))
 
-test_integration_2 = model.gamma2(limits, my_equilateral_xs, my_u_values, my_v_values)
-cc_vals = [test_integration_2[i].mean for i in range(len(test_integration_2))]
-result_array_2 = transform_gamma(cc_vals, 2, my_equilateral_xs, my_u_values, my_v_values)
-np.save("Gamma2_15bins_d2min3_d2max35_phi60_centroid_no_linterp_no_kinterp", np.real(result_array_2))
+bb_vals = np.ndarray(shape=len(new_d2), dtype=complex)
+for i in range(len(new_d2)):
+    test_integration_1_re = model.gamma1(limits, new_d2[i], u_2[i], v_2[i], imag=False)
+    test_integration_1_im = model.gamma1(limits, new_d2[i], u_2[i], v_2[i], imag=True)
+    bb_vals[i] = test_integration_1_re.mean + 1j*test_integration_1_im.mean
 
-test_integration_3 = model.gamma3(limits, my_equilateral_xs, my_u_values, my_v_values)
-dd_vals = [test_integration_3[i].mean for i in range(len(test_integration_3))]
-result_array_3 = transform_gamma(dd_vals, 3, my_equilateral_xs, my_u_values, my_v_values)
-np.save("Gamma3_15bins_d2min3_d2max35_phi60_centroid_no_linterp_no_kinterp", np.real(result_array_3))
+result_array_1 = transform_gamma(bb_vals, 1, new_d2, u_2, v_2)
+np.save("Gamma1_real_20bins_d2val4_phimin0_phimax180_neval_500000_niter5_nchi10", np.real(result_array_1))
+np.save("Gamma1_imag_20bins_d2val4_phimin0_phimax180_neval_500000_niter5_nchi10", np.imag(result_array_1))
 
-result_ttt = (result_array_0+result_array_1+result_array_2+result_array_3)/4
+cc_vals = np.ndarray(shape=len(new_d2), dtype=complex)
+for i in range(len(new_d2)):
+    test_integration_2_re = model.gamma2(limits, new_d2[i], u_2[i], v_2[i], imag=False)
+    test_integration_2_im = model.gamma2(limits, new_d2[i], u_2[i], v_2[i], imag=True)
+    cc_vals[i] = test_integration_2_re.mean + 1j*test_integration_2_im.mean
+
+result_array_2 = transform_gamma(cc_vals, 2, new_d2, u_2, v_2)
+np.save("Gamma2_real_20bins_d2val4_phimin0_phimax180_neval_500000_niter5_nchi10", np.real(result_array_2))
+np.save("Gamma2_imag_20bins_d2val4_phimin0_phimax180_neval_500000_niter5_nchi10", np.imag(result_array_2))
+
+dd_vals = np.ndarray(shape=len(new_d2), dtype=complex)
+for i in range(len(new_d2)):
+    test_integration_3_re = model.gamma3(limits, new_d2[i], u_2[i], v_2[i], imag=False)
+    test_integration_3_im = model.gamma3(limits, new_d2[i], u_2[i], v_2[i], imag=True)
+    dd_vals[i] = test_integration_3_re.mean + 1j*test_integration_3_im.mean
+
+result_array_3 = transform_gamma(dd_vals, 3, new_d2, u_2, v_2)
+np.save("Gamma3_real_20bins_d2val4_phimin0_phimax180_neval_500000_niter5_nchi10", np.real(result_array_3))
+np.save("Gamma3_imag_20bins_d2val4_phimin0_phimax180_neval_500000_niter5_nchi10", np.imag(result_array_3))

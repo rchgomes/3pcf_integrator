@@ -41,35 +41,23 @@ my_u_values = 1*np.ones_like(my_equilateral_xs)
 my_v_values = np.zeros_like(my_equilateral_xs)
 limits = [[0, 2*np.pi],[0, np.pi/2],[0,50]]
 
-'''Test halo model'''
-#kless = np.logspace(-2,np.log10(20),10)
-#zless = np.linspace(0,2.7,10)
-#halo = halo_model_bispectrum(params, kless, zless, "/Users/gchgomes/Documents/bispectrum_new_modeling/the_test_CTIMES2_with_zindex_")
-#halo.compute_lensing_kernel(1, maximum_distance, 10000, mynz)
-#aa_vals = np.ndarray(shape=len(my_equilateral_xs), dtype=complex)
-#for i in range(len(my_equilateral_xs)):
-#    test_integration_0_re = halo.gamma0(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=False)
-#    test_integration_0_im = halo.gamma0(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=True)
-#    aa_vals[i] = test_integration_0_re.mean + 1j*test_integration_0_im.mean
-
-#result_array_0 = transform_gamma(aa_vals, 0, my_equilateral_xs, my_u_values, my_v_values)
-#np.save("Gamma0_HALOMODELCTIMES2_real_10bins_d2min3_d2max35_phi60_neval60000_niter8", np.real(result_array_0))
-#np.save("Gamma0_HALOMODELCTIMES2_imag_10bins_d2min3_d2max35_phi60_neval60000_niter8", np.imag(result_array_0))
-'''End'''
-
-#print(dgsd)
 model.compute_lensing_kernel(1, maximum_distance, 10000, mynz)
+
+
+'''test reverse order'''
 
 aa_vals = np.ndarray(shape=len(my_equilateral_xs), dtype=complex)
 for i in range(len(my_equilateral_xs)):
-    test_integration_0_re = model.gamma0(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=False)
-    test_integration_0_im = model.gamma0(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=True)
-    aa_vals[i] = test_integration_0_re.mean + 1j*test_integration_0_im.mean
+    test_integration_0_re = model.gamma0_loop(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], 100, 4000, 10, imag=False)
+    test_integration_0_im = model.gamma0_loop(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], 100, 4000, 10, imag=True)
+    aa_vals[i] = test_integration_0_re + 1j*test_integration_0_im
 
 result_array_0 = transform_gamma(aa_vals, 0, my_equilateral_xs, my_u_values, my_v_values)
-np.save("Gamma0_real_10bins_d2min3_d2max35_phi60_neval500000_niter5_nchi10", np.real(result_array_0))
-np.save("Gamma0_imag_10bins_d2min3_d2max35_phi60_neval500000_niter5_nchi10", np.imag(result_array_0))
+np.save("Gamma0_real_10bins_d2min3_d2max35_NEW_ORDER_10chisteps", np.real(result_array_0))
+np.save("Gamma0_imag_10bins_d2min3_d2max35_NEW_ORDER_10chisteps", np.imag(result_array_0))
 
+
+print(sfbf)
 bb_vals = np.ndarray(shape=len(my_equilateral_xs), dtype=complex)
 for i in range(len(my_equilateral_xs)):
     test_integration_1_re = model.gamma1(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=False)
@@ -77,9 +65,10 @@ for i in range(len(my_equilateral_xs)):
     bb_vals[i] = test_integration_1_re.mean + 1j*test_integration_1_im.mean
 
 result_array_1 = transform_gamma(bb_vals, 1, my_equilateral_xs, my_u_values, my_v_values)
-np.save("Gamma1_real_10bins_d2min3_d2max35_phi60_neval500000_niter5_nchi10", np.real(result_array_1))
-np.save("Gamma1_imag_10bins_d2min3_d2max35_phi60_neval500000_niter5_nchi10", np.imag(result_array_1))
+np.save("Gamma1_real_10bins_d2min3_d2max35_phi60_neval60000_niter8_DEBUG_TAN", np.real(result_array_1))
+np.save("Gamma1_imag_10bins_d2min3_d2max35_phi60_neval60000_niter8_DEBUG_TAN", np.imag(result_array_1))
 
+print(sdva)
 cc_vals = np.ndarray(shape=len(my_equilateral_xs), dtype=complex)
 for i in range(len(my_equilateral_xs)):
     test_integration_2_re = model.gamma2(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=False)
@@ -87,8 +76,8 @@ for i in range(len(my_equilateral_xs)):
     cc_vals[i] = test_integration_2_re.mean + 1j*test_integration_2_im.mean
 
 result_array_2 = transform_gamma(cc_vals, 2, my_equilateral_xs, my_u_values, my_v_values)
-np.save("Gamma2_real_10bins_d2min3_d2max35_phi60_neval500000_niter5_nchi10", np.real(result_array_2))
-np.save("Gamma2_imagl_10bins_d2min3_d2max35_phi60_neval500000_niter5_nchi10", np.imag(result_array_2))
+np.save("Gamma2_real_10bins_d2min3_d2max35_phi60_neval25000", np.real(result_array_2))
+np.save("Gamma2_imag_10bins_d2min3_d2max35_phi60_neval25000", np.imag(result_array_2))
 
 dd_vals = np.ndarray(shape=len(my_equilateral_xs), dtype=complex)
 for i in range(len(my_equilateral_xs)):
@@ -97,5 +86,5 @@ for i in range(len(my_equilateral_xs)):
     dd_vals[i] = test_integration_3_re.mean + 1j*test_integration_3_im.mean
 
 result_array_3 = transform_gamma(dd_vals, 3, my_equilateral_xs, my_u_values, my_v_values)
-np.save("Gamma3_real_10bins_d2min3_d2max35_phi60_neval500000_niter5_nchi10", np.real(result_array_3))
-np.save("Gamma3_imag_10bins_d2min3_d2max35_phi60_neval500000_niter5_nchi10", np.imag(result_array_3))
+np.save("Gamma3_real_10bins_d2min3_d2max35_phi60_neval25000", np.real(result_array_3))
+np.save("Gamma3_imag_10bins_d2min3_d2max35_phi60_neval25000", np.imag(result_array_3))
