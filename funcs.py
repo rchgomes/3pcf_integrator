@@ -18,18 +18,15 @@ def f_psi2(x1,x2,x3):
 
 def transform_gamma(gamma, num, r, u, v):
 
-    print(gamma)
     x2 = r * np.pi / (60 * 180)
     x3 = u * x2
     x1 = v * x3 + x2
-
-    print(x1,x2,x3)
 
     psi1 = f_psi1(x1,x2,x3)
     psi2 = f_psi2(x1,x2,x3)
     psi3 = f_psi3(x1,x2,x3)
 
-    print(psi1, psi2, psi3)
+    print("transforming", psi1, psi2, psi3)
     if num == 0:
         gamma_transf = gamma * np.exp(-2*1j*(psi1+psi2+psi3))
 
@@ -42,7 +39,6 @@ def transform_gamma(gamma, num, r, u, v):
     if num == 3:
         gamma_transf = gamma * np.exp(-2 * 1j * (psi1 + psi2 - psi3))
 
-    print(gamma_transf)
     return(gamma_transf)
 
 def remove_zeros(x):

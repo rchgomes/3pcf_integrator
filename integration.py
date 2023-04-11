@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from bihalofit import bihalofit
 from funcs import f_h3, f_psi3, f_psi1, f_psi2, transform_gamma
+from compute_3pcf import compute_3pcf, compute_3pcf_ro, plot_3pcf
 from run_classy import run_classy
 from halo_model import halo_model_bispectrum
 
@@ -14,7 +15,6 @@ h = 0.678
 A_s = 2.1e-9
 n_s = 0.968
 
-"Maximum scale in units of h/Mpc"
 k_max = 50
 
 params = {
@@ -29,73 +29,29 @@ params = {
              'z_max_pk':10.
 }
 
-'''Create ranges of k and z for the CLASS power spectrum'''
-my_k = np.logspace(-3, np.log10(k_max), num=10000) #h/Mpc^-1
-my_z_new = np.linspace(0,3,1000)
-model = bihalofit(params, my_k, my_z_new)
-maximum_distance = 4400
 mynz = np.loadtxt("bin_04_desy3_source_nz.dat")
-'''input in acrmins'''
+
+''' equilateral: input in acrmins'''
 my_equilateral_xs = np.logspace(np.log10(3),np.log10(35), num=10)
 my_u_values = 1*np.ones_like(my_equilateral_xs)
 my_v_values = np.zeros_like(my_equilateral_xs)
-limits = [[0, 2*np.pi],[0, np.pi/2],[0,50]]
 
-'''Test halo model'''
-#kless = np.logspace(-2,np.log10(20),10)
-#zless = np.linspace(0,2.7,10)
-#halo = halo_model_bispectrum(params, kless, zless, "/Users/gchgomes/Documents/bispectrum_new_modeling/the_test_CTIMES2_with_zindex_")
-#halo.compute_lensing_kernel(1, maximum_distance, 10000, mynz)
-#aa_vals = np.ndarray(shape=len(my_equilateral_xs), dtype=complex)
-#for i in range(len(my_equilateral_xs)):
-#    test_integration_0_re = halo.gamma0(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=False)
-#    test_integration_0_im = halo.gamma0(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=True)
-#    aa_vals[i] = test_integration_0_re.mean + 1j*test_integration_0_im.mean
+'''isosceles: input in acrmins'''
+my_angles = np.linspace(2,178, num=20)
+u_2 = np.ones_like(my_angles)
+v_2 = np.zeros_like(my_angles)
+new_d2 = 4.0*np.ones_like(u_2)
+for i in range(len(my_angles)):
+    if my_angles[i] < 60:
+        u_2[i] = np.sqrt(2*(1-np.cos(my_angles[i]*np.pi/180)))
+    else:
+        v_2[i] = np.sqrt(2*(1-np.cos(my_angles[i]*np.pi/180)))-1
 
-#result_array_0 = transform_gamma(aa_vals, 0, my_equilateral_xs, my_u_values, my_v_values)
-#np.save("Gamma0_HALOMODELCTIMES2_real_10bins_d2min3_d2max35_phi60_neval60000_niter8", np.real(result_array_0))
-#np.save("Gamma0_HALOMODELCTIMES2_imag_10bins_d2min3_d2max35_phi60_neval60000_niter8", np.imag(result_array_0))
-'''End'''
+#compute_3pcf(params, mynz, my_equilateral_xs, my_u_values, my_v_values, "new_scenario_test_10apr_neval50000", neval=50000)
+#compute_3pcf_ro(params, mynz, my_equilateral_xs, my_u_values, my_v_values, "new_scenario_test_10apr_neval50000_ro", neval=50000)
 
-#print(dgsd)
-model.compute_lensing_kernel(1, maximum_distance, 10000, mynz)
+my_file_list = ["Gamma1_real_new_scenario_angle_test_10apr_neval50000.npy"]
+my_label_list = ["typical order"]
+plot_3pcf(my_file_list, my_label_list, my_angles, "$\Gamma^1$", no_log=True)
 
-aa_vals = np.ndarray(shape=len(my_equilateral_xs), dtype=complex)
-for i in range(len(my_equilateral_xs)):
-    test_integration_0_re = model.gamma0(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=False)
-    test_integration_0_im = model.gamma0(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=True)
-    aa_vals[i] = test_integration_0_re.mean + 1j*test_integration_0_im.mean
-
-result_array_0 = transform_gamma(aa_vals, 0, my_equilateral_xs, my_u_values, my_v_values)
-np.save("Gamma0_real_10bins_d2min3_d2max35_phi60_neval500000_niter5_nchi10", np.real(result_array_0))
-np.save("Gamma0_imag_10bins_d2min3_d2max35_phi60_neval500000_niter5_nchi10", np.imag(result_array_0))
-
-bb_vals = np.ndarray(shape=len(my_equilateral_xs), dtype=complex)
-for i in range(len(my_equilateral_xs)):
-    test_integration_1_re = model.gamma1(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=False)
-    test_integration_1_im = model.gamma1(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=True)
-    bb_vals[i] = test_integration_1_re.mean + 1j*test_integration_1_im.mean
-
-result_array_1 = transform_gamma(bb_vals, 1, my_equilateral_xs, my_u_values, my_v_values)
-np.save("Gamma1_real_10bins_d2min3_d2max35_phi60_neval500000_niter5_nchi10", np.real(result_array_1))
-np.save("Gamma1_imag_10bins_d2min3_d2max35_phi60_neval500000_niter5_nchi10", np.imag(result_array_1))
-
-cc_vals = np.ndarray(shape=len(my_equilateral_xs), dtype=complex)
-for i in range(len(my_equilateral_xs)):
-    test_integration_2_re = model.gamma2(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=False)
-    test_integration_2_im = model.gamma2(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=True)
-    cc_vals[i] = test_integration_2_re.mean + 1j*test_integration_2_im.mean
-
-result_array_2 = transform_gamma(cc_vals, 2, my_equilateral_xs, my_u_values, my_v_values)
-np.save("Gamma2_real_10bins_d2min3_d2max35_phi60_neval500000_niter5_nchi10", np.real(result_array_2))
-np.save("Gamma2_imagl_10bins_d2min3_d2max35_phi60_neval500000_niter5_nchi10", np.imag(result_array_2))
-
-dd_vals = np.ndarray(shape=len(my_equilateral_xs), dtype=complex)
-for i in range(len(my_equilateral_xs)):
-    test_integration_3_re = model.gamma3(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=False)
-    test_integration_3_im = model.gamma3(limits, my_equilateral_xs[i], my_u_values[i], my_v_values[i], imag=True)
-    dd_vals[i] = test_integration_3_re.mean + 1j*test_integration_3_im.mean
-
-result_array_3 = transform_gamma(dd_vals, 3, my_equilateral_xs, my_u_values, my_v_values)
-np.save("Gamma3_real_10bins_d2min3_d2max35_phi60_neval500000_niter5_nchi10", np.real(result_array_3))
-np.save("Gamma3_imag_10bins_d2min3_d2max35_phi60_neval500000_niter5_nchi10", np.imag(result_array_3))
+compute_3pcf(params, mynz, new_d2, u_2, v_2, "new_scenario_angle_test_10apr_neval10000", neval=10000)
