@@ -26,9 +26,10 @@ class bispectrum:
 
         self.omegam = self.cosmo_params['Omega_b'] + self.cosmo_params['Omega_cdm']
         h = self.cosmo_params['h']
-        knl = self.my_cosmo.nonlinear_scale(z, len(z))
+        self.knl = self.my_cosmo.nonlinear_scale(z, len(z))
 
-        self.knl_interp = interp1d(z, knl, bounds_error = False, fill_value = knl[-1])
+        print(self.knl)
+        self.knl_interp = interp1d(z, self.knl, bounds_error = False, fill_value = self.knl[-1])
 
         self.Pk_linear = np.ndarray(shape=(len(k),len(z)))
         self.Pk_nonlinear = np.ndarray(shape=(len(k), len(z)))
@@ -41,12 +42,16 @@ class bispectrum:
         self.Pk_nonlinear *= h ** 3
 
         newpkinterp = []
+        newpkinterp_nonlin = []
         for kii in range(len(self.k)):
             newpkinterp.append([])
+            newpkinterp_nonlin.append([])
             for zi in range(len(self.z)):
                 newpkinterp[kii].append(self.Pk_linear[kii][zi])
+                newpkinterp_nonlin[kii].append(self.Pk_nonlinear[kii][zi])
 
         self.PL = RegularGridInterpolator((self.k, self.z), newpkinterp, bounds_error = False, fill_value = 0)
+        self.PNL = RegularGridInterpolator((self.k, self.z), newpkinterp_nonlin, bounds_error=False, fill_value=0)
         self.r_from_z, self.dzdr_of_z = self.my_cosmo.z_of_r(z)
 
         self.r_from_z *= h
@@ -54,16 +59,17 @@ class bispectrum:
 
         self.dzdr_from_r_func = interp1d(self.r_from_z, self.dzdr_of_z,  bounds_error = False, fill_value = 0)
         self.z_from_r_func = interp1d(self.r_from_z, z, bounds_error = False, fill_value = 0)
+        self.r_from_z_func = interp1d(z, self.r_from_z, bounds_error=False, fill_value=0)
 
     def compute_kernel(self, k1, k2, k3):
         dot = (-k3 ** 2 + k1 ** 2 + k2 ** 2) / 2
         f2 = 5 / 7 + 2 * dot ** 2 / (7 * k1 ** 2 * k2 ** 2) - dot * (1 / k1 ** 2 + 1 / k2 ** 2) / 2
         return (f2)
 
-    def b_of_l(self, l1, l2, l3, chi):
+    def b_of_l(self, l1, l2, l3, chi, bary_correction):
 
         z_actual = self.z_from_r_func(chi)
-        b_of_l_vals = self.matter_bispectrum(z_actual, l1/chi, l2/chi, l3/chi)
+        b_of_l_vals = self.matter_bispectrum(z_actual, l1/chi, l2/chi, l3/chi, bary_correction)
 
         return (b_of_l_vals)
 
@@ -98,14 +104,14 @@ class bispectrum:
         #plt.yscale("log")
         #plt.show()
 
-    def compute_kappa_bispectrum(self, l1, l2, l3, chimin, chimax, npoints):
+    def compute_kappa_bispectrum(self, l1, l2, l3, chimin, chimax, npoints, bary_correction):
 
         constant = 27*(100/299792)**6*self.omegam**3/8
         chivals_simple = np.linspace(chimin, chimax, npoints)
         if type(l1) == np.float64 or type(l1) == float or type(l1) == int:
             integrand = (self.lensing_kernel(chivals_simple) * (
                         1 + self.z_from_r_func(chivals_simple))) ** 3 / chivals_simple * self.b_of_l(
-                l1, l2, l3, chivals_simple)
+                l1, l2, l3, chivals_simple, bary_correction)
             integral = np.trapz(integrand, chivals_simple)
         else:
             chivals_extended = np.ndarray(shape=(len(l1), len(chivals_simple)))
@@ -114,7 +120,7 @@ class bispectrum:
             integrand = np.ndarray(shape=(len(l1), len(chivals_simple)))
             for chii in range(len(chivals_simple)):
                 integrand[:,chii] = (self.lensing_kernel(chivals_simple[chii]) * (1 + self.z_from_r_func(chivals_simple[chii]))) ** 3 / chivals_simple[chii] * self.b_of_l(
-                    l1, l2, l3, chivals_simple[chii])
+                    l1, l2, l3, chivals_simple[chii], bary_correction)
             integral = np.trapz(integrand, chivals_extended)
 
         return(constant*integral)
@@ -123,7 +129,7 @@ class bispectrum:
 
         self.interpolated_kappa_bispectrum = RegularGridInterpolator((lvec, lvec, lvec), self.kappa_bispectrum, bounds_error = False, fill_value = 0)
 
-    def gamma0_integrand(self, r, u, v, chimin, chimax, n_chibins, imag, y):
+    def gamma0_integrand(self, r, u, v, chimin, chimax, n_chibins, bary_correction, imag, y):
 
         x2 = r*np.pi/(60*180)
         x3 = u*x2
@@ -210,22 +216,22 @@ class bispectrum:
             print("yep")
             print(R,psi, A1_prime, phi)
 
-        first_term = E1 / A1_prime ** 4 * self.compute_kappa_bispectrum(l1_1,l2_1, l3_1, chimin, chimax, n_chibins)
-        second_term = E2 / A2_prime ** 4 * self.compute_kappa_bispectrum(l1_2, l2_2, l3_2, chimin, chimax, n_chibins)
-        third_term = E3 / A3_prime ** 4 * self.compute_kappa_bispectrum(l1_3, l2_3, l3_3, chimin, chimax, n_chibins)
+        first_term = E1 / A1_prime ** 4 * self.compute_kappa_bispectrum(l1_1,l2_1, l3_1, chimin, chimax, n_chibins, bary_correction)
+        second_term = E2 / A2_prime ** 4 * self.compute_kappa_bispectrum(l1_2, l2_2, l3_2, chimin, chimax, n_chibins, bary_correction)
+        third_term = E3 / A3_prime ** 4 * self.compute_kappa_bispectrum(l1_3, l2_3, l3_3, chimin, chimax, n_chibins, bary_correction)
 
         complete_integrand = outside_term*(first_term+second_term+third_term)
 
         return(complete_integrand)
 
-    def gamma0(self, integ_limits, r, u, v, chimin, chimax, n_chibins, niter, nevalu, imag = False):
+    def gamma0(self, integ_limits, r, u, v, chimin, chimax, n_chibins, niter, nevalu, baryons = False, imag = False):
 
         timenow = time.time()
         int_obj = Integrator(integ_limits)
 
         @vegas.batchintegrand
         def my_integrand(y):
-            return(functools.partial(self.gamma0_integrand, r, u, v, chimin, chimax, n_chibins, imag)(y))
+            return(functools.partial(self.gamma0_integrand, r, u, v, chimin, chimax, n_chibins, baryons, imag)(y))
 
         result = int_obj(my_integrand, nitn=niter, neval=nevalu)
         timeafter = time.time()
@@ -233,7 +239,7 @@ class bispectrum:
 
         return(result)
 
-    def gamma1_integrand(self, r, u, v, chimin, chimax, n_chibins, imag, y):
+    def gamma1_integrand(self, r, u, v, chimin, chimax, n_chibins, bary_correction, imag, y):
 
         x2 = r*np.pi/(60*180)
         x3 = u*x2
@@ -309,22 +315,22 @@ class bispectrum:
         if l3_3.any() == 0:
             l3_3 = remove_zeros(l3_3)
 
-        first_term = E1 / A1_prime ** 4 * self.compute_kappa_bispectrum(l1_1,l2_1, l3_1, chimin, chimax, n_chibins)
-        second_term = E2 / A2_prime ** 4 * self.compute_kappa_bispectrum(l1_2, l2_2, l3_2, chimin, chimax, n_chibins)
-        third_term = E3 / A3_prime ** 4 * self.compute_kappa_bispectrum(l1_3, l2_3, l3_3, chimin, chimax, n_chibins)
+        first_term = E1 / A1_prime ** 4 * self.compute_kappa_bispectrum(l1_1,l2_1, l3_1, chimin, chimax, n_chibins, bary_correction)
+        second_term = E2 / A2_prime ** 4 * self.compute_kappa_bispectrum(l1_2, l2_2, l3_2, chimin, chimax, n_chibins, bary_correction)
+        third_term = E3 / A3_prime ** 4 * self.compute_kappa_bispectrum(l1_3, l2_3, l3_3, chimin, chimax, n_chibins, bary_correction)
 
         complete_integrand = outside_term*(first_term+second_term+third_term)
 
         return(complete_integrand)
 
-    def gamma1(self, integ_limits, r, u, v, chimin, chimax, n_chibins, niter, nevalu, imag = False):
+    def gamma1(self, integ_limits, r, u, v, chimin, chimax, n_chibins, niter, nevalu, baryons = False, imag = False):
 
         timenow = time.time()
         int_obj = Integrator(integ_limits)
 
         @vegas.batchintegrand
         def my_integrand(y):
-            return(functools.partial(self.gamma1_integrand, r, u, v, chimin, chimax, n_chibins, imag)(y))
+            return(functools.partial(self.gamma1_integrand, r, u, v, chimin, chimax, n_chibins, baryons, imag)(y))
 
         result = int_obj(my_integrand, nitn=niter, neval=nevalu)
         timeafter = time.time()
@@ -332,7 +338,7 @@ class bispectrum:
 
         return(result)
 
-    def gamma2(self, integ_limits, r, u, v, chimin, chimax, n_chibins, niter, nevalu, imag = False):
+    def gamma2(self, integ_limits, r, u, v, chimin, chimax, n_chibins, niter, nevalu, baryons = False, imag = False):
 
         x2 = r*np.pi/(60*180)
         x3 = u*x2
@@ -347,7 +353,7 @@ class bispectrum:
 
         @vegas.batchintegrand
         def my_integrand(y):
-            return (functools.partial(self.gamma1_integrand, new_r, new_u, new_v, chimin, chimax, n_chibins, imag)(y))
+            return (functools.partial(self.gamma1_integrand, new_r, new_u, new_v, chimin, chimax, n_chibins, baryons, imag)(y))
 
         result = int_obj(my_integrand, nitn=niter, neval=nevalu)
         timeafter = time.time()
@@ -355,7 +361,7 @@ class bispectrum:
 
         return(result)
 
-    def gamma3(self, integ_limits, r, u, v, chimin, chimax, n_chibins, niter, nevalu, imag = False):
+    def gamma3(self, integ_limits, r, u, v, chimin, chimax, n_chibins, niter, nevalu, baryons = False, imag = False):
 
         x2 = r * np.pi / (60 * 180)
         x3 = u * x2
@@ -370,7 +376,7 @@ class bispectrum:
 
         @vegas.batchintegrand
         def my_integrand(y):
-            return (functools.partial(self.gamma1_integrand, new_r, new_u, new_v, chimin, chimax, n_chibins, imag)(y))
+            return (functools.partial(self.gamma1_integrand, new_r, new_u, new_v, chimin, chimax, n_chibins, baryons, imag)(y))
 
         result = int_obj(my_integrand, nitn=niter, neval=nevalu)
         timeafter = time.time()
@@ -378,7 +384,7 @@ class bispectrum:
 
         return (result)
 
-    def gamma0_integrand_ro(self, r, u, v, chi, imag, y):
+    def gamma0_integrand_ro(self, r, u, v, chi,bary_correction, imag, y):
 
         x2 = r*np.pi/(60*180)
         x3 = u*x2
@@ -461,46 +467,48 @@ class bispectrum:
         if l3_3.any() == 0:
             l3_3 = remove_zeros(l3_3)
 
-        if np.any(l2_1) == 0 or np.any(l2_2) == 0 or np.any(l2_3) == 0:
-            print("yep")
-            print(R,psi, A1_prime, phi)
+        #if np.any(l2_1) == 0 or np.any(l2_2) == 0 or np.any(l2_3) == 0:
+            #print("yep")
+            #print(R,psi, A1_prime, phi)
 
-        first_term = E1 / A1_prime ** 4 * self.b_of_l(l1_1,l2_1, l3_1, chi)
-        second_term = E2 / A2_prime ** 4 * self.b_of_l(l1_2, l2_2, l3_2, chi)
-        third_term = E3 / A3_prime ** 4 * self.b_of_l(l1_3, l2_3, l3_3,chi)
+        first_term = E1 / A1_prime ** 4 * self.b_of_l(l1_1,l2_1, l3_1, chi, bary_correction)
+        second_term = E2 / A2_prime ** 4 * self.b_of_l(l1_2, l2_2, l3_2, chi, bary_correction)
+        third_term = E3 / A3_prime ** 4 * self.b_of_l(l1_3, l2_3, l3_3,chi, bary_correction)
 
         complete_integrand = outside_term*(first_term+second_term+third_term)
 
         return(complete_integrand)
 
-    def gamma0_ro(self, integ_limits, r, u, v, chi, niter, nevalu, imag = False):
+    def gamma0_ro(self, integ_limits, r, u, v, chi, niter, nevalu, baryons, imag = False):
 
+        timesv= time.time()
         int_obj = Integrator(integ_limits)
 
         @vegas.batchintegrand
         def my_integrand(y):
-            return(functools.partial(self.gamma0_integrand_ro, r, u, v, chi, imag)(y))
+            return(functools.partial(self.gamma0_integrand_ro, r, u, v, chi, baryons, imag)(y))
 
         result = int_obj(my_integrand, nitn=niter, neval=nevalu)
+        #print("time to single unprojected integral with niter and neval:", time.time()-timesv, niter, nevalu)
 
         return(result)
 
-    def gamma0_loop(self, integ_limits, r, u, v, chi_min, chi_max, n_chisteps, niter, nevalu, imag = False):
+    def gamma0_loop(self, integ_limits, r, u, v, chi_min, chi_max, n_chisteps, niter, nevalu, baryons = False, imag = False):
 
         constant = 27 * (100 / 299792) ** 6 * self.omegam ** 3 / 8
         timenow = time.time()
         chivals = np.linspace(chi_min, chi_max, n_chisteps)
         result_of_chi = np.ndarray(shape=(len(chivals)))
         for i in range(len(chivals)):
-            result_of_chi[i] = self.gamma0_ro(integ_limits, r, u, v, chivals[i], niter, nevalu, imag).mean
+            result_of_chi[i] = self.gamma0_ro(integ_limits, r, u, v, chivals[i], niter, nevalu, baryons, imag).mean
         to_integrate = (self.lensing_kernel(chivals) * (1 + self.z_from_r_func(chivals))) ** 3 / chivals * result_of_chi
         final_result = np.trapz(to_integrate, chivals)
         timeafter = time.time()
-        print("the time to integrate is", timeafter-timenow)
+        #print("the time to integrate is", timeafter-timenow)
 
         return(final_result*constant)
 
-    def gamma1_integrand_ro(self, r, u, v, chi, imag, y):
+    def gamma1_integrand_ro(self, r, u, v, chi, bary_correction, imag, y):
 
         x2 = r*np.pi/(60*180)
         x3 = u*x2
@@ -576,22 +584,22 @@ class bispectrum:
         if l3_3.any() == 0:
             l3_3 = remove_zeros(l3_3)
 
-        first_term = E1 / A1_prime ** 4 * self.b_of_l(l1_1,l2_1, l3_1,chi)
-        second_term = E2 / A2_prime ** 4 * self.b_of_l(l1_2, l2_2, l3_2, chi)
-        third_term = E3 / A3_prime ** 4 * self.b_of_l(l1_3, l2_3, l3_3, chi)
+        first_term = E1 / A1_prime ** 4 * self.b_of_l(l1_1,l2_1, l3_1,chi, bary_correction)
+        second_term = E2 / A2_prime ** 4 * self.b_of_l(l1_2, l2_2, l3_2, chi, bary_correction)
+        third_term = E3 / A3_prime ** 4 * self.b_of_l(l1_3, l2_3, l3_3, chi, bary_correction)
 
         complete_integrand = outside_term*(first_term+second_term+third_term)
 
         return(complete_integrand)
 
-    def gamma1_ro(self, integ_limits, r, u, v, chi, niter, nevalu, imag = False):
+    def gamma1_ro(self, integ_limits, r, u, v, chi, niter, nevalu, baryons, imag = False):
 
         timenow = time.time()
         int_obj = Integrator(integ_limits)
 
         @vegas.batchintegrand
         def my_integrand(y):
-            return(functools.partial(self.gamma1_integrand_ro, r, u, v, chi, imag)(y))
+            return(functools.partial(self.gamma1_integrand_ro, r, u, v, chi, baryons, imag)(y))
 
         result = int_obj(my_integrand, nitn=niter, neval=nevalu)
         timeafter = time.time()
@@ -599,14 +607,14 @@ class bispectrum:
 
         return(result)
 
-    def gamma1_loop(self, integ_limits, r, u, v, chi_min, chi_max, n_chisteps, niter, nevalu, imag = False):
+    def gamma1_loop(self, integ_limits, r, u, v, chi_min, chi_max, n_chisteps, niter, nevalu, baryons = False, imag = False):
 
         constant = 27 * (100 / 299792) ** 6 * self.omegam ** 3 / 8
         timenow = time.time()
         chivals = np.linspace(chi_min, chi_max, n_chisteps)
         result_of_chi = np.ndarray(shape=(len(chivals)))
         for i in range(len(chivals)):
-            result_of_chi[i] = self.gamma1_ro(integ_limits, r, u, v, chivals[i], niter, nevalu, imag).mean
+            result_of_chi[i] = self.gamma1_ro(integ_limits, r, u, v, chivals[i], niter, nevalu, baryons, imag).mean
         to_integrate = (self.lensing_kernel(chivals) * (1 + self.z_from_r_func(chivals))) ** 3 / chivals * result_of_chi
         final_result = np.trapz(to_integrate, chivals)
         timeafter = time.time()
@@ -614,7 +622,7 @@ class bispectrum:
 
         return(final_result*constant)
 
-    def gamma2_ro(self, integ_limits, r, u, v, chi, niter, nevalu, imag = False):
+    def gamma2_ro(self, integ_limits, r, u, v, chi, niter, nevalu, baryons, imag = False):
 
         x2 = r*np.pi/(60*180)
         x3 = u*x2
@@ -629,7 +637,7 @@ class bispectrum:
 
         @vegas.batchintegrand
         def my_integrand(y):
-            return (functools.partial(self.gamma1_integrand_ro, new_r, new_u, new_v,chi,  imag)(y))
+            return (functools.partial(self.gamma1_integrand_ro, new_r, new_u, new_v,chi, baryons, imag)(y))
 
         result = int_obj(my_integrand, nitn=niter, neval=nevalu)
         timeafter = time.time()
@@ -637,14 +645,14 @@ class bispectrum:
 
         return(result)
 
-    def gamma2_loop(self, integ_limits, r, u, v, chi_min, chi_max, n_chisteps, niter, nevalu, imag = False):
+    def gamma2_loop(self, integ_limits, r, u, v, chi_min, chi_max, n_chisteps, niter, nevalu, baryons = False, imag = False):
 
         constant = 27 * (100 / 299792) ** 6 * self.omegam ** 3 / 8
         timenow = time.time()
         chivals = np.linspace(chi_min, chi_max, n_chisteps)
         result_of_chi = np.ndarray(shape=(len(chivals)))
         for i in range(len(chivals)):
-            result_of_chi[i] = self.gamma2_ro(integ_limits, r, u, v, chivals[i], niter, nevalu, imag).mean
+            result_of_chi[i] = self.gamma2_ro(integ_limits, r, u, v, chivals[i], niter, nevalu, baryons, imag).mean
         to_integrate = (self.lensing_kernel(chivals) * (1 + self.z_from_r_func(chivals))) ** 3 / chivals * result_of_chi
         final_result = np.trapz(to_integrate, chivals)
         timeafter = time.time()
@@ -652,7 +660,7 @@ class bispectrum:
 
         return(final_result*constant)
 
-    def gamma3_ro(self, integ_limits, r, u, v, chi, niter, nevalu, imag = False):
+    def gamma3_ro(self, integ_limits, r, u, v, chi, niter, nevalu, baryons, imag = False):
 
         x2 = r * np.pi / (60 * 180)
         x3 = u * x2
@@ -667,7 +675,7 @@ class bispectrum:
 
         @vegas.batchintegrand
         def my_integrand(y):
-            return (functools.partial(self.gamma1_integrand_ro, new_r, new_u, new_v, chi, imag)(y))
+            return (functools.partial(self.gamma1_integrand_ro, new_r, new_u, new_v, chi, baryons, imag)(y))
 
         result = int_obj(my_integrand, nitn=niter, neval=nevalu)
         timeafter = time.time()
@@ -675,14 +683,14 @@ class bispectrum:
 
         return (result)
 
-    def gamma3_loop(self, integ_limits, r, u, v, chi_min, chi_max, n_chisteps, niter, nevalu, imag = False):
+    def gamma3_loop(self, integ_limits, r, u, v, chi_min, chi_max, n_chisteps, niter, nevalu, baryons = False, imag = False):
 
         constant = 27 * (100 / 299792) ** 6 * self.omegam ** 3 / 8
         timenow = time.time()
         chivals = np.linspace(chi_min, chi_max, n_chisteps)
         result_of_chi = np.ndarray(shape=(len(chivals)))
         for i in range(len(chivals)):
-            result_of_chi[i] = self.gamma3_ro(integ_limits, r, u, v, chivals[i], niter, nevalu, imag).mean
+            result_of_chi[i] = self.gamma3_ro(integ_limits, r, u, v, chivals[i], niter, nevalu, baryons, imag).mean
         to_integrate = (self.lensing_kernel(chivals) * (1 + self.z_from_r_func(chivals))) ** 3 / chivals * result_of_chi
         final_result = np.trapz(to_integrate, chivals)
         timeafter = time.time()
