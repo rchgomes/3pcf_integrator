@@ -75,7 +75,7 @@ class bihalofit(bispectrum):
         self.en = 10 ** (-0.632 + 0.646 * self.neff)
         self.en_interp = interp1d(z, self.en, bounds_error=False, fill_value=self.en[-1])
 
-        print("time to init bihalofit:", time.time()-timebih)
+        #print("time to init bihalofit:", time.time()-timebih)
 
     def compute_dependent_params_old(self, z, k1, k2, k3):
 
@@ -218,3 +218,7 @@ class bihalofit(bispectrum):
             return(self.compute_one_halo(z,k1,k2,k3)+self.compute_three_halo(z, k1, k2, k3))
         if baryons == True:
             return((self.compute_one_halo(z,k1,k2,k3)+self.compute_three_halo(z, k1, k2, k3))*self.baryonic_correction(z, k1, k2, k3))
+
+    def is_knl_zero(self, z):
+
+        return (self.knl_interp(z) == 0.0)

@@ -9,6 +9,7 @@ import vegas
 from vegas import Integrator
 import functools
 from funcs import remove_zeros
+from funcs import uhat
 from inspect import signature
 
 #Verify dependance of k_nl and n_eff by cosmology
@@ -28,7 +29,7 @@ class bispectrum:
         h = self.cosmo_params['h']
         self.knl = self.my_cosmo.nonlinear_scale(z, len(z))
 
-        print(self.knl)
+        #print(self.knl)
         self.knl_interp = interp1d(z, self.knl, bounds_error = False, fill_value = self.knl[-1])
 
         self.Pk_linear = np.ndarray(shape=(len(k),len(z)))
@@ -68,8 +69,11 @@ class bispectrum:
 
     def b_of_l(self, l1, l2, l3, chi, bary_correction):
 
-        z_actual = self.z_from_r_func(chi)
-        b_of_l_vals = self.matter_bispectrum(z_actual, l1/chi, l2/chi, l3/chi, bary_correction)
+        if self.name == 'one_halo_NFW':
+            b_of_l_vals = self.matter_bispectrum(l1,l2,l3)
+        else:
+            z_actual = self.z_from_r_func(chi)
+            b_of_l_vals = self.matter_bispectrum(z_actual, l1/chi, l2/chi, l3/chi, bary_correction)
 
         return (b_of_l_vals)
 
@@ -80,7 +84,7 @@ class bispectrum:
         nz = interp1d(dndz[:, 0], dndz[:, 1], bounds_error = False, fill_value = 0)
 
         def_z = np.trapz(dndz[:,1], dndz[:,0])
-        print(def_z)
+        #print(def_z)
 
         try:
             nvals = nz(zvals)*self.dzdr_from_r_func(chivals)
@@ -89,7 +93,7 @@ class bispectrum:
             raise ValueError(f"There was an interpolation problem. Your requested redshifts span from z={zvals[0]} to z={zvals[-1]}, "
                              f"while your redshift distribution function spans from z={dndz[0][0]} to z={dndz[-1][0]}")
 
-        print(chimin, chimax)
+        #print(chimin, chimax)
         def_int = np.trapz(nvals, chivals)
         nvals /= def_int
         #plt.plot(chivals, nvals)
@@ -129,6 +133,50 @@ class bispectrum:
 
         self.interpolated_kappa_bispectrum = RegularGridInterpolator((lvec, lvec, lvec), self.kappa_bispectrum, bounds_error = False, fill_value = 0)
 
+    def map3_integrand(self, theta1, theta2, theta3, chi, bary_correction, y):
+
+        l1 = y[:,0]
+        l2 = y[:,1]
+        phi = y[:,2]
+
+        const = 2/(2*np.pi)**3
+        factor = l1*l2
+        l3 = l1**2+l2**2+2*l1*l2*phi
+        third_val = theta3*np.sqrt(l1**2+l2**2+2*l1*l2*np.cos(phi))
+        final_integrand = const*factor*uhat(theta1*l1)*uhat(theta2*l2)*uhat(third_val)*self.b_of_l(l1,l2, l3, chi, bary_correction)
+
+        return(final_integrand)
+
+    def map3(self, integ_limits, theta1, theta2, theta3, chi, niter, nevalu, baryons = False):
+
+        timenow = time.time()
+        int_obj = Integrator(integ_limits)
+
+        @vegas.batchintegrand
+        def my_integrand(y):
+            return(functools.partial(self.map3_integrand, theta1, theta2, theta3, chi, baryons)(y))
+
+        result = int_obj(my_integrand, nitn=niter, neval=nevalu)
+        timeafter = time.time()
+        print("the time to integrate is", timeafter-timenow)
+
+        return(result)
+
+    def map3_loop(self, integ_limits, theta1, theta2, theta3, chi_min, chi_max, n_chisteps, niter, nevalu, baryons = False):
+
+        constant = 27 * (100 / 299792) ** 6 * self.omegam ** 3 / 8
+        timenow = time.time()
+        chivals = np.linspace(chi_min, chi_max, n_chisteps)
+        result_of_chi = np.ndarray(shape=(len(chivals)))
+        for i in range(len(chivals)):
+            result_of_chi[i] = self.map3(integ_limits, theta1, theta2, theta3, chivals[i], niter, nevalu, baryons).mean
+        to_integrate = (self.lensing_kernel(chivals) * (1 + self.z_from_r_func(chivals))) ** 3 / chivals * result_of_chi
+        final_result = np.trapz(to_integrate, chivals)
+        timeafter = time.time()
+        #print("the time to integrate is", timeafter-timenow)
+
+        return(final_result*constant)
+
     def gamma0_integrand(self, r, u, v, chimin, chimax, n_chibins, bary_correction, imag, y):
 
         x2 = r*np.pi/(60*180)
@@ -153,6 +201,7 @@ class bispectrum:
         phi1 = np.arccos((x1**2-x2**2-x3**2)/(-2*x2*x3))
         phi2 = np.arccos((x2**2-x3**2-x1**2)/(-2*x3*x1))
         phi3 = np.arccos((x3**2-x1**2-x2**2)/(-2*x1*x2))
+        print("here are the values", phi1, phi2, phi3)
         #print(phi1,phi2,phi3)
         """inside terms:"""
 
@@ -408,10 +457,12 @@ class bispectrum:
         phi1 = np.arccos((x1**2-x2**2-x3**2)/(-2*x2*x3))
         phi2 = np.arccos((x2**2-x3**2-x1**2)/(-2*x3*x1))
         phi3 = np.arccos((x3**2-x1**2-x2**2)/(-2*x1*x2))
+        #print("here are the values", phi1, phi2, phi3)
         #print(phi1,phi2,phi3)
         """inside terms:"""
 
         A1_prime = np.sqrt((x3*np.cos(psi))**2+(x2*np.sin(psi))**2+x2*x3*np.sin(2*psi)*np.cos(phi+phi1))
+        #print("val of A1prime", A1_prime)
 
         A1p_sin_alpha1 = (x3*np.cos(psi)-x2*np.sin(psi))*np.sin((phi+phi1)/2)
         A1p_cos_alpha1 = (x3 * np.cos(psi) + x2 * np.sin(psi)) * np.cos((phi + phi1) / 2)
@@ -603,7 +654,7 @@ class bispectrum:
 
         result = int_obj(my_integrand, nitn=niter, neval=nevalu)
         timeafter = time.time()
-        print("the time to integrate is", timeafter-timenow)
+        #print("the time to integrate is", timeafter-timenow)
 
         return(result)
 
@@ -618,7 +669,7 @@ class bispectrum:
         to_integrate = (self.lensing_kernel(chivals) * (1 + self.z_from_r_func(chivals))) ** 3 / chivals * result_of_chi
         final_result = np.trapz(to_integrate, chivals)
         timeafter = time.time()
-        print("the time to integrate is", timeafter-timenow)
+        #print("the time to integrate is", timeafter-timenow)
 
         return(final_result*constant)
 
@@ -641,7 +692,7 @@ class bispectrum:
 
         result = int_obj(my_integrand, nitn=niter, neval=nevalu)
         timeafter = time.time()
-        print("the time to integrate is", timeafter-timenow)
+        #print("the time to integrate is", timeafter-timenow)
 
         return(result)
 
@@ -656,7 +707,7 @@ class bispectrum:
         to_integrate = (self.lensing_kernel(chivals) * (1 + self.z_from_r_func(chivals))) ** 3 / chivals * result_of_chi
         final_result = np.trapz(to_integrate, chivals)
         timeafter = time.time()
-        print("the time to integrate is", timeafter-timenow)
+        #print("the time to integrate is", timeafter-timenow)
 
         return(final_result*constant)
 
@@ -679,7 +730,7 @@ class bispectrum:
 
         result = int_obj(my_integrand, nitn=niter, neval=nevalu)
         timeafter = time.time()
-        print("the time to integrate is", timeafter - timenow)
+        #print("the time to integrate is", timeafter - timenow)
 
         return (result)
 
@@ -694,6 +745,6 @@ class bispectrum:
         to_integrate = (self.lensing_kernel(chivals) * (1 + self.z_from_r_func(chivals))) ** 3 / chivals * result_of_chi
         final_result = np.trapz(to_integrate, chivals)
         timeafter = time.time()
-        print("the time to integrate is", timeafter-timenow)
+        #print("the time to integrate is", timeafter-timenow)
 
         return(final_result*constant)
