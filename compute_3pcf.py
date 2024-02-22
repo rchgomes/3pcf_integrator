@@ -104,7 +104,7 @@ def plot_3pcf(files, labels, xvals, gamma_func, no_log = False):
 
 def compute_map3(cosmo_parameters, dndz_file, theta1_vals, theta2_vals, theta3_vals, output_suffix,
                  kmin=10**(-3), kmax=50, n_kbins=10000, chimin=1, chimax=4000,
-                 n_chibins=10, niter=5, neval=50000, lmax=3000, model = 'bihalofit', baryons = False):
+                 n_chibins=10, niter=5, neval=50000, lmax=1000, model = 'bihalofit', baryons = False):
 
     my_k = np.logspace(np.log10(kmin), np.log10(kmax), num=n_kbins)  # h/Mpc^-1
     my_z_new = np.linspace(0,3,1000)

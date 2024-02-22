@@ -127,7 +127,7 @@ class bihalofit(bispectrum):
     def compute_one_halo(self, z, k1, k2, k3):
 
         #print("z is", z)
-        knl = self.knl_interp(z)
+        knl = self.knl_interp(z)/self.cosmo_params['h'] #UPDATED ISSUE ON K_NL
         #print("knl is", knl)
         #print("k1 is", k1)
         if type(k1) == float and type(z) == float:
@@ -216,6 +216,9 @@ class bihalofit(bispectrum):
 
         if baryons == False:
             return(self.compute_one_halo(z,k1,k2,k3)+self.compute_three_halo(z, k1, k2, k3))
+            #return (self.compute_one_halo(z, k1, k2, k3))
+            #return (self.compute_three_halo(z, k1, k2, k3))
+
         if baryons == True:
             return((self.compute_one_halo(z,k1,k2,k3)+self.compute_three_halo(z, k1, k2, k3))*self.baryonic_correction(z, k1, k2, k3))
 

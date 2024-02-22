@@ -135,15 +135,18 @@ class bispectrum:
 
     def map3_integrand(self, theta1, theta2, theta3, chi, bary_correction, y):
 
+        theta1_conv = theta1 * np.pi/ (60 * 180)
+        theta2_conv = theta2 * np.pi / (60 * 180)
+        theta3_conv = theta3 * np.pi / (60 * 180)
+
         l1 = y[:,0]
         l2 = y[:,1]
         phi = y[:,2]
 
         const = 2/(2*np.pi)**3
         factor = l1*l2
-        l3 = l1**2+l2**2+2*l1*l2*phi
-        third_val = theta3*np.sqrt(l1**2+l2**2+2*l1*l2*np.cos(phi))
-        final_integrand = const*factor*uhat(theta1*l1)*uhat(theta2*l2)*uhat(third_val)*self.b_of_l(l1,l2, l3, chi, bary_correction)
+        l3 = np.sqrt(l1**2+l2**2+2*l1*l2*np.cos(phi))
+        final_integrand = const*factor*uhat(theta1_conv*l1)*uhat(theta2_conv*l2)*uhat(theta3_conv*l3)*self.b_of_l(l1,l2, l3, chi, bary_correction)
 
         return(final_integrand)
 
