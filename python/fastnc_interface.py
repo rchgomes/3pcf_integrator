@@ -1,5 +1,16 @@
+'''
+Author     : Sunao Sugiyama
+Last edit  : 2024/03/07 18:18:56
+
+
+TODO:
+- include cross-redshift bins
+- IA
+- allow for user-defined t1 and t2 binning to be consistent with treecorr output. (currently the output is on FFT grid of fastnc)
+'''
 from cosmosis.datablock import option_section, names
 import numpy as np
+import os
 import fastnc
 from astropy.cosmology import wCDM
 
@@ -30,25 +41,12 @@ def setup(options):
     config['shear-projection'] = options.get_string(option_section, "projection", default = "x")
 
     # binning
-    config['mu']  = np.array([0], dtype=np.float64)
+    config['mu']  = np.array([0], dtype=int)
     config['phi-bin'] = np.linspace(0, np.pi, 20)
 
     return config
 
 def execute(block, config):
-    """
-    General Input:
-    - cosmological parameters
-    - linear power spectrum
-    - distance-redshift relation
-    Survey input:
-    - source redshift bins
-
-    TODO:
-    - include cross-redshift bins
-    - IA
-    - allow for user-defined t1 and t2 binning to be consistent with treecorr output. (currently the output is on FFT grid of fastnc)
-    """
     
     # BISPECTRUM ######################################
     # update bispectrum with inputs:
@@ -58,27 +56,34 @@ def execute(block, config):
                 H0=100*block[names.cosmological_parameters, 'h0'], \
                 Om0=block[names.cosmological_parameters, 'omega_m'], \
                 Ode0=1.0-block[names.cosmological_parameters, 'omega_m'], \
-                meta = {'sigma8':block[names.cosmological_parameters, 'sigma8'], \
+                #meta = {'sigma8':block[names.cosmological_parameters, 'sigma8'], \
+                meta = {'sigma8':0.8,  # test\
                         'n':block[names.cosmological_parameters, 'n_s']}
     )
     bs.set_cosmology(cosmo)
     # set source distribution
-    bs.set_source_distribution(
-        # # For now we leave it blank (by default this sets zs=1)
-        # z=block['source-redshift', 'z'], #TODO
-        # dNdz=block['source-redshift', 'dNdz'] #TODO
-    )
+    # bs.set_source_distribution(
+    #     z=block['source-redshift', 'z'], #TODO
+    #     dNdz=block['source-redshift', 'dNdz'] #TODO
+    # )
     # set lensing kernel
     bs.compute_lensing_kernel()
     # set linear matter power spectrum
+    # TODO: For now, we source the power spectrum from file for test.
+    # to be replaced with prediction by structure module.
+    here = os.path.dirname(__file__)
+    k, pklin = np.loadtxt(os.path.join(here,'../data/devl/pklin_P18.dat'), unpack=True)
+    z, lgr = np.loadtxt(os.path.join(here,'../data/devl/lgr_P18.dat'), unpack=True)
     bs.set_pklin(
-                block['matter_power_lin', 'k_h'], \
-                block['matter_power_lin', 'p_k']
+                k, pklin        
+                # block['matter_power_lin', 'k_h'], \
+                # block['matter_power_lin', 'p_k']
     )
     # set lienar growth rate
     bs.set_lgr(
-        block[names.cosmological_parameters, 'z'], \
-        block[names.cosmological_parameters, 'growth_rate']
+        z, lgr
+        # block[names.cosmological_parameters, 'z'], \
+        # block[names.cosmological_parameters, 'growth_rate']
     )
     # update the interpolation.
     bs.interpolate()
@@ -92,7 +97,7 @@ def execute(block, config):
     Gamma = nc.Gamma(
         mu=config['mu'], 
         phi=config['phi-bin'],
-        projection=config['3pcf-projection']
+        projection=config['shear-projection']
         )
     # Now the Gamma has the shape of (mu.size, phi.size, nc.t1.size, nc.t2.size)
     # We reshape it to one dimensional array
@@ -107,11 +112,14 @@ def execute(block, config):
 
     # write to block
     sctname = "ggg"
-    block[sctname, 'Gamma'] = Gamma
+    block[sctname, 'Gamma-real'] = Gamma.real
+    block[sctname, 'Gamma-imag'] = Gamma.imag
     block[sctname, 'mu'] = mu
     block[sctname, 'phi'] = phi
     block[sctname, 't1'] = t1
     block[sctname, 't2'] = t2
+    
+    return 0
 
 def cleanup(config):
     pass
