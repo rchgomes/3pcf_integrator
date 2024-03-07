@@ -11,3 +11,5 @@ export PYTHONPATH=$here/python:$PYTHONPATH
 # environment dependent setups
 # path to cosmosis-standard-library, used in the ini file.
 export COSMOSIS_STD_LIB=${here}/../cosmosis-standard-library/
+
+unset here
