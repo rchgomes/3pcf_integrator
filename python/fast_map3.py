@@ -11,13 +11,14 @@
 #    this list of conditions, and the disclaimer given in the documentation
 #    and/or other materials provided with the distribution.
 
-
+import numpy as np
 '''This file contains an adapted version of the treecorr functions _calculateT and
 calculateMap, that are designed to function with theoretical predictions outside of the
 treecorr environment'''
 
-def _calculateT(cls, s, t, k1, k2, k3):
+def _calculateT(s, t, k1, k2, k3):
     # First calculate q values:
+
     q1 = (s + t) / 3.
     q2 = q1 - t
     q3 = q1 - s
@@ -35,7 +36,7 @@ def _calculateT(cls, s, t, k1, k2, k3):
     b2 = np.conjugate(q2) ** 2 * q1 * q3
     b3 = np.conjugate(q3) ** 2 * q1 * q2
 
-    if k1 == 1 and k2 == 1 and k3 == 1:
+    if k1 == 1 and k2.all() == 1 and k3.all() == 1:
 
         # Some factors we use multiple times
         expfactor = -np.exp(-(a1 + a2 + a3) / 2)
@@ -150,7 +151,7 @@ def calculateMap3(three_pt, d2_vals, d3_vals, phi_vals, logr_bin_size, phi_bin_s
 
     # SAS binning counts each triangle with each vertex in the c1 position.
     # Just need to account for the cases where 1-2-3 are clockwise, rather than CCW.
-    if k2 == 1 and k3 == 1:
+    if k2.all() == 1 and k3.all() == 1:
         mmm *= 2
         mcmm *= 2
         mmcm += mmmc
