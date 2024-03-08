@@ -3,6 +3,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 import sys
 from fast_map3 import calculateMap3
+import time
 
 import pickle
 
@@ -18,9 +19,11 @@ def load_obj(name):
 def setup(options):
 
     path_chains = options.get_string(option_section, "path_chains", default = "")
-    filter_1 = options.get_string(option_section, "theta_filter_1", default = "")
-    filter_2 = options.get_string(option_section, "theta_filter_2", default = "")
-    filter_3 = options.get_string(option_section, "theta_filter_3", default = "")
+
+    filter_1 = options.get_double_array_1d(option_section, "theta_filter_1")
+    filter_2 = options.get_double_array_1d(option_section, "theta_filter_2")
+    filter_3 = options.get_double_array_1d(option_section, "theta_filter_3")
+
     all_filters = np.vstack([filter_1, filter_2, filter_3])
 
     info = load_obj(path_chains)
@@ -39,16 +42,37 @@ def execute(block, config):
     name_likelihood = 'map3_like'
     filters = config["filters"]
 
-    '''TO DO: get Gamma^0, Gamma^1, Gamma^2 and Gamma^3 from the datablock in the right format:
-    Gamma^0, Gamma^1, Gamma^2, Gamma^3 must be put into the 4xn array three_pt, where 
-    three_pt[i] contains the flattened Gamma^i theory. Get also the n-dimensional arrays 
-    d2_vals, d3_vals, phi_vals, with the values on the SAS binning. Get the bin size in logr
-    and the phi bin size in radians. Use all this on the following function'''
+    gamma = block["ggg", 'Gamma-real'] + 1j*block["ggg", 'Gamma-imag']
+    mu = block["ggg", 'mu']
 
-    y = calculateMap3(three_pt,  d2_vals, d3_vals, phi_vals, logr_bin_size, phi_bin_size, filters)
+    indices_0 = np.where(mu == 0)
+    indices_1 = np.where(mu == 1)
+    indices_2 = np.where(mu == 2)
+    indices_3 = np.where(mu == 3)
 
-    print(np.shape(config['y_obs']))
-    print(np.shape(y))
+    gamma0 = gamma[indices_0]
+    gamma1 = gamma[indices_1]
+    gamma2 = gamma[indices_2]
+    gamma3 = gamma[indices_3]
+
+    phi = block["ggg", 'phi'][indices_0]
+    t1 = block["ggg", 't1'][indices_0]
+    t2 = block["ggg", 't2'][indices_0]
+
+    t1 *= 180*60/np.pi
+    t2 *= 180*60/np.pi
+
+    gamma_all = np.vstack([gamma0, gamma1, gamma2, gamma3])
+
+    '''TO DO: Get the bin size in logr
+    and the phi bin size in radians. Use all this on the following function.
+    Also, compute for all z auto-correlations'''
+
+    phi_bin_size = np.pi/20
+    logr_bin_size = 0.2
+
+    y = calculateMap3(gamma_all,  t2, t1, phi, logr_bin_size, phi_bin_size, filters)
+
     w = y-config['y_obs']
 
     chi2 = np.matmul(w,np.matmul(config['inv_cov'],w))
