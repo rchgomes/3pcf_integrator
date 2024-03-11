@@ -1,6 +1,6 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/03/07 18:18:56
+Last edit  : 2024/03/11 18:29:02
 
 
 TODO:
@@ -56,34 +56,26 @@ def execute(block, config):
                 H0=100*block[names.cosmological_parameters, 'h0'], \
                 Om0=block[names.cosmological_parameters, 'omega_m'], \
                 Ode0=1.0-block[names.cosmological_parameters, 'omega_m'], \
-                #meta = {'sigma8':block[names.cosmological_parameters, 'sigma8'], \
-                meta = {'sigma8':0.8,  # test\
+                meta = {'sigma8':block[names.cosmological_parameters, 'sigma_8'], \
                         'n':block[names.cosmological_parameters, 'n_s']}
     )
     bs.set_cosmology(cosmo)
     # set source distribution
-    # bs.set_source_distribution(
-    #     z=block['source-redshift', 'z'], #TODO
-    #     dNdz=block['source-redshift', 'dNdz'] #TODO
-    # )
+    bs.set_source_distribution(
+        block['nz_source', "z"],
+        block['nz_source', "bin_%d" % 0] # tentatively we use 0th redshift bin, fastnc will be updated to accept tomography
+    )
     # set lensing kernel
     bs.compute_lensing_kernel()
     # set linear matter power spectrum
-    # TODO: For now, we source the power spectrum from file for test.
-    # to be replaced with prediction by structure module.
-    here = os.path.dirname(__file__)
-    k, pklin = np.loadtxt(os.path.join(here,'../data/devl/pklin_P18.dat'), unpack=True)
-    z, lgr = np.loadtxt(os.path.join(here,'../data/devl/lgr_P18.dat'), unpack=True)
     bs.set_pklin(
-                k, pklin        
-                # block['matter_power_lin', 'k_h'], \
-                # block['matter_power_lin', 'p_k']
+        block[names.matter_power_lin, 'k_h'],
+        block[names.matter_power_lin, 'p_k'][0,:]
     )
     # set lienar growth rate
     bs.set_lgr(
-        z, lgr
-        # block[names.cosmological_parameters, 'z'], \
-        # block[names.cosmological_parameters, 'growth_rate']
+        block[names.growth_parameters, "z"],
+        block[names.growth_parameters, "d_z"]
     )
     # update the interpolation.
     bs.interpolate()
