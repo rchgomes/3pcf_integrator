@@ -1,6 +1,6 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/03/11 18:29:02
+Last edit  : 2024/03/12 16:50:56
 
 
 TODO:
@@ -40,6 +40,12 @@ def setup(options):
     # projection
     config['shear-projection'] = options.get_string(option_section, "projection", default = "x")
 
+    # sample combinations
+    config['sample-combinations'] = options.get_string(option_section, "sample_combinations", default = "all")
+    config['sample-combinations'] = config['sample-combinations'].split(' ')
+    config['sample-combinations'] = [tuple(x.split(',')) for x in config['sample-combinations']]
+    print(config['sample-combinations'])
+
     # binning
     config['mu']  = np.array([0], dtype=int)
     config['phi-bin'] = np.linspace(0, np.pi, 20)
@@ -61,9 +67,11 @@ def execute(block, config):
     )
     bs.set_cosmology(cosmo)
     # set source distribution
+    nzbin = block['nz_source', "nbin"]
     bs.set_source_distribution(
-        block['nz_source', "z"],
-        block['nz_source', "bin_%d" % 0] # tentatively we use 0th redshift bin, fastnc will be updated to accept tomography
+        [block['nz_source', "z"] for _ in range(nzbin)],
+        [block['nz_source', "bin_%d" % (i+1)] for i in range(nzbin)],
+        ['bin_%d' % (i+1) for i in range(nzbin)]
     )
     # set lensing kernel
     bs.compute_lensing_kernel()
@@ -81,31 +89,38 @@ def execute(block, config):
     bs.interpolate()
 
     # 3PCF ############################################
-    # update fastnc:
     nc = config['fastnc']
-    nc.set_bispectrum(bs)
-    
-    # compute 3PCF
-    Gamma = nc.Gamma(
-        mu=config['mu'], 
-        phi=config['phi-bin'],
-        projection=config['shear-projection']
-        )
-    # Now the Gamma has the shape of (mu.size, phi.size, nc.t1.size, nc.t2.size)
-    # We reshape it to one dimensional array
-    shape = Gamma.shape
-    Gamma = np.reshape(Gamma, -1)
-    # We reshape the bin parameters to one dimensional array as well
-    mu, phi, t1, t2 = np.meshgrid(config['mu'], config['phi-bin'], nc.t1, nc.t2, indexing='ij')
-    mu  = np.reshape(mu, -1)
-    phi = np.reshape(phi, -1)
-    t1  = np.reshape(t1, -1)
-    t2  = np.reshape(t2, -1)
-
-    # write to block
     sctname = "ggg"
-    block[sctname, 'Gamma-real'] = Gamma.real
-    block[sctname, 'Gamma-imag'] = Gamma.imag
+    
+    for sample_combination in config['sample-combinations']:
+        print('calculating sample_combination:', sample_combination)
+        # set bispectrum
+        nc.set_bispectrum(bs, sample_combinations=[sample_combination])
+    
+        # compute 3PCF
+        Gamma = nc.Gamma(
+            mu=config['mu'], 
+            phi=config['phi-bin'],
+            projection=config['shear-projection'],
+            sample_combination=sample_combination,
+            )
+        # Now the Gamma has the shape of (mu.size, phi.size, nc.t1.size, nc.t2.size)
+        # We reshape it to one dimensional array
+        shape = Gamma.shape
+        Gamma = np.reshape(Gamma, -1)
+        # We reshape the bin parameters to one dimensional array as well
+        mu, phi, t1, t2 = np.meshgrid(config['mu'], config['phi-bin'], nc.t1, nc.t2, indexing='ij')
+        mu  = np.reshape(mu, -1)
+        phi = np.reshape(phi, -1)
+        t1  = np.reshape(t1, -1)
+        t2  = np.reshape(t2, -1)
+
+        # write to block
+        name = ','.join(sample_combination)
+        block[sctname, f'Gamma-real-{name}'] = Gamma.real
+        block[sctname, f'Gamma-imag-{name}'] = Gamma.imag
+    
+    # write common parameters
     block[sctname, 'mu'] = mu
     block[sctname, 'phi'] = phi
     block[sctname, 't1'] = t1
