@@ -35,25 +35,27 @@ def setup(options):
     config["cov"] = info['cov']
     config["filters"] = all_filters
 
+    # sample combinations
+    config['sample-combinations'] = options.get_string(option_section, "sample_combinations", default = "all")
+    config['sample-combinations'] = config['sample-combinations'].split(' ')
+    config['sample-combinations'] = [tuple(x.split(',')) for x in config['sample-combinations']]
+
+    config["num_sample"] = len(config['sample-combinations'])
+    config["num_aperture"] = len(filter_1)
+
     return config
 
 def execute(block, config):
 
     name_likelihood = 'map3_like'
-    filters = config["filters"]
 
-    gamma = block["ggg", 'Gamma-real'] + 1j*block["ggg", 'Gamma-imag']
+    filters = config["filters"]
     mu = block["ggg", 'mu']
 
     indices_0 = np.where(mu == 0)
     indices_1 = np.where(mu == 1)
     indices_2 = np.where(mu == 2)
     indices_3 = np.where(mu == 3)
-
-    gamma0 = gamma[indices_0]
-    gamma1 = gamma[indices_1]
-    gamma2 = gamma[indices_2]
-    gamma3 = gamma[indices_3]
 
     phi = block["ggg", 'phi'][indices_0]
     t1 = block["ggg", 't1'][indices_0]
@@ -62,21 +64,48 @@ def execute(block, config):
     t1 *= 180*60/np.pi
     t2 *= 180*60/np.pi
 
-    gamma_all = np.vstack([gamma0, gamma1, gamma2, gamma3])
+    '''TO DO: Get the bin size in logr from input.
+    Temporarily, I'm taking the bin size directly from the t2 array values,
+    I'm assuming the phi bin size will remain hard coded, but we could put 
+    it as an input for fastnc. In this case, we would also change the 
+    phi_bin_size parameter here.'''
 
-    '''TO DO: Get the bin size in logr
-    and the phi bin size in radians. Use all this on the following function.
-    Also, compute for all z auto-correlations'''
+    logr_bin_size = np.log(t2[1])-np.log(t2[0])
+    phi_bin_size = np.pi / 20
 
-    phi_bin_size = np.pi/20
-    logr_bin_size = 0.2
+    '''END OF TO DO'''
 
-    y = calculateMap3(gamma_all,  t2, t1, phi, logr_bin_size, phi_bin_size, filters)
+    zbin_combinations = config["sample-combinations"]
+    num_zbin_combinations = config["num_sample"]
+    num_aperture_combinations = config["num_aperture"]
+    num_all_combinations = num_zbin_combinations*num_aperture_combinations
+
+    y = np.zeros(num_all_combinations)
+
+    for i in range(num_zbin_combinations):
+
+        print(zbin_combinations[i])
+        print(zbin_combinations)
+        print(num_zbin_combinations)
+        name = ','.join(zbin_combinations[i])
+        gamma = block["ggg", f'Gamma-real-{name}'] + 1j*block["ggg", f'Gamma-imag-{name}']
+
+        gamma0 = gamma[indices_0]
+        gamma1 = gamma[indices_1]
+        gamma2 = gamma[indices_2]
+        gamma3 = gamma[indices_3]
+        gamma_all = np.vstack([gamma0, gamma1, gamma2, gamma3])
+
+        y_temp = calculateMap3(gamma_all,  t2, t1, phi, logr_bin_size, phi_bin_size, filters)
+        y[i*num_aperture_combinations:(i+1)*num_aperture_combinations] = y_temp
 
     w = y-config['y_obs']
 
     chi2 = np.matmul(w,np.matmul(config['inv_cov'],w))
     block[names.likelihoods, name_likelihood] = -0.5 * np.real(chi2)
+    print(y)
+    print(config['y_obs'])
+    #np.save("theory_test_autocorrelations_map3", y)
 
     return 0
 

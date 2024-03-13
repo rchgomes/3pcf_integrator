@@ -47,7 +47,7 @@ def setup(options):
     print(config['sample-combinations'])
 
     # binning
-    config['mu']  = np.array([0], dtype=int)
+    config['mu']  = np.array([0,1,2,3], dtype=int)
     config['phi-bin'] = np.linspace(0, np.pi, 20)
 
     return config
@@ -91,7 +91,7 @@ def execute(block, config):
     # 3PCF ############################################
     nc = config['fastnc']
     sctname = "ggg"
-    
+
     for sample_combination in config['sample-combinations']:
         print('calculating sample_combination:', sample_combination)
         # set bispectrum
@@ -125,7 +125,7 @@ def execute(block, config):
     block[sctname, 'phi'] = phi
     block[sctname, 't1'] = t1
     block[sctname, 't2'] = t2
-    
+
     return 0
 
 def cleanup(config):
