@@ -1,6 +1,6 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/03/12 16:50:56
+Last edit  : 2024/03/13 12:55:57
 
 
 TODO:
@@ -91,6 +91,8 @@ def execute(block, config):
     # 3PCF ############################################
     nc = config['fastnc']
     sctname = "ggg"
+
+    print(config['shear-projection'], 'projection')
 
     for sample_combination in config['sample-combinations']:
         print('calculating sample_combination:', sample_combination)
