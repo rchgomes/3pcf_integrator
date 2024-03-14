@@ -1,18 +1,32 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/03/13 12:55:57
+Last edit  : 2024/03/14 12:12:04
 
 
 TODO:
-- include cross-redshift bins
 - IA
 - allow for user-defined t1 and t2 binning to be consistent with treecorr output. (currently the output is on FFT grid of fastnc)
+- implement bin averaging effect.
 '''
 from cosmosis.datablock import option_section, names
 import numpy as np
 import os
 import fastnc
 from astropy.cosmology import wCDM
+
+def get_string_array_1d(options, section, name):
+    # I was not able to utilize
+    # CosmoSIS python API 
+    # options.get_string_array_1d.
+    # This is tentative...
+    o = options.get_string(section, name).split()
+    o = [x for x in o if x]  # Remove empty strings
+    return o    
+
+def get_sample_sombinations(options):
+    o = get_string_array_1d(options, option_section, "sample_combinations")
+    o = [tuple(x.split(',')) for x in o]
+    return o
 
 def setup(options):
     """
@@ -24,7 +38,6 @@ def setup(options):
     """
     # config
     config = {}
-    option_section = "fastnc"
 
     # bisppectrum model (halofit)
     config['bispectrum'] = fastnc.bispectrum.BispectrumHalofit()
@@ -41,13 +54,17 @@ def setup(options):
     config['shear-projection'] = options.get_string(option_section, "projection", default = "x")
 
     # sample combinations
-    config['sample-combinations'] = options.get_string(option_section, "sample_combinations", default = "all")
-    config['sample-combinations'] = config['sample-combinations'].split(' ')
-    config['sample-combinations'] = [tuple(x.split(',')) for x in config['sample-combinations']]
+    config['sample-combinations'] = get_sample_sombinations(options)
     print(config['sample-combinations'])
 
+    # natural component indices
+    if options.has_value(option_section, "mu"):
+        config['mu'] = options.get_int_array_1d(option_section, "mu")
+    else:
+        print('Setting detault mu to [0,1,2,3].')
+        config['mu'] = [0,1,2,3]
+
     # binning
-    config['mu']  = np.array([0,1,2,3], dtype=int)
     config['phi-bin'] = np.linspace(0, np.pi, 20)
 
     return config
@@ -91,8 +108,6 @@ def execute(block, config):
     # 3PCF ############################################
     nc = config['fastnc']
     sctname = "ggg"
-
-    print(config['shear-projection'], 'projection')
 
     for sample_combination in config['sample-combinations']:
         print('calculating sample_combination:', sample_combination)
