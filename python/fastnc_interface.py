@@ -1,6 +1,6 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/03/14 12:12:04
+Last edit  : 2024/03/14 14:02:18
 
 
 TODO:
@@ -65,7 +65,10 @@ def setup(options):
         config['mu'] = [0,1,2,3]
 
     # binning
-    config['phi-bin'] = np.linspace(0, np.pi, 20)
+    config['phi'] = np.linspace(0, np.pi, 20)
+
+    # bin size in log(theta1) = log(theta2)
+    config['dlnt'] = options.get_double(option_section, "dlnt")
 
     return config
 
@@ -117,20 +120,11 @@ def execute(block, config):
         # compute 3PCF
         Gamma = nc.Gamma(
             mu=config['mu'], 
-            phi=config['phi-bin'],
+            phi=config['phi'],
             projection=config['shear-projection'],
+            dlnt=config['dlnt'],
             sample_combination=sample_combination,
             )
-        # Now the Gamma has the shape of (mu.size, phi.size, nc.t1.size, nc.t2.size)
-        # We reshape it to one dimensional array
-        shape = Gamma.shape
-        Gamma = np.reshape(Gamma, -1)
-        # We reshape the bin parameters to one dimensional array as well
-        mu, phi, t1, t2 = np.meshgrid(config['mu'], config['phi-bin'], nc.t1, nc.t2, indexing='ij')
-        mu  = np.reshape(mu, -1)
-        phi = np.reshape(phi, -1)
-        t1  = np.reshape(t1, -1)
-        t2  = np.reshape(t2, -1)
 
         # write to block
         name = ','.join(sample_combination)
@@ -138,10 +132,10 @@ def execute(block, config):
         block[sctname, f'Gamma-imag-{name}'] = Gamma.imag
     
     # write common parameters
-    block[sctname, 'mu'] = mu
-    block[sctname, 'phi'] = phi
-    block[sctname, 't1'] = t1
-    block[sctname, 't2'] = t2
+    block[sctname, 'mu'] = config['mu']
+    block[sctname, 'phi'] = config['phi']
+    block[sctname, 't1'] = nc.t1
+    block[sctname, 't2'] = nc.t2
 
     return 0
 
