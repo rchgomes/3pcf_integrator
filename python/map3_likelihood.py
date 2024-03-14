@@ -52,8 +52,8 @@ def execute(block, config):
     filters = config["filters"]
     mu = block["ggg", 'mu']
     phi = block["ggg", 'phi']
-    t1 = block["ggg", 't1']
-    t2 = block["ggg", 't2']
+    t1 = block["ggg", 't1'] * 180*60/np.pi # in arcmin
+    t2 = block["ggg", 't2'] * 180*60/np.pi # in arcmin
 
     '''TO DO: Get the bin size in logr from input.
     Temporarily, I'm taking the bin size directly from the t2 array values,
