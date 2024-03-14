@@ -1,6 +1,6 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/03/14 14:02:18
+Last edit  : 2024/03/14 14:07:28
 
 
 TODO:
@@ -127,6 +127,13 @@ def execute(block, config):
             )
 
         # write to block
+        # Note that the Gamma has the shape of 
+        # (mu.size, phi.size, t1.size, t2.size)
+        # where 
+        # mu = config['mu']
+        # phi = config['phi']
+        # t1 = nc.t1
+        # t2 = nc.t2
         name = ','.join(sample_combination)
         block[sctname, f'Gamma-real-{name}'] = Gamma.real
         block[sctname, f'Gamma-imag-{name}'] = Gamma.imag
