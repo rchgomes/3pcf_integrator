@@ -1,12 +1,11 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/03/14 14:07:28
+Last edit  : 2024/03/14 14:46:48
 
 
 TODO:
 - IA
 - allow for user-defined t1 and t2 binning to be consistent with treecorr output. (currently the output is on FFT grid of fastnc)
-- implement bin averaging effect.
 '''
 from cosmosis.datablock import option_section, names
 import numpy as np
@@ -68,7 +67,11 @@ def setup(options):
     config['phi'] = np.linspace(0, np.pi, 20)
 
     # bin size in log(theta1) = log(theta2)
-    config['dlnt'] = options.get_double(option_section, "dlnt")
+    if options.has_value(option_section, "dlnt"):
+        config['dlnt'] = options.get_double(option_section, "dlnt")
+    else:
+        print('Setting detault dlnt to None.')
+        config['dlnt'] = None
 
     return config
 

@@ -51,18 +51,9 @@ def execute(block, config):
 
     filters = config["filters"]
     mu = block["ggg", 'mu']
-
-    indices_0 = np.where(mu == 0)
-    indices_1 = np.where(mu == 1)
-    indices_2 = np.where(mu == 2)
-    indices_3 = np.where(mu == 3)
-
-    phi = block["ggg", 'phi'][indices_0]
-    t1 = block["ggg", 't1'][indices_0]
-    t2 = block["ggg", 't2'][indices_0]
-
-    t1 *= 180*60/np.pi
-    t2 *= 180*60/np.pi
+    phi = block["ggg", 'phi']
+    t1 = block["ggg", 't1']
+    t2 = block["ggg", 't2']
 
     '''TO DO: Get the bin size in logr from input.
     Temporarily, I'm taking the bin size directly from the t2 array values,
@@ -71,9 +62,11 @@ def execute(block, config):
     phi_bin_size parameter here.'''
 
     logr_bin_size = np.log(t2[1])-np.log(t2[0])
-    phi_bin_size = np.pi / 20
+    phi_bin_size = phi[1]-phi[0]
 
     '''END OF TO DO'''
+
+    phi, t1, t2 = np.meshgrid(phi, t1, t2, indexing='ij')
 
     zbin_combinations = config["sample-combinations"]
     num_zbin_combinations = config["num_sample"]
@@ -90,13 +83,7 @@ def execute(block, config):
         name = ','.join(zbin_combinations[i])
         gamma = block["ggg", f'Gamma-real-{name}'] + 1j*block["ggg", f'Gamma-imag-{name}']
 
-        gamma0 = gamma[indices_0]
-        gamma1 = gamma[indices_1]
-        gamma2 = gamma[indices_2]
-        gamma3 = gamma[indices_3]
-        gamma_all = np.vstack([gamma0, gamma1, gamma2, gamma3])
-
-        y_temp = calculateMap3(gamma_all,  t2, t1, phi, logr_bin_size, phi_bin_size, filters)
+        y_temp = calculateMap3(gamma, t2, t1, phi, logr_bin_size, phi_bin_size, filters)
         y[i*num_aperture_combinations:(i+1)*num_aperture_combinations] = y_temp
 
     w = y-config['y_obs']

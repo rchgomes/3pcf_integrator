@@ -124,9 +124,9 @@ def calculateMap3(three_pt, d2_vals, d3_vals, phi_vals, logr_bin_size, phi_bin_s
     k2 = filters[1]/filters[0]
     k3 = filters[2]/filters[0]
 
-    s = np.outer(1. / R, d2_vals)
-    d3 = np.outer(1. / R, d3_vals)
-    t = d3 * np.exp(1j * phi_vals) #phi vals in radians
+    s = np.outer(1. / R, d2_vals.ravel())
+    d3 = np.outer(1. / R, d3_vals.ravel())
+    t = d3 * np.exp(1j * phi_vals.ravel()) #phi vals in radians
 
     T0, T1, T2, T3 = _calculateT(s, t, 1., k2, k3)
 
@@ -140,10 +140,10 @@ def calculateMap3(three_pt, d2_vals, d3_vals, phi_vals, logr_bin_size, phi_bin_s
     T3 *= sds * d2t
 
     # Now do the integral by taking the matrix products.
-    gam0 = three_pt[0]
-    gam1 = three_pt[1]
-    gam2 = three_pt[2]
-    gam3 = three_pt[3]
+    gam0 = three_pt[0].ravel()
+    gam1 = three_pt[1].ravel()
+    gam2 = three_pt[2].ravel()
+    gam3 = three_pt[3].ravel()
     mmm = T0.dot(gam0)
     mcmm = T1.dot(gam1)
     mmcm = T2.dot(gam2)
