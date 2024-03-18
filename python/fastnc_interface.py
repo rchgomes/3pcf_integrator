@@ -1,6 +1,6 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/03/18 12:22:06
+Last edit  : 2024/03/18 13:41:51
 
 
 TODO:
@@ -74,7 +74,11 @@ def setup(options):
         config['mu'] = [0,1,2,3]
 
     # binning
-    config['phi'] = np.linspace(0, np.pi, 20)
+    config['phi'] = np.linspace(
+        options.get_double(option_section, "phi-min"), 
+        options.get_double(option_section, "phi-max"),
+        options.get_int(option_section, "n-phi-bin")
+    )
 
     # bin size in log(theta1) = log(theta2)
     if options.has_value(option_section, "dlnt"):
@@ -86,6 +90,16 @@ def setup(options):
     # pixel window function
     config['use-pixwin'] = options.get_bool(option_section, "use-pixwin", default = False)
     config['nside'] = options.get_int(option_section, "nside", default = 1024)
+
+    # scale cuts in theory:
+    # This is a tentative solution to match the scales of Gamma
+    # between measurement and theory
+    # Ideally we should evaluate the theory on the measurement bins
+    # but the current implementation does not accept the user defined theta, phi bins
+    # so, for now, we truncate the scale in theory to match the measurement.
+    config['n-theta-bin'] = options.get_int(option_section, "n-theta-bin")
+    config['theta-min'] = options.get_double(option_section, "theta-min") * np.pi/(180*60.0) # radians
+    config['theta-max'] = options.get_double(option_section, "theta-max") * np.pi/(180*60.0) # radians
 
     return config
 
@@ -155,6 +169,18 @@ def execute(block, config):
             sample_combination=sample_combination,
             )
 
+        # TENTATVIE SOLUTION, need to be improved
+        # tentative scale cuts to truncate the theory Gamma
+        # to meet with the scale of the measurement.
+        sel = (config['theta-min']<=nc.t1) & (nc.t1<=config['theta-max'])
+        Gamma = Gamma[:,:,sel,:][:,:,:,sel]
+        # down-sample to have roughly same number of bins
+        print('Gamma shape before down-sampling,', Gamma.shape)
+        print('desired bin number:', config['n-theta-bin'])
+        skip = int(Gamma.shape[2]/config['n-theta-bin'])
+        Gamma = Gamma[:,:,::skip,::skip]
+        print(Gamma.shape)
+
         # write to block
         # Note that the Gamma has the shape of 
         # (mu.size, phi.size, t1.size, t2.size)
@@ -170,8 +196,12 @@ def execute(block, config):
     # write common parameters
     block[sctname, 'mu'] = config['mu']
     block[sctname, 'phi'] = config['phi']
-    block[sctname, 't1'] = nc.t1
-    block[sctname, 't2'] = nc.t2
+
+    # tentative scale cuts to truncate the theory Gamma
+    # to meet with the scale of the measurement.
+    sel = (config['theta-min']<=nc.t1) & (nc.t1<=config['theta-max'])
+    block[sctname, 't1'] = nc.t1[sel][::skip]
+    block[sctname, 't2'] = nc.t2[sel][::skip]
 
     return 0
 
