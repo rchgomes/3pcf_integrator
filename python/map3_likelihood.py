@@ -50,7 +50,6 @@ def execute(block, config):
     name_likelihood = 'map3_like'
 
     filters = config["filters"]
-    mu = block["ggg", 'mu']
     phi = block["ggg", 'phi']
     t1 = block["ggg", 't1'] * 180*60/np.pi # in arcmin
     t2 = block["ggg", 't2'] * 180*60/np.pi # in arcmin
@@ -84,10 +83,11 @@ def execute(block, config):
         gamma = block["ggg", f'Gamma-real-{name}'] + 1j*block["ggg", f'Gamma-imag-{name}']
 
         y_temp = calculateMap3(gamma, t2, t1, phi, logr_bin_size, phi_bin_size, filters)
+        #y_temp = calculateMap3(gamma, t1, t2, phi, logr_bin_size, phi_bin_size, filters)
         y[i*num_aperture_combinations:(i+1)*num_aperture_combinations] = y_temp
 
+    # likelihood
     w = y-config['y_obs']
-
     chi2 = np.matmul(w,np.matmul(config['inv_cov'],w))
     block[names.likelihoods, name_likelihood] = -0.5 * np.real(chi2)
     print(y)

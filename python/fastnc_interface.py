@@ -1,12 +1,10 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/03/18 13:41:51
+Last edit  : 2024/03/21 18:22:38
 
 
 TODO:
 - IA
-- allow for user-defined t1 and t2 binning to be consistent with treecorr output. (currently the output is on FFT grid of fastnc)
-- phi binning
 '''
 from cosmosis.datablock import option_section, names
 import numpy as np
@@ -31,7 +29,7 @@ def get_sample_sombinations(options):
 def get_healpix_window_function(nside):
     import healpy as hp
     from scipy.interpolate import interp1d
-    w = hp.sphtfunc.pixwin(1024)
+    w = hp.sphtfunc.pixwin(nside)
     l = np.arange(3*nside)
     fnc = interp1d(l, w, kind='linear', bounds_error=False, fill_value=(1,0))
     window = lambda l1, l2, l3: fnc(l1) * fnc(l2) * fnc(l3)
@@ -48,58 +46,59 @@ def setup(options):
     # config
     config = {}
 
-    # bisppectrum model (halofit)
-    config['bispectrum'] = fastnc.bispectrum.BispectrumHalofit()
-
-    # multipole-based 3pcf model (fastnc)
+    # Maximum multipoles
     Lmax   = options.get_int(option_section, "Lmax", default = 30)
     Mmax   = options.get_int(option_section, "Mmax", default = 50)
+    multipole_type = options.get_string(option_section, "multipole_type", default = "legendre")
+
+    ########################################################################################
+    # bisppectrum model (halofit)
+    config_multipole = {'Lmax':Lmax, 'multipole_type':multipole_type}
+    bs = fastnc.bispectrum.BispectrumHalofit(config_multipole=config_multipole)
+    if options.has_value(option_section, "use-pixwin"):
+        bs.set_window_function(get_healpix_window_function(options.get_int(option_section, "nside")))
+    config['bispectrum'] = bs
+
+    ########################################################################################
+    # parse the configs for the 3PCF 
+    config_fftlog  = {}
+    config_fftgrid = {'nfft':options.get_int(option_section, "nfft", default = 150)}
+    projection     = options.get_string(option_section, "projection", default = "x")
+    # Set binning for the 3PCF
+    config_bin     = {}
+    if options.has_value(option_section, "mu"):
+        config_bin['mu'] = options.get_int_array_1d(option_section, "mu")
+    else:
+        print('Setting detault mu to [0,1,2,3].')
+        config_bin['mu'] = [0,1,2,3]
+    # theta binning
+    config_bin['t1'] = np.logspace(
+        np.log10(options.get_double(option_section, "theta-min") * np.pi/(180*60.0)), # radians
+        np.log10(options.get_double(option_section, "theta-max") * np.pi/(180*60.0)), # radians
+        options.get_int(option_section, "n-theta-bin")
+        )
+    # phi binning
+    config_bin['phi'] = np.linspace(
+        options.get_double(option_section, "phi-min"), 
+        options.get_double(option_section, "phi-max"),
+        options.get_int(option_section, "n-phi-bin")
+        )
+    # theta bin size
+    config_bin['dlnt'] = options.get_double(option_section, "dlnt", default = None)
+
+    # Now we instantiate fastnc
     config['fastnc'] = fastnc.fastnc.FastNaturalComponents(
         Lmax, Mmax, 
-        config_bin={'nell12bin':options.get_int(option_section, "nell12bin", default = 150)}
+        projection=projection,
+        multipole_type=multipole_type,
+        config_fftlog = config_fftlog,
+        config_fftgrid= config_fftgrid,
+        config_bin    = config_bin
     )
-
-    # projection
-    config['shear-projection'] = options.get_string(option_section, "projection", default = "x")
 
     # sample combinations
     config['sample-combinations'] = get_sample_sombinations(options)
     print(config['sample-combinations'])
-
-    # natural component indices
-    if options.has_value(option_section, "mu"):
-        config['mu'] = options.get_int_array_1d(option_section, "mu")
-    else:
-        print('Setting detault mu to [0,1,2,3].')
-        config['mu'] = [0,1,2,3]
-
-    # binning
-    config['phi'] = np.linspace(
-        options.get_double(option_section, "phi-min"), 
-        options.get_double(option_section, "phi-max"),
-        options.get_int(option_section, "n-phi-bin")
-    )
-
-    # bin size in log(theta1) = log(theta2)
-    if options.has_value(option_section, "dlnt"):
-        config['dlnt'] = options.get_double(option_section, "dlnt")
-    else:
-        print('Setting detault dlnt to None.')
-        config['dlnt'] = None
-
-    # pixel window function
-    config['use-pixwin'] = options.get_bool(option_section, "use-pixwin", default = False)
-    config['nside'] = options.get_int(option_section, "nside", default = 1024)
-
-    # scale cuts in theory:
-    # This is a tentative solution to match the scales of Gamma
-    # between measurement and theory
-    # Ideally we should evaluate the theory on the measurement bins
-    # but the current implementation does not accept the user defined theta, phi bins
-    # so, for now, we truncate the scale in theory to match the measurement.
-    config['n-theta-bin'] = options.get_int(option_section, "n-theta-bin")
-    config['theta-min'] = options.get_double(option_section, "theta-min") * np.pi/(180*60.0) # radians
-    config['theta-max'] = options.get_double(option_section, "theta-max") * np.pi/(180*60.0) # radians
 
     return config
 
@@ -138,48 +137,21 @@ def execute(block, config):
     )
     # update the interpolation.
     bs.interpolate()
+    bs.decompose(sample_combinations=config['sample-combinations'])
 
     # 3PCF ############################################
     nc = config['fastnc']
     sctname = "ggg"
 
-    # pixel window function
-    # multiplied on bispectrum in Fourier space
-    # This is only needed when compared with simulation
-    # with finite resolution.
-    # Now, this assumes the resolution is determined by the Nside
-    # os healpix.
-    if config['use-pixwin']:
-        print('Applying pixel window function.')
-        window = get_healpix_window_function(config['nside'])
-    else:
-        window = None
-
     for sample_combination in config['sample-combinations']:
         print('calculating sample_combination:', sample_combination)
         # set bispectrum
-        nc.set_bispectrum(bs, sample_combinations=[sample_combination], window=window)
-    
-        # compute 3PCF
-        Gamma = nc.Gamma(
-            mu=config['mu'], 
-            phi=config['phi'],
-            projection=config['shear-projection'],
-            dlnt=config['dlnt'],
-            sample_combination=sample_combination,
-            )
+        nc.set_bispectrum(bs)
+        nc.set_grid()
+        nc.compute(sample_combination=sample_combination)
 
-        # TENTATVIE SOLUTION, need to be improved
-        # tentative scale cuts to truncate the theory Gamma
-        # to meet with the scale of the measurement.
-        sel = (config['theta-min']<=nc.t1) & (nc.t1<=config['theta-max'])
-        Gamma = Gamma[:,:,sel,:][:,:,:,sel]
-        # down-sample to have roughly same number of bins
-        print('Gamma shape before down-sampling,', Gamma.shape)
-        print('desired bin number:', config['n-theta-bin'])
-        skip = int(Gamma.shape[2]/config['n-theta-bin'])
-        Gamma = Gamma[:,:,::skip,::skip]
-        print(Gamma.shape)
+        # stack the Gamma
+        Gamma = np.array([nc.Gamma0, nc.Gamma1, nc.Gamma2, nc.Gamma3])
 
         # write to block
         # Note that the Gamma has the shape of 
@@ -194,14 +166,16 @@ def execute(block, config):
         block[sctname, f'Gamma-imag-{name}'] = Gamma.imag
     
     # write common parameters
-    block[sctname, 'mu'] = config['mu']
-    block[sctname, 'phi'] = config['phi']
+    block[sctname, 'mu'] = nc.mu
+    block[sctname, 'phi'] = nc.phi
+    block[sctname, 't1'] = nc.t1
+    block[sctname, 't2'] = nc.t2
 
     # tentative scale cuts to truncate the theory Gamma
     # to meet with the scale of the measurement.
-    sel = (config['theta-min']<=nc.t1) & (nc.t1<=config['theta-max'])
-    block[sctname, 't1'] = nc.t1[sel][::skip]
-    block[sctname, 't2'] = nc.t2[sel][::skip]
+    # sel = (config['theta-min']<=nc.t1) & (nc.t1<=config['theta-max'])
+    # block[sctname, 't1'] = nc.t1[sel][::skip]
+    # block[sctname, 't2'] = nc.t2[sel][::skip]
 
     return 0
 
