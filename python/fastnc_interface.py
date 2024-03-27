@@ -1,6 +1,6 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/03/21 18:22:38
+Last edit  : 2024/03/26 15:37:55
 
 
 TODO:
@@ -168,14 +168,23 @@ def execute(block, config):
     # write common parameters
     block[sctname, 'mu'] = nc.mu
     block[sctname, 'phi'] = nc.phi
-    block[sctname, 't1'] = nc.t1
-    block[sctname, 't2'] = nc.t2
-
-    # tentative scale cuts to truncate the theory Gamma
-    # to meet with the scale of the measurement.
-    # sel = (config['theta-min']<=nc.t1) & (nc.t1<=config['theta-max'])
-    # block[sctname, 't1'] = nc.t1[sel][::skip]
-    # block[sctname, 't2'] = nc.t2[sel][::skip]
+    # nc.t1 and nc.t2 is the lower edges of bins
+    # block[sctname, 't1'] = nc.t1
+    # block[sctname, 't2'] = nc.t2
+    # Conversion of Gamma to map3 in measurement
+    # uses mean t1 and mean t2 as bin values 
+    # (meand2, meand3 in TreeCorr)
+    # (The other option is to use exp(logmeand2) etc)
+    dlnt = np.diff(np.log(nc.t1))[0]
+    # 1. meant1 = t1min * 2/3 (exp(3dlnt)-1)/(exp(2dlnt)-1)
+    factor = 2.0/3.0*(np.exp(3*dlnt)-1)/(np.exp(2*dlnt)-1)
+    block[sctname, 't1'] = nc.t1 * factor
+    block[sctname, 't2'] = nc.t2 * factor
+    # 2. exp(logmeant1) = t1min * exp( (exp(2dlnt)(2dlnt-1)+1)/2/(exp(2dlnt)-1) )
+    # factor = (np.exp(2*dlnt)*(2*dlnt-1)+1)/2/(np.exp(2*dlnt)-1)
+    # factor = np.exp(factor)
+    # block[sctname, 'meant1'] = nc.t1 * factor
+    # block[sctname, 'meant2'] = nc.t2 * factor
 
     return 0
 
