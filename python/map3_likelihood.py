@@ -84,7 +84,9 @@ def execute(block, config):
 
         y_temp = calculateMap3(gamma, t2, t1, phi, logr_bin_size, phi_bin_size, filters)
         #y_temp = calculateMap3(gamma, t1, t2, phi, logr_bin_size, phi_bin_size, filters)
-        y[i*num_aperture_combinations:(i+1)*num_aperture_combinations] = y_temp
+        block['map3', f'map-bin_{i+1},bin_{i+1},bin_{i+1}'] = y_temp
+        y[i*num_aperture_combinations:(i+1)*num_aperture_combinations] = y_temp 
+    block['map3', 'filters'] = filters
 
     # likelihood
     w = y-config['y_obs']
