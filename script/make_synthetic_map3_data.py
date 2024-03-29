@@ -40,7 +40,7 @@ def write(fname_base, fname_out, data):
         pickle.dump(obj, f)
 
 if __name__ == '__main__':
-    data = read("output/test_2pt-map3-s8om/map3", [(1,1,1), (2,2,2), (3,3,3), (4,4,4)])
+    data = read("output/des-y3-2pt-map3/map3", [(1,1,1), (2,2,2), (3,3,3), (4,4,4)])
     fname_base = "data/nz/map3_dv_COSMOGRID_7Mar24_REDSHIFT_AUTOCORRELATIONS_ONLY.pkl"
     fname_out  = "data/nz/map3_synthetic_desy3-param_REDSHIFT_AUTOCORRELATIONS_ONLY.pkl"
     form = write(fname_base, fname_out, data)
