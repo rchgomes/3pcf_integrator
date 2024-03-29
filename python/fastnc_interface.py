@@ -86,15 +86,10 @@ def setup(options):
     # theta bin size
     config_bin['dlnt'] = options.get_double(option_section, "dlnt", default = None)
 
+    use_cache = options.get_bool(option_section, 'use_cache', default = False)
+
     # Now we instantiate fastnc
-    config['fastnc'] = fastnc.fastnc.FastNaturalComponents(
-        Lmax, Mmax, 
-        projection=projection,
-        multipole_type=multipole_type,
-        config_fftlog = config_fftlog,
-        config_fftgrid= config_fftgrid,
-        config_bin    = config_bin
-    )
+    config['fastnc'] = fastnc.fastnc.FastNaturalComponents( Lmax, Mmax, projection=projection, multipole_type=multipole_type, config_fftlog = config_fftlog, config_fftgrid= config_fftgrid, config_bin    = config_bin, use_cache=use_cache)
 
     # sample combinations
     config['sample-combinations'] = get_sample_sombinations(options)
