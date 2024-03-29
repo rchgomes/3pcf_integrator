@@ -19,3 +19,7 @@ This sources the environmental pathes necessary for cosmosis configs.
 ```
 source setup-3pcf-path.sh
 ```
+
+# TODO if time permits
+- use fits format for data vector
+- implement save_map3 module

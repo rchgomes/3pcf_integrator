@@ -34,13 +34,19 @@ def write(fname_base, fname_out, data):
 
     For now we assume Rafael's data format for CosmoGrid sims.
     """
+    assert fname_base != fname_out, "fname_base and fname_out must be different"
     obj = load_obj(fname_base)
     obj['y_obs'] = data
     with open(fname_out, 'wb') as f:
         pickle.dump(obj, f)
 
 if __name__ == '__main__':
-    data = read("output/des-y3-2pt-map3/map3", [(1,1,1), (2,2,2), (3,3,3), (4,4,4)])
-    fname_base = "data/nz/map3_dv_COSMOGRID_7Mar24_REDSHIFT_AUTOCORRELATIONS_ONLY.pkl"
-    fname_out  = "data/nz/map3_synthetic_desy3-param_REDSHIFT_AUTOCORRELATIONS_ONLY.pkl"
-    form = write(fname_base, fname_out, data)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("data", help="Data")
+    parser.add_argument("fname_out", help="Output file name")
+    parser.add_argument("--fname_base", help="Base file name", default="data/nz/map3_dv_COSMOGRID_7Mar24_REDSHIFT_AUTOCORRELATIONS_ONLY.pkl")
+    args = parser.parse_args()
+
+    data = read(args.data, [(1,1,1), (2,2,2), (3,3,3), (4,4,4)])
+    write(args.fname_base, args.fname_out, data)
