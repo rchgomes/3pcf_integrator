@@ -1,6 +1,6 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/03/26 15:37:55
+Last edit  : 2024/03/29 23:14:15
 
 
 TODO:
@@ -21,9 +21,9 @@ def get_string_array_1d(options, section, name):
     o = [x for x in o if x]  # Remove empty strings
     return o    
 
-def get_sample_sombinations(options):
+def get_sample_sombinations(options, separator=','):
     o = get_string_array_1d(options, option_section, "sample_combinations")
-    o = [tuple(x.split(',')) for x in o]
+    o = [tuple(x.split(separator)) for x in o]
     return o
 
 def get_healpix_window_function(nside):
@@ -116,7 +116,7 @@ def execute(block, config):
     bs.set_source_distribution(
         [block['nz_source', "z"] for _ in range(nzbin)],
         [block['nz_source', "bin_%d" % (i+1)] for i in range(nzbin)],
-        ['bin_%d' % (i+1) for i in range(nzbin)]
+        ['%d' % (i+1) for i in range(nzbin)]
     )
     # set lensing kernel
     bs.compute_lensing_kernel()
@@ -136,7 +136,7 @@ def execute(block, config):
 
     # 3PCF ############################################
     nc = config['fastnc']
-    sctname = "ggg"
+    sctname = "natural_components"
 
     for sample_combination in config['sample-combinations']:
         print('calculating sample_combination:', sample_combination)
@@ -156,9 +156,9 @@ def execute(block, config):
         # phi = config['phi']
         # t1 = nc.t1
         # t2 = nc.t2
-        name = ','.join(sample_combination)
-        block[sctname, f'Gamma-real-{name}'] = Gamma.real
-        block[sctname, f'Gamma-imag-{name}'] = Gamma.imag
+        name = '_'.join(sample_combination)
+        block[sctname, f'real-bin_{name}'] = Gamma.real
+        block[sctname, f'imag-bin_{name}'] = Gamma.imag
     
     # write common parameters
     block[sctname, 'mu'] = nc.mu
