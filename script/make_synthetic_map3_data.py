@@ -23,7 +23,7 @@ def load_obj(name):
 def read(dirname, scombs):
     data = []
     for scomb in scombs:
-        _ = np.loadtxt("{}/map-bin_{},bin_{},bin_{}.txt".format(dirname, scomb[0],scomb[1],scomb[2]))
+        _ = np.loadtxt("{}/map3-bin_{}_{}_{}.txt".format(dirname, scomb[0],scomb[1],scomb[2]))
         data.append(_)
     data = np.hstack(data)
     return data
