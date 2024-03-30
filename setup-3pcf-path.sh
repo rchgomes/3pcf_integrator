@@ -1,6 +1,9 @@
 #!/bin/bash
 # Setup path of the project
 
+# source cosmosis configuration
+source cosmosis-configure
+
 # Common setup for every environment
 here=$(dirname "$(pwd)/${BASH_SOURCE[0]}")
 # path to this project directory, used in the ini file.
