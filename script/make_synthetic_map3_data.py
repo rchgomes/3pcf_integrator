@@ -46,7 +46,10 @@ if __name__ == '__main__':
     parser.add_argument("data", help="Data")
     parser.add_argument("fname_out", help="Output file name")
     parser.add_argument("--fname_base", help="Base file name", default="data/nz/map3_dv_COSMOGRID_7Mar24_REDSHIFT_AUTOCORRELATIONS_ONLY.pkl")
+    parser.add_argument("--scomb", help="sample combinations", default='1,1,1 2,2,2 3,3,3 4,4,4')
     args = parser.parse_args()
 
-    data = read(args.data, [(1,1,1), (2,2,2), (3,3,3), (4,4,4)])
+    scomb = [tuple(map(int, s.split(','))) for s in args.scomb.split()]
+
+    data = read(args.data, scomb)
     write(args.fname_base, args.fname_out, data)
