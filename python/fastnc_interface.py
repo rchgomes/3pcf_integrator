@@ -1,6 +1,6 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/03/29 23:14:15
+Last edit  : 2024/04/08 11:30:35
 
 
 TODO:
@@ -46,50 +46,42 @@ def setup(options):
     # config
     config = {}
 
-    # Maximum multipoles
-    Lmax   = options.get_int(option_section, "Lmax", default = 30)
-    Mmax   = options.get_int(option_section, "Mmax", default = 50)
+    # Common setups
+    Lmax   = options.get_int(option_section, "Lmax", default = 50)
     multipole_type = options.get_string(option_section, "multipole_type", default = "legendre")
 
     ########################################################################################
     # bisppectrum model (halofit)
-    config_multipole = {'Lmax':Lmax, 'multipole_type':multipole_type}
-    bs = fastnc.bispectrum.BispectrumHalofit(config_multipole=config_multipole)
+    bs = fastnc.bispectrum.BispectrumHalofit({'Lmax':Lmax, 'multipole_type':multipole_type})
     if options.has_value(option_section, "use-pixwin"):
         bs.set_window_function(get_healpix_window_function(options.get_int(option_section, "nside")))
     config['bispectrum'] = bs
 
-    ########################################################################################
-    # parse the configs for the 3PCF 
-    config_fftlog  = {}
-    config_fftgrid = {'nfft':options.get_int(option_section, "nfft", default = 150)}
-    projection     = options.get_string(option_section, "projection", default = "x")
-    # Set binning for the 3PCF
-    config_bin     = {}
-    if options.has_value(option_section, "mu"):
-        config_bin['mu'] = options.get_int_array_1d(option_section, "mu")
-    else:
-        print('Setting detault mu to [0,1,2,3].')
-        config_bin['mu'] = [0,1,2,3]
-    # theta binning
-    config_bin['t1'] = np.logspace(
+    ########################################################################################    
+    # 3PCF model (fastnc)
+    t1 = np.logspace(
         np.log10(options.get_double(option_section, "theta-min") * np.pi/(180*60.0)), # radians
         np.log10(options.get_double(option_section, "theta-max") * np.pi/(180*60.0)), # radians
-        options.get_int(option_section, "n-theta-bin")
-        )
-    # phi binning
-    config_bin['phi'] = np.linspace(
+        options.get_int(option_section, "n-theta-bin"))
+    t2 = np.logspace(
+        np.log10(options.get_double(option_section, "theta-min") * np.pi/(180*60.0)), # radians
+        np.log10(options.get_double(option_section, "theta-max") * np.pi/(180*60.0)), # radians
+        options.get_int(option_section, "n-theta-bin"))
+    phi = np.linspace(
         options.get_double(option_section, "phi-min"), 
         options.get_double(option_section, "phi-max"),
-        options.get_int(option_section, "n-phi-bin")
-        )
-    # theta bin size
-    config_bin['dlnt'] = options.get_double(option_section, "dlnt", default = None)
-
-    use_cache = options.get_bool(option_section, 'use_cache', default = False)
-
-    # Now we instantiate fastnc
-    config['fastnc'] = fastnc.fastnc.FastNaturalComponents( Lmax, Mmax, projection=projection, multipole_type=multipole_type, config_fftlog = config_fftlog, config_fftgrid= config_fftgrid, config_bin    = config_bin, use_cache=use_cache)
+        options.get_int(option_section, "n-phi-bin"))
+    config_3pcf = { \
+            'Lmax':Lmax, \
+            'Mmax':options.get_int(option_section, "Mmax", default = 30), \
+            't1':t1, 
+            't2':t2, \
+            'phi':phi, \
+            'dlnt':options.get_double(option_section, "dlnt", default = None), \
+            'mu':options.get_int_array_1d(option_section, "mu") if options.has_value(option_section, "mu") else [0,1,2,3], \
+            'multipole_type':multipole_type, \
+            'cache':options.get_bool(option_section, 'use_cache', default = False)}
+    config['fastnc'] = fastnc.fastnc.FastNaturalComponents(config_3pcf)
 
     # sample combinations
     config['sample-combinations'] = get_sample_sombinations(options)
@@ -131,8 +123,8 @@ def execute(block, config):
         block[names.growth_parameters, "d_z"]
     )
     # update the interpolation.
-    bs.interpolate()
-    bs.decompose(sample_combinations=config['sample-combinations'])
+    bs.interpolate(scombs=config['sample-combinations'])
+    bs.decompose(scombs=config['sample-combinations'])
 
     # 3PCF ############################################
     nc = config['fastnc']
@@ -142,8 +134,8 @@ def execute(block, config):
         print('calculating sample_combination:', sample_combination)
         # set bispectrum
         nc.set_bispectrum(bs)
-        nc.set_grid()
-        nc.compute(sample_combination=sample_combination)
+        # nc.set_grid()
+        nc.compute(scomb=sample_combination)
 
         # stack the Gamma
         Gamma = np.array([nc.Gamma0, nc.Gamma1, nc.Gamma2, nc.Gamma3])
