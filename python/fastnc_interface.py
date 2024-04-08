@@ -52,7 +52,11 @@ def setup(options):
 
     ########################################################################################
     # bisppectrum model (halofit)
-    bs = fastnc.bispectrum.BispectrumHalofit({'Lmax':Lmax, 'multipole_type':multipole_type})
+    config_halofit = {'Lmax':Lmax, 
+                      'multipole_type':multipole_type, 
+                      'NLA':True, 
+                      'multiply_Rb':options.get_bool(option_section, "multiply_Rb", default = False)}
+    bs = fastnc.bispectrum.BispectrumHalofit(config_halofit)
     if options.has_value(option_section, "use-pixwin"):
         bs.set_window_function(get_healpix_window_function(options.get_int(option_section, "nside")))
     config['bispectrum'] = bs
@@ -103,6 +107,10 @@ def execute(block, config):
                         'n':block[names.cosmological_parameters, 'n_s']}
     )
     bs.set_cosmology(cosmo)
+    # Intrinsic parameter
+    bs.set_NLA_param({'AIA':block['intrinsic_alignment_parameters', 'a1'], \
+            'alphaIA':block['intrinsic_alignment_parameters', 'alpha1'] , \
+            'z0':block['intrinsic_alignment_parameters', 'z_piv']})
     # set source distribution
     nzbin = block['nz_source', "nbin"]
     bs.set_source_distribution(
@@ -110,8 +118,6 @@ def execute(block, config):
         [block['nz_source', "bin_%d" % (i+1)] for i in range(nzbin)],
         ['%d' % (i+1) for i in range(nzbin)]
     )
-    # set lensing kernel
-    bs.compute_lensing_kernel()
     # set linear matter power spectrum
     bs.set_pklin(
         block[names.matter_power_lin, 'k_h'],
@@ -123,6 +129,7 @@ def execute(block, config):
         block[names.growth_parameters, "d_z"]
     )
     # update the interpolation.
+    bs.compute_kernel()
     bs.interpolate(scombs=config['sample-combinations'])
     bs.decompose(scombs=config['sample-combinations'])
 
