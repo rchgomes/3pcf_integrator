@@ -101,7 +101,6 @@ class ThreePointDataClass:
             b2 = np.array([b2])
             b3 = np.array([b3])
             signal = np.array([signal])
-        print(z1.size, z2.size, z3.size, b1.size, b2.size, b3.size, signal.size)
         assert z1.size == z2.size == z3.size == b1.size == b2.size == b3.size == signal.size, \
             'All the arrays should have the same size.'
         self.z1 = np.append(self.z1, z1)
@@ -494,6 +493,7 @@ class ThreePointDataClass:
         cov = self.get_covariance(sel)
         if Hartlap:
             nsim = self.nsim4cov
+            assert nsim > n, 'nsim should be greater than n'
             n = cov.shape[0]
             f = (nsim - n - 2) / (nsim - 1)
             cov /= f
@@ -554,7 +554,7 @@ class ThreePointDataClass:
 
     def replace(self, sel):
         """
-        Replace the 3pt data object with the selection/sort array.
+        Replace the 3pt data object using a given selection/sort array.
         Note that this is a **destructive** method.
 
         Args:
