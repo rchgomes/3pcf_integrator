@@ -1,6 +1,6 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/04/08 11:30:35
+Last edit  : 2024/04/10 17:39:01
 
 
 TODO:
@@ -21,10 +21,18 @@ def get_string_array_1d(options, section, name):
     o = [x for x in o if x]  # Remove empty strings
     return o    
 
-def get_sample_sombinations(options, separator=','):
-    o = get_string_array_1d(options, option_section, "sample_combinations")
-    o = [tuple(x.split(separator)) for x in o]
-    return o
+def get_sample_sombinations(options, separator=',',):
+    try:
+        o = get_string_array_1d(options, option_section, "sample_combinations")
+        o = [tuple(x.split(separator)) for x in o]
+        return o
+    except:
+        # special case for preparing the sample_combinations
+        # used for preparing the training data for emulator.
+        # We will train for Gamma w/o LoS integration.
+        print('<<<<< Special case for preparing the training data for emulator. >>>>>>')
+        o = options.get_double_array_1d(option_section, "sample_combinations")
+        return o    
 
 def get_healpix_window_function(nside):
     import healpy as hp
@@ -57,7 +65,7 @@ def setup(options):
                       'NLA':True, 
                       'multiply_Rb':options.get_bool(option_section, "multiply_Rb", default = False)}
     bs = fastnc.bispectrum.BispectrumHalofit(config_halofit)
-    if options.has_value(option_section, "use-pixwin"):
+    if options.has_value(option_section, "use-pixwin") and options.get_bool(option_section, "use-pixwin"):
         bs.set_window_function(get_healpix_window_function(options.get_int(option_section, "nside")))
     config['bispectrum'] = bs
 
@@ -78,6 +86,8 @@ def setup(options):
     config_3pcf = { \
             'Lmax':Lmax, \
             'Mmax':options.get_int(option_section, "Mmax", default = 30), \
+            'projection': options.get_string(option_section, "projection", default = "x"), \
+            'nfft': options.get_int(option_section, "nfft", default = 150), \
             't1':t1, 
             't2':t2, \
             'phi':phi, \
@@ -90,7 +100,7 @@ def setup(options):
     # sample combinations
     config['sample-combinations'] = get_sample_sombinations(options)
     print(config['sample-combinations'])
-
+    
     return config
 
 def execute(block, config):
@@ -150,12 +160,10 @@ def execute(block, config):
         # write to block
         # Note that the Gamma has the shape of 
         # (mu.size, phi.size, t1.size, t2.size)
-        # where 
-        # mu = config['mu']
-        # phi = config['phi']
-        # t1 = nc.t1
-        # t2 = nc.t2
-        name = '_'.join(sample_combination)
+        if isinstance(sample_combination, tuple):
+            name = '_'.join(sample_combination)
+        else:
+            name = str(sample_combination)
         block[sctname, f'real-bin_{name}'] = Gamma.real
         block[sctname, f'imag-bin_{name}'] = Gamma.imag
     

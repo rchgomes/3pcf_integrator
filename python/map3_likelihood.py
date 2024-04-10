@@ -24,10 +24,18 @@ def get_string_array_1d(options, section, name):
     o = [x for x in o if x]  # Remove empty strings
     return o    
     
-def get_sample_sombinations(options, separator=','):
-    o = get_string_array_1d(options, option_section, "sample_combinations")
-    o = [tuple(x.split(separator)) for x in o]
-    return o
+def get_sample_sombinations(options, separator=',',):
+    try:
+        o = get_string_array_1d(options, option_section, "sample_combinations")
+        o = [tuple(x.split(separator)) for x in o]
+        return o
+    except:
+        # special case for preparing the sample_combinations
+        # used for preparing the training data for emulator.
+        # We will train for Gamma w/o LoS integration.
+        print('<<<<< Special case for preparing the training data for emulator. >>>>>>')
+        o = options.get_double_array_1d(option_section, "sample_combinations")
+        return o    
 
 def setup(options):
 
@@ -83,7 +91,10 @@ def execute(block, config):
         print(zbin_combinations[i])
         print(zbin_combinations)
         print(num_zbin_combinations)
-        name = '_'.join(zbin_combinations[i])
+        if isinstance(zbin_combinations[i], tuple):
+            name = '_'.join(zbin_combinations[i])
+        else:
+            name = str(zbin_combinations[i])
         gamma = block[section_nc, f'real-bin_{name}'] + 1j*block[section_nc, f'imag-bin_{name}']
 
         y_temp = calculateMap3(gamma, t2, t1, phi, logr_bin_size, phi_bin_size, filters)
