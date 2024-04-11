@@ -1,9 +1,10 @@
 import numpy as np
 from astropy.table import Table
 from astropy.io import fits
+import matplotlib.pyplot as plt
 
 class ThreePointDataClass:
-    def __init__(self, name, bin_type, kernel1=None, kernel2=None, kernel3=None):
+    def __init__(self, name, bin_type, kernel1=None, kernel2=None, kernel3=None, sortz=True):
         """
         Initialize the 3pt data object.
 
@@ -14,6 +15,7 @@ class ThreePointDataClass:
             kernel1 (str)  : The kernel type for bin1.
             kernel2 (str)  : The kernel type for bin2.
             kernel3 (str)  : The kernel type for bin3.
+            sortz (bool)   : Whether to identify the permutations of (z1, z2, z3)
         
         Description:
             This method initializes the 3pt data object with the provided 
@@ -38,6 +40,7 @@ class ThreePointDataClass:
         self.kernel1 = kernel1 or 'nz_source'
         self.kernel2 = kernel2 or 'nz_source'
         self.kernel3 = kernel3 or 'nz_source'
+        self.sortz   = sortz
         self.set_empty()
 
     def set_empty(self):
@@ -66,7 +69,7 @@ class ThreePointDataClass:
         # size
         self.size = 0
 
-    def set_value(self, z1, z2, z3, b1, b2, b3, signal):
+    def set_value(self, z1, z2, z3, b1, b2, b3, signal, where=None):
         """
         Set the value of the 3pt data.
 
@@ -78,6 +81,7 @@ class ThreePointDataClass:
             b2 (float, array): The value of bin2.
             b3 (float, array): The value of bin3.
             signal (float, array): The signal value.
+            where (array): where to put the values. If None, append.
 
         Description:
             This method sets the value of the 3pt data by appending the provided 
@@ -93,32 +97,46 @@ class ThreePointDataClass:
             If bin_type is 'Multipole', the values of b1, b2, and b3 are appended
             to the arrays theta1, theta2, and M respectively.
         """
-        if np.isscalar(z1):
-            z1 = np.array([z1])
-            z2 = np.array([z2])
-            z3 = np.array([z3])
-            b1 = np.array([b1])
-            b2 = np.array([b2])
-            b3 = np.array([b3])
-            signal = np.array([signal])
+        z1 = np.atleast_1d(z1)
+        z2 = np.atleast_1d(z2)
+        z3 = np.atleast_1d(z3)
+        b1 = np.atleast_1d(b1)
+        b2 = np.atleast_1d(b2)
+        b3 = np.atleast_1d(b3)
+        signal = np.atleast_1d(signal)
+        if z1.size == 1 and b1.size > 1:
+            z1 = np.repeat(z1, b1.size)
+            z2 = np.repeat(z2, b2.size)
+            z3 = np.repeat(z3, b3.size)
         assert z1.size == z2.size == z3.size == b1.size == b2.size == b3.size == signal.size, \
-            'All the arrays should have the same size.'
-        self.z1 = np.append(self.z1, z1)
-        self.z2 = np.append(self.z2, z2)
-        self.z3 = np.append(self.z3, z3)
+            f'All the arrays should have the same size. The sizes are {z1.size}, {z1.size}, {z2.size}, ' \
+            f'{z3.size}, {b1.size}, {b2.size}, {b3.size}, {signal.size}'
+        # Identify the 
+        if self.sortz:
+            z1, z2, z3 = np.sort([z1, z2, z3], axis=0)
+        # Set the values
+        def put(z, y, sel):
+            if sel is None:
+                z = np.append(z, y)
+            else:
+                z[sel] = y
+            return z
+        self.z1 = put(self.z1, z1, where)
+        self.z2 = put(self.z2, z2, where)
+        self.z3 = put(self.z3, z3, where)
         if self.bin_type == 'SSS':
-            self.theta1 = np.append(self.theta1, b1)
-            self.theta2 = np.append(self.theta2, b2)
-            self.theta3 = np.append(self.theta3, b3)
+            self.theta1 = put(self.theta1, b1, where)
+            self.theta2 = put(self.theta2, b2, where)
+            self.theta3 = put(self.theta3, b3, where)
         elif self.bin_type == 'SAS':
-            self.theta1 = np.append(self.theta1, b1)
-            self.theta2 = np.append(self.theta2, b2)
-            self.phi = np.append(self.phi, b3)
+            self.theta1 = put(self.theta1, b1, where)
+            self.theta2 = put(self.theta2, b2, where)
+            self.phi = put(self.phi, b3, where)
         elif self.bin_type == 'Multipole':
-            self.theta1 = np.append(self.theta1, b1)
-            self.theta2 = np.append(self.theta2, b2)
-            self.M = np.append(self.M, b3)
-        self.signal = np.append(self.signal, signal)
+            self.theta1 = put(self.theta1, b1, where)
+            self.theta2 = put(self.theta2, b2, where)
+            self.M = put(self.M, b3, where)
+        self.signal = put(self.signal, signal, where)
         self.size = self.z1.size
 
     def set_covariance(self, cov, nsim=0):
@@ -170,6 +188,7 @@ class ThreePointDataClass:
         header['KERNEL_1'] = self.kernel1
         header['KERNEL_2'] = self.kernel2
         header['KERNEL_3'] = self.kernel3
+        header['SORTZ']    = self.sortz
         header['3PT_DATA'] = True
         # create hdu
         hdu = fits.BinTableHDU(table, header=header)
@@ -204,6 +223,7 @@ class ThreePointDataClass:
             hdul = fits.open(filename_or_hdul)
         else:
             hdul = filename_or_hdul
+        # signal
         hdu = hdul[1]
         # read header
         header = hdu.header
@@ -212,7 +232,8 @@ class ThreePointDataClass:
         kernel1 = header['KERNEL_1']
         kernel2 = header['KERNEL_2']
         kernel3 = header['KERNEL_3']
-        obj = cls(name, bin_type, kernel1, kernel2, kernel3)
+        sortz   = header['SORTZ']
+        obj = cls(name, bin_type, kernel1, kernel2, kernel3, sortz)
         # assign values
         data = hdu.data
         if bin_type == 'SSS':
@@ -228,6 +249,10 @@ class ThreePointDataClass:
             b2 = data['THETA2']
             b3 = data['M']
         obj.set_value(data['BIN1'], data['BIN2'], data['BIN3'], b1, b2, b3, data['VALUE'])
+        # covariance
+        if len(hdul) > 2:
+            hdu = hdul[2]
+            obj.set_covariance(hdu.data, hdu.header['NSIM'])
         return obj
 
     def _parse_selection(self, val, which, condition, helper):
@@ -281,14 +306,18 @@ class ThreePointDataClass:
         
         Example:
             To select all the data points with z1 = 1, use:
-            >>> sel = data.selection_zbin(1, 'z1')
+            >>> sel = data.selection_z_bin(1, 'z1')
             >>> data_z1 = data[sel]
             To select all the data points with z = 2, use:
-            >>> sel = data.selection_zbin(2, 'z')
+            >>> sel = data.selection_z_bin(2, 'z')
             >>> data_z = data[sel]
             To select all the data points with z1 >= 3, use:
-            >>> sel = data.selection_zbin(3, 'z1', '>=')
+            >>> sel = data.selection_z_bin(3, 'z1', '>=')
             >>> data_z1 = data[sel]
+            Special case: to get (z1, z2, z3) == (1,2,3) without caring the
+            order of z1, z2, z3, then use:
+            >>> sel = data.selection_z_bin([1,2,3], 'z123')
+            >>> data_z123 = data[sel]
 
         Returns:
             sel (array): The selection array.
@@ -305,6 +334,9 @@ class ThreePointDataClass:
                 raise ValueError('which should be z1, z2 or z3')
             return sel
 
+        if which == 'z123':
+            which = ['z1', 'z2', 'z3']
+            z_val = np.sort(z_val)
         sel = self._parse_selection(z_val, which, condition, helper)
         return sel
 
@@ -493,6 +525,7 @@ class ThreePointDataClass:
         cov = self.get_covariance(sel)
         if Hartlap:
             nsim = self.nsim4cov
+            n = cov.shape[0]
             assert nsim > n, 'nsim should be greater than n'
             n = cov.shape[0]
             f = (nsim - n - 2) / (nsim - 1)
@@ -500,20 +533,39 @@ class ThreePointDataClass:
         icov = np.linalg.inv(cov)
         return icov
 
-    def get_z_bin(self, sel=None):
+    def get_rcc(self, sel=None):
         """
-        Get the redshift bin arrays.
+        Get the correlation coefficient matrix.
 
         Args:
             sel (array): The selection array.
         
         Returns:
+            rcc (array): The reduced covariance matrix.
+        """
+        cov = self.get_covariance(sel)
+        diag= np.diag(cov)
+        rcc = cov / np.sqrt(np.outer(diag, diag))
+        return rcc
+
+    def get_z_bin(self, sel=None, unique=False):
+        """
+        Get the redshift bin arrays.
+
+        Args:
+            sel (array): The selection array.
+            unique (bool): Whether to return unique redshift bins.
+        
+        Returns:
             z1, z2, z3 (array): The redshift bin arrays.
         """
         if sel is None:
-            return self.z1, self.z2, self.z3
+            z1, z2, z3 = self.z1, self.z2, self.z3
         else:
-            return self.z1[sel], self.z2[sel], self.z3[sel]
+            z1, z2, z3 = self.z1[sel], self.z2[sel], self.z3[sel]
+        if unique:
+            z1, z2, z3 = np.unique([z1, z2, z3], axis=1)
+        return np.array([z1, z2, z3])
     
     def get_t_bin(self, sel=None):
         """
@@ -527,19 +579,26 @@ class ThreePointDataClass:
         """
         if self.bin_type == 'SSS':
             if sel is None:
-                return self.theta1, self.theta2, self.theta3
+                b1, b2, b3 = self.theta1, self.theta2, self.theta3
             else:
-                return self.theta1[sel], self.theta2[sel], self.theta3[sel]
+                b1, b2, b3 = self.theta1[sel], self.theta2[sel], self.theta3[sel]
         elif self.bin_type == 'SAS':
             if sel is None:
-                return self.theta1, self.theta2, self.phi
+                b1, b2, b3 = self.theta1, self.theta2, self.phi
             else:
-                return self.theta1[sel], self.theta2[sel], self.phi[sel]
+                b1, b2, b3 = self.theta1[sel], self.theta2[sel], self.phi[sel]
         elif self.bin_type == 'Multipole':
             if sel is None:
-                return self.theta1, self.theta2, self.M
+                b1, b2, b3 = self.theta1, self.theta2, self.M
             else:
-                return self.theta1[sel], self.theta2[sel], self.M[sel]
+                b1, b2, b3 = self.theta1[sel], self.theta2[sel], self.M[sel]
+        return np.array([b1, b2, b3])
+
+    def get_snr(self, sel=None):
+        icov = self.get_inverse_covariance(sel)
+        s    = self.get_signal(sel)
+        snr = np.matmul(s, np.matmul(icov, s))**0.5
+        return snr
 
     def copy(self):
         """
@@ -611,6 +670,195 @@ class ThreePointDataClass:
         obj = self.copy()
         obj.replace(sel)
         return obj
+
+    def _plot_z_bin(self, ax, colors, sel=None):
+        """
+        Plot the redshift bins.
+
+        Args:
+            ax (axis): The axis object.
+            colors (list): The colors of the plot.
+        """
+        z1, z2, z3 = self.get_z_bin(sel=sel)
+        ax.plot(z1, color=colors[0], label=r'$z_1$')
+        ax.plot(z2, color=colors[1], label=r'$z_2$')
+        ax.plot(z3, color=colors[2], label=r'$z_3$')
+        ax.set_ylabel(r'redshift bin')
+        ax.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
+        return ax
+    
+    def _plot_t_bin(self, ax, colors, sel=None):
+        """
+        Plot the triangle bins.
+
+        Args:
+            ax (axis): The axis object.
+            colors (list): The colors of the plot.
+        """
+        t1, t2, t3 = self.get_t_bin(sel=sel)
+        if self.bin_type == 'SSS':
+            ax.plot(t1, color=colors[0], label=r'$\theta_1$')
+            ax.plot(t2, color=colors[1], label=r'$\theta_2$')
+            ax.plot(t3, color=colors[2], label=r'$\theta_3$')
+        elif self.bin_type == 'SAS':
+            ax.plot(t1, color=colors[0], label=r'$\theta_1$')
+            ax.plot(t2, color=colors[1], label=r'$\theta_2$')
+            ax.plot(np.nan, color=colors[2], label=r'$\phi$')
+            _ = ax.twinx()
+            _.plot(t3, color=colors[2], label=r'$\phi$')
+        elif self.bin_type == 'Multipole':
+            ax.plot(t1, color=colors[0], label=r'$\theta_1$')
+            ax.plot(t2, color=colors[1], label=r'$\theta_2$')
+            ax.plot(np.nan, color=colors[2], label=r'$M$')
+            _ = ax.twinx()
+            _.plot(t3, color=colors[2], label=r'$\phi$')
+        ax.set_ylabel(r'triangle bin')
+        ax.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
+        return ax
+    
+    def _plot_signal(self, ax, color, s=None, errorbar=True, yscale='lin', sel=None):
+        """
+        Plot the signal.
+
+        Args:
+            ax (axis): The axis object.
+            color (str): The color of the plot.
+            s (array): The signal array, default is None.
+            errorbar (bool): Whether to plot the error bars.
+            yscale (str): The yscale of the plot.
+        """
+        s = self.get_signal(sel=sel) if s is None else s
+        ax.set_yscale(yscale)
+        if errorbar and hasattr(self, 'cov'):
+            cov = self.get_covariance(sel=sel)
+            ax.errorbar(np.arange(s.size), s, yerr=np.sqrt(np.diag(cov)), fmt='.', color=color)
+        else:
+            ax.plot(s, color=color)
+        ax.set_ylabel(r'signal')
+        return ax
+
+    def _plot_residual(self, ax, color, s, errorbar=True, norm=True):
+        """
+        Plot the residual signal.
+
+        Args:
+            ax (axis): The axis object.
+            color (str): The color of the plot.
+            s (array): The signal array.
+            errorbar (bool): Whether to plot the error bars.
+            norm (bool): Whether to normalize the residual.
+        """
+        res = self.get_signal()-s
+        if norm:
+            res /= np.sqrt(np.diag(self.cov))
+        if errorbar and hasattr(self, 'cov'):
+            err = np.ones(res.size) if norm else np.sqrt(np.diag(self.cov)) 
+            ax.errorbar(np.arange(res.size), res, yerr=err, fmt='.', color=color)
+        else:
+            ax.plot(s, color=color)
+        ax.set_ylabel(r'residual')
+        ax.axhline(0.0, color='gray')
+        ax.grid()
+        return ax
+
+    def plot(self, figsize=(10,6), signal_color=None, bin_colors=None, errorbar=True, yscale='lin', sel=None):
+        """
+        Plot the 3pt data.
+
+        Args:
+            figsize (tuple): The figure size.
+            signal_color (str): The color of the signal.
+            bin_colors (list): The colors of the bins.
+            errorbar (bool): Whether to plot the error bars.
+            yscale (str): The yscale of the plot.
+        """
+        # set defaults
+        if bin_colors is None:
+            bin_colors = [None, None, None]
+        bin_colors = [c or 'C%d'%i for i, c in enumerate(bin_colors)]
+        # Data ordering before sort
+        fig, axes = plt.subplots(3,1, figsize=(10, 6), sharex=True)
+        plt.subplots_adjust(hspace=0.02)
+        # redshift bin
+        self._plot_z_bin(axes[0], bin_colors, sel=sel)
+        # triangle bin
+        self._plot_t_bin(axes[1], bin_colors, sel=sel)
+        # signal
+        self._plot_signal(axes[2], signal_color, errorbar=errorbar, yscale=yscale, sel=sel)
+        # set x label
+        axes[2].set_xlabel('Data index')
+        return fig
+
+    def plot_residual(self, s, figsize=(10,6), signal_colors=None, bin_colors=None, errorbar=True, yscale='lin'):
+        """
+        Plot the 3pt data.
+
+        Args:
+            figsize (tuple): The figure size.
+            signal_colors (str): The colors of the signal.
+            bin_colors (list): The colors of the bins.
+            errorbar (bool): Whether to plot the error bars.
+            yscale (str): The yscale of the plot.
+        """
+        # set defaults
+        if bin_colors is None:
+            bin_colors = [None, None, None]
+        bin_colors = [c or 'C%d'%i for i, c in enumerate(bin_colors)]
+        if signal_colors is None:
+            signal_colors = ['k', 'r']
+        # Data ordering before sort
+        fig, axes = plt.subplots(4,1, figsize=(10, 6), sharex=True)
+        plt.subplots_adjust(hspace=0.02)
+        # redshift bin
+        self._plot_z_bin(axes[0], bin_colors)
+        # triangle bin
+        self._plot_t_bin(axes[1], bin_colors)
+        # signal in this class
+        self._plot_signal(axes[2], signal_colors[0], errorbar=errorbar, yscale=yscale)
+        # external signal
+        self._plot_signal(axes[2], signal_colors[1], s=s, errorbar=errorbar, yscale=yscale)
+        # plot residual
+        self._plot_residual(axes[3], signal_colors[0], s, errorbar=errorbar)
+        # set x label
+        axes[2].set_xlabel('Data index')
+        return fig
+
+    def plot_covarivance(self, figsize=(7,7), log=True, cmap='bwr', sel=None):
+        """
+        Plot the covariance matrix.
+
+        Args:
+            figsize (tuple): The figure size.
+            log (bool): Whether to plot the log of the covariance matrix.
+            cmap (str): The color map.
+            sel (array): The selection array.
+        """
+        if hasattr(self, 'cov'):
+            z = self.get_covariance(sel=sel)
+            if log:
+                z = np.log10(np.abs(z)) * np.sign(z)
+            vmax = np.max(np.abs(z))
+            fig, ax = plt.subplots(figsize=figsize)
+            ax.imshow(z, cmap=cmap, vmin=-vmax, vmax=vmax)
+            return fig
+        else:
+            print('Covariance matrix is not available.')
+
+    def plot_rcc(self, figsize=(7,7), cmap='bwr', sel=None):
+        """
+        Plot the correlation coefficient matrix.
+
+        Args:
+            figsize (tuple): The figure size.
+            cmap (str): The color map.
+            sel (array): The selection array.
+        """
+        if hasattr(self, 'cov'):
+            z = self.get_rcc(sel=sel)
+            fig, ax = plt.subplots(figsize=figsize)
+            ax.imshow(z, cmap=cmap, vmin=-1, vmax=1)
+        else:
+            print('Covariance matrix is not available.')
 
 def compare(array, val, condition):
     if condition == '==':
