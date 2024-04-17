@@ -12,12 +12,19 @@ def get_string_array_1d(options, section, name):
     # This is tentative...
     o = options.get_string(section, name).split()
     o = [x for x in o if x]  # Remove empty strings
-    return o    
-    
-def get_sample_sombinations(options, separator=','):
-    o = get_string_array_1d(options, option_section, "sample_combinations")
-    o = [tuple(x.split(separator)) for x in o]
     return o
+
+def get_sample_sombinations(options, separator=',',):
+    try:
+        o = get_string_array_1d(options, option_section, "sample_combinations")
+        o = [tuple(x.split(separator)) for x in o]
+        return o
+    except:
+        # special case for preparing the sample_combinations
+        # used for preparing the training data for emulator.
+        # We will train for Gamma w/o LoS integration.
+        o = options.get_double_array_1d(option_section, "sample_combinations")
+        return o
 
 def setup(options):
     config = dict()
