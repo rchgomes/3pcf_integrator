@@ -62,7 +62,7 @@ def setup(options):
     # bisppectrum model (halofit)
     config_halofit = {'Lmax':Lmax, 
                       'multipole_type':multipole_type, 
-                      'NLA':True, 
+                      'NLA':options.get_bool(option_section, 'NLA', default=True),  
                       'multiply_Rb':options.get_bool(option_section, "multiply_Rb", default = False)}
     bs = fastnc.bispectrum.BispectrumHalofit(config_halofit)
     if options.has_value(option_section, "use-pixwin") and options.get_bool(option_section, "use-pixwin"):
