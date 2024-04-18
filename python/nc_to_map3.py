@@ -54,7 +54,10 @@ def execute(block, config):
     # convert natural component to map3:
     block['map3', 'filters'] = filters
     for sample_combination in config["sample-combinations"]:
-        name = '_'.join(sample_combination)
+        if isinstance(sample_combination, tuple):
+            name = '_'.join(sample_combination)
+        else:
+            name = str(sample_combination)
         gamma = block[section_nc, f'real-bin_{name}'] + 1j*block[section_nc, f'imag-bin_{name}']
         map3 = calculateMap3(gamma, t2, t1, phi, logr_bin_size, phi_bin_size, filters)
         block['map3', f'map3-bin_{name}'] = map3
