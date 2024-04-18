@@ -112,6 +112,7 @@ def execute(block, config):
                 H0=100*block[names.cosmological_parameters, 'h0'], \
                 Om0=block[names.cosmological_parameters, 'omega_m'], \
                 Ode0=1.0-block[names.cosmological_parameters, 'omega_m'], \
+                w0 = block[names.cosmological_parameters, 'w'], \
                 meta = {'sigma8':block[names.cosmological_parameters, 'sigma_8'], \
                         'n':block[names.cosmological_parameters, 'n_s']}
     )
