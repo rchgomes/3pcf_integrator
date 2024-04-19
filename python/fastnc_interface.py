@@ -141,7 +141,7 @@ def execute(block, config):
     # set baryon paramter
     if block.has_value('baryon_parameters', 'fb'):
         fb = block['baryon_parameters', 'fb']
-        bs.set_baryon_params({'fb', fb})
+        bs.set_baryon_param({'fb': fb})
     # update the interpolation.
     bs.compute_kernel()
     bs.interpolate(scombs=config['sample-combinations'])
