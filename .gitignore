@@ -1,3 +1,7 @@
+# submit script
+submitjob*.sh
+
+
 .DS_Store
 .vscode/
 output/

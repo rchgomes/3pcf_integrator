@@ -4,7 +4,6 @@ This module convert natural-component (nc) of shear 3pcf to map3.
 from cosmosis.datablock import option_section, names
 import numpy as np
 from fast_map3 import calculateMap3
-from utils import get_sample_combinations
 
 def setup(options):
     config = dict()
@@ -23,7 +22,10 @@ def execute(block, config):
     # convert natural component to map3:
     block['map3', 'filters'] = block["map3", "filters"]
     for sample_combination in block["map3", "sample-combinations"]:
-        name = '_'.join(sample_combination)
+        if isinstance(sample_combination, tuple):
+            name = '_'.join(sample_combination)
+        else:
+            name = str(sample_combination)
         gamma = block[section_nc, f'real-bin_{name}'] + 1j*block[section_nc, f'imag-bin_{name}']
         map3 = calculateMap3(gamma, t2, t1, phi, logr_bin_size, phi_bin_size, filters)
         block['map3', f'map3-bin_{name}'] = map3

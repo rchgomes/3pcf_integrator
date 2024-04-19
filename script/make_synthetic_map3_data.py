@@ -37,6 +37,7 @@ def write(fname_base, fname_out, data):
     """
     assert fname_base != fname_out, "fname_base and fname_out must be different"
     obj = load_obj(fname_base)
+    assert obj['y_obs'].size == data.size
     obj['y_obs'] = data
     with open(fname_out, 'wb') as f:
         pickle.dump(obj, f)

@@ -41,8 +41,7 @@ def setup(options):
     # bisppectrum model (halofit)
     config_halofit = {'Lmax':Lmax, 
                       'multipole_type':multipole_type, 
-                      'NLA':True, 
-                      'multiply_Rb':options.get_bool(option_section, "multiply_Rb", default = False)}
+                      'NLA':options.get_bool(option_section, 'NLA', default=True)} 
     bs = fastnc.bispectrum.BispectrumHalofit(config_halofit)
     if options.has_value(option_section, "use-pixwin") and options.get_bool(option_section, "use-pixwin"):
         bs.set_window_function(get_healpix_window_function(options.get_int(option_section, "nside")))
@@ -92,6 +91,7 @@ def execute(block, config):
                 H0=100*block[names.cosmological_parameters, 'h0'], \
                 Om0=block[names.cosmological_parameters, 'omega_m'], \
                 Ode0=1.0-block[names.cosmological_parameters, 'omega_m'], \
+                w0 = block[names.cosmological_parameters, 'w'], \
                 meta = {'sigma8':block[names.cosmological_parameters, 'sigma_8'], \
                         'n':block[names.cosmological_parameters, 'n_s']}
     )
@@ -117,6 +117,10 @@ def execute(block, config):
         block[names.growth_parameters, "z"],
         block[names.growth_parameters, "d_z"]
     )
+    # set baryon paramter
+    if block.has_value('baryon_parameters', 'fb'):
+        fb = block['baryon_parameters', 'fb']
+        bs.set_baryon_param({'fb': fb})
     # update the interpolation.
     bs.compute_kernel()
     bs.interpolate(scombs=config['sample-combinations'])
