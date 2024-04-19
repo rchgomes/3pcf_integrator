@@ -20,12 +20,12 @@ def execute(block, config):
     phi, t1, t2 = np.meshgrid(phi, t1, t2, indexing='ij')
 
     # convert natural component to map3:
-    block['map3', 'filters'] = block["map3", "filters"]
-    for sample_combination in block["map3", "sample-combinations"]:
-        if isinstance(sample_combination, tuple):
-            name = '_'.join(sample_combination)
+    for scomb in block["map3", "sample_combinations"]:
+        if np.isscalar(scomb):
+            name = str(scomb)
         else:
-            name = str(sample_combination)
+            name = '_'.join([str(s) for s in scomb])
+        filters = block['map3', 'filters_'+name]
         gamma = block[section_nc, f'real-bin_{name}'] + 1j*block[section_nc, f'imag-bin_{name}']
         map3 = calculateMap3(gamma, t2, t1, phi, logr_bin_size, phi_bin_size, filters)
         block['map3', f'map3-bin_{name}'] = map3

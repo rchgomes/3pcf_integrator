@@ -1,17 +1,12 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/04/16 17:30:07
-
-
-TODO:
-- IA
+Last edit  : 2024/04/19 16:31:52
 '''
 from cosmosis.datablock import option_section, names
 import numpy as np
 import os
 import fastnc
 from astropy.cosmology import wCDM
-from utils import get_sample_combinations
 
 def get_healpix_window_function(nside):
     import healpy as hp
@@ -23,13 +18,6 @@ def get_healpix_window_function(nside):
     return window
 
 def setup(options):
-    """
-    Necessary keys in the ini file:
-    - Lmax: maximum multipole
-    - Mmax: maximum multipole
-    - l12bin: number of bins for l12
-    - projection: projection of shear, x, cent, ortho (default: x)
-    """
     # config
     config = {}
 
@@ -74,10 +62,6 @@ def setup(options):
             'multipole_type':multipole_type, \
             'cache':options.get_bool(option_section, 'use_cache', default = False)}
     config['fastnc'] = fastnc.fastnc.FastNaturalComponents(config_3pcf)
-
-    # # sample combinations
-    # config['sample-combinations'] = get_sample_combinations(options)
-    # print(config['sample-combinations'])
     
     return config
 
@@ -105,7 +89,7 @@ def execute(block, config):
     bs.set_source_distribution(
         [block['nz_source', "z"] for _ in range(nzbin)],
         [block['nz_source', "bin_%d" % (i+1)] for i in range(nzbin)],
-        ['%d' % (i+1) for i in range(nzbin)]
+        [(i+1) for i in range(nzbin)]
     )
     # set linear matter power spectrum
     bs.set_pklin(
@@ -123,8 +107,8 @@ def execute(block, config):
         bs.set_baryon_param({'fb': fb})
     # update the interpolation.
     bs.compute_kernel()
-    bs.interpolate(scombs=config['sample-combinations'])
-    bs.decompose(scombs=config['sample-combinations'])
+    bs.interpolate(scombs=block['natural_components', 'sample_combinations'])
+    bs.decompose(scombs=block['natural_components', 'sample_combinations'])
 
     # 3PCF ############################################
     nc = config['fastnc']
@@ -143,10 +127,10 @@ def execute(block, config):
         # write to block
         # Note that the Gamma has the shape of 
         # (mu.size, phi.size, t1.size, t2.size)
-        if isinstance(scomb, tuple):
-            name = '_'.join(scomb)
-        else:
+        if np.isscalar(scomb):
             name = str(scomb)
+        else:
+            name = '_'.join([str(s) for s in scomb])
         block[sctname, f'real-bin_{name}'] = Gamma.real
         block[sctname, f'imag-bin_{name}'] = Gamma.imag
     

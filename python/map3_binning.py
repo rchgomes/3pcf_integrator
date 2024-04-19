@@ -11,16 +11,23 @@ import os
 from threepoint import ThreePointDataClass
 
 def setup(options):
-    fname = options.get_string(option_section, "3pt_file")
+    config = {}
+    fname = options.get_string(option_section, "data_file")
     thpt = ThreePointDataClass.from_fits(fname)
-    scombs = thpt.get_z_bin(unique=True)
-    filters= {}
+    # Apply selection here
+    selection = np.ones(thpt.size, dtype=bool)
+
+
+
+    thpt.replace(selection)
+    # get binning
+    scombs  = thpt.get_z_bin(unique=True).T
+    filters = {}
     for scomb in scombs:
         sel = thpt.selection_z_bin(scomb, 'z123', condition='==')
-        filters[scomb] = thpt.get_t_bin(sel=sel)
-    # Apply selection here
-
-    # put on config
+        name= '_'.join([str(s) for s in scomb])
+        filters[name] = thpt.get_t_bin(sel=sel)
+    # put them on config
     config['sample_combinations'] = scombs
     config['filters'] = filters
 
@@ -30,7 +37,8 @@ def execute(block, config):
     # map3:
     block['map3', 'sample_combinations'] = config['sample_combinations']
     for scomb in config['sample_combinations']:
-        block['map3', 'filters_'+'_'.join(scomb)] = config['filter'][scomb]
+        name= '_'.join([str(s) for s in scomb])
+        block['map3', 'filters_{}'.format(name)] = config['filters'][name]
     # Because the natural components are also needed for map3
     # we need to inform the z-bin combination to the natural component
     block['natural_components', 'sample_combinations'] = config['sample_combinations']

@@ -139,6 +139,36 @@ class ThreePointDataClass:
         self.signal = put(self.signal, signal, where)
         self.size = self.z1.size
 
+    def where_to_set(self, z1, z2, z3, b1, b2, b3):
+        z1 = np.atleast_1d(z1)
+        z2 = np.atleast_1d(z2)
+        z3 = np.atleast_1d(z3)
+        b1 = np.atleast_1d(b1)
+        b2 = np.atleast_1d(b2)
+        b3 = np.atleast_1d(b3)
+        if z1.size == 1 and b1.size > 1:
+            z1 = np.repeat(z1, b1.size)
+            z2 = np.repeat(z2, b2.size)
+            z3 = np.repeat(z3, b3.size)
+        assert z1.size == z2.size == z3.size == b1.size == b2.size == b3.size, \
+            f'All the arrays should have the same size. The sizes are {z1.size}, {z1.size}, {z2.size}, ' \
+            f'{z3.size}, {b1.size}, {b2.size}, {b3.size}'
+        # Identify the 
+        if self.sortz:
+            z1, z2, z3 = np.sort([z1, z2, z3], axis=0)
+        # determine
+        where = []
+        for _z1, _z2, _z3, _b1, _b2, _b3 in zip(z1, z2, z3, b1, b2, b3):
+            sel = (self.z1==_z1) & (self.z2==_z2) & (self.z3==_z3)
+            if self.bin_type == 'SSS':
+                sel &= (self.theta1==_b1) & (self.theta2==_b2) & (self.theta3==_b3)
+            elif self.bin_type == 'SAS':
+                sel &= (self.theta1==_b1) & (self.theta2==_b2) & (self.phi==_b3)
+            elif self.bin_type == 'Multipole':
+                sel &= (self.theta1==_b1) & (self.theta2==_b2) & (self.M==_b3)
+            where.append(np.arange(self.size)[sel][0])
+        return np.array(where)
+
     def set_covariance(self, cov, nsim=0):
         """
         Set the covariance matrix.
@@ -761,7 +791,7 @@ class ThreePointDataClass:
         ax.grid()
         return ax
 
-    def plot(self, figsize=(10,6), signal_color=None, bin_colors=None, errorbar=True, yscale='lin', sel=None):
+    def plot(self, figsize=(10,6), signal_color=None, bin_colors=None, errorbar=True, yscale='linear', sel=None):
         """
         Plot the 3pt data.
 
@@ -839,7 +869,7 @@ class ThreePointDataClass:
                 z = np.log10(np.abs(z)) * np.sign(z)
             vmax = np.max(np.abs(z))
             fig, ax = plt.subplots(figsize=figsize)
-            ax.imshow(z, cmap=cmap, vmin=-vmax, vmax=vmax)
+            ax.imshow(z, cmap=cmap, vmin=-vmax, vmax=vmax, origin='lower')
             return fig
         else:
             print('Covariance matrix is not available.')
@@ -856,7 +886,7 @@ class ThreePointDataClass:
         if hasattr(self, 'cov'):
             z = self.get_rcc(sel=sel)
             fig, ax = plt.subplots(figsize=figsize)
-            ax.imshow(z, cmap=cmap, vmin=-1, vmax=1)
+            ax.imshow(z, cmap=cmap, vmin=-1, vmax=1, origin='lower')
         else:
             print('Covariance matrix is not available.')
 
