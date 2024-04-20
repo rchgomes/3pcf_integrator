@@ -4,8 +4,7 @@ This script converts the Rafael's pkl data to the threepoint data class.
 import numpy as np
 import pickle
 import os,sys
-cwd = os.getcwd()
-sys.path.append(os.path.join(cwd,'../python'))
+sys.path.append(os.path.join(os.path.dirname(__file__),'../python'))
 import threepoint
 
 def load_obj(name):
@@ -79,8 +78,24 @@ def main4():
     fname_out = 'data/nz/map3_dv_NOISY_COSMOGRID_10Apr24_ALL_ZCORRELATIONS.fits'
     convert_pkl2dataclass(fname_pkl, z1, z2, z3, t1, t2, t3, nsims, fname_out)
 
+def main5():
+    """full zbin"""
+    fname_pkl = 'data/nz/map3_dv_COSMOGRID_19Apr24.pkl'
+    fname_out = 'data/nz/map3_dv_COSMOGRID_19Apr24.fits'
+    z = np.array([[1,1,1], [1,1,2], [1,1,3], [1,1,4], [1,2,2], 
+                  [1,2,3], [1,2,4], [1,3,3], [1,3,4], [1,4,4], 
+                  [2,2,2], [2,2,3], [2,2,4], [2,3,3], [2,3,4], 
+                  [2,4,4], [3,3,3], [3,3,4], [3,4,4], [4,4,4]])
+    z1, z2, z3 = z.T
+    t1 = [7.0, 14.0, 25.0, 40.0]
+    t2 = [7.0, 14.0, 25.0, 40.0]
+    t3 = [7.0, 14.0, 25.0, 40.0]
+    nsims = 400
+    convert_pkl2dataclass(fname_pkl, z1, z2, z3, t1, t2, t3, nsims, fname_out)
+
 if __name__ == '__main__':
-    main1()
-    main2()
-    main3()
-    main4()
+    # main1()
+    # main2()
+    # main3()
+    # main4()
+    main5()
