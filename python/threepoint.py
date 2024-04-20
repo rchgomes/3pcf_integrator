@@ -892,14 +892,14 @@ class ThreePointDataClass:
 
 def compare(array, val, condition):
     if condition == '==':
-        return array == val
+        return val == array
     elif condition == '>':
-        return array > val
+        return val > array
     elif condition == '<':
-        return array < val
+        return val < array
     elif condition == '>=':
-        return array >= val
+        return val >= array
     elif condition == '<=':
-        return array <= val
+        return val <= array
     else:
         raise ValueError('Condition "{}" not recognized.'.format(condition))
