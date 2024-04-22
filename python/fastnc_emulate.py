@@ -1,24 +1,15 @@
-'''
-Author     : Sunao Sugiyama
-Last edit  : 2024/04/10 17:39:01
-
-
-TODO:
-- IA
-'''
 from cosmosis.datablock import option_section, names
 import numpy as np
 import os
 import fastnc
 from astropy.cosmology import wCDM
+from cosmopower import cosmopower_NN
+import pickle
 
 def get_string_array_1d(options, section, name):
-    # I was not able to utilize
-    # CosmoSIS python API 
-    # options.get_string_array_1d.
-    # This is tentative...
+
     o = options.get_string(section, name).split()
-    o = [x for x in o if x]  # Remove empty strings
+    o = [x for x in o if x]
     return o    
 
 def get_sample_sombinations(options, separator=',',):
@@ -36,6 +27,13 @@ def get_healpix_window_function(nside):
     window = lambda l1, l2, l3: fnc(l1) * fnc(l2) * fnc(l3)
     return window
 
+def load_obj(name):
+    try:
+        with open(name + '.pkl', 'rb') as f:
+            return pickle.load(f)
+    except:
+        with open(name + '.pkl', 'rb') as f:
+            return pickle.load(f, encoding='latin1')
 
 def rescale_params(params, scale):
     params_rescaled = np.zeros_like(params)
@@ -81,15 +79,20 @@ def setup(options):
                       'NLA':True, 
                       'multiply_Rb':options.get_bool(option_section, "multiply_Rb", default = False)}
     bs = fastnc.bispectrum.BispectrumHalofit(config_halofit)
-    if options.has_value(option_section, "use-pixwin") and options.get_bool(option_section, "use-pixwin"):
-        bs.set_window_function(get_healpix_window_function(options.get_int(option_section, "nside")))
+    #if options.has_value(option_section, "use-pixwin") and options.get_bool(option_section, "use-pixwin"):
+    #    bs.set_window_function(get_healpix_window_function(options.get_int(option_section, "nside")))
     config['bispectrum'] = bs
 
     # sample combinations
     config['sample-combinations'] = get_sample_sombinations(options)
     print(config['sample-combinations'])
+    config["num_sample"] = len(config['sample-combinations'])
 
-    filter_num = options.get_int(option_section,"num_filters", default = 4)
+    filter_1 = options.get_double_array_1d(option_section, "theta_filter_1")
+    filter_2 = options.get_double_array_1d(option_section, "theta_filter_2")
+    filter_3 = options.get_double_array_1d(option_section, "theta_filter_3")
+    filter_num = len(filter_1)
+
     zarray = options.get_double_array_1d(option_section, "z_values")
 
     modes = np.arange(filter_num*len(zarray))
@@ -97,7 +100,6 @@ def setup(options):
                           modes=modes,
                           n_hidden=[64, 256, 1024, 1024, 512, 256, 128],
                           )
-
 
     model_filename = options.get_string(option_section, "model_filename")
     cp_nn.restore(model_filename)
@@ -108,37 +110,47 @@ def setup(options):
 
     config['rescaling_params'] = rescaling_values['params']
     config['rescaling_features'] = rescaling_values['features']
-    config['filter_num'] = filter_num
+    config["filter_num"] = filter_num
     config['zarray'] = zarray
+    config['network'] = cp_nn
+
+    path_chains = options.get_string(option_section, "path_chains", default = "")
+    info = load_obj(path_chains)
+    inv_cov,y_obs= info['inv_cov'],info['y_obs']
+    config["inv_cov"] = inv_cov
+    config["y_obs"] = y_obs
+    config["cov"] = info['cov']
     
     return config
 
 def execute(block, config):
 
-    filter_num = config['filter_num']
-    zarray = config['zarray']
+    name_likelihood = 'emu_map3_like'
 
+    filter_num = config["filter_num"]
+    zarray = config['zarray']
+    cp_nn = config['network']
 
     parameters = np.zeros(5)
     parameters[0] = block[names.cosmological_parameters, 'omega_m']
-    parameters[1] = block[names.cosmological_parameters, 's8']
+    parameters[1] = block[names.cosmological_parameters, 'S_8']
     parameters[2] = block[names.cosmological_parameters, 'h0']
     parameters[3] = block[names.cosmological_parameters, 'omega_b']
     parameters[4] = block[names.cosmological_parameters, 'n_s']
 
     params_for_network = rescale_params(parameters, config['rescaling_params'])
-    test_params_dict = {'Omega_m': params_for_network[0],
-                        's8': params_for_network[1],
-                        'h0': params_for_network[2],
-                        'Omega_b': params_for_network[3],
-                        'ns': params_for_network[4]}
+    test_params_dict = {'Omega_m': [params_for_network[0]],
+                        's8': [params_for_network[1]],
+                        'h0': [params_for_network[2]],
+                        'Omega_b': [params_for_network[3]],
+                        'ns': [params_for_network[4]]}
 
     predictions = cp_nn.predictions_np(test_params_dict)
     predictions_rescaled = post_process(predictions, config['rescaling_features'])
 
     predictions_newshape = np.zeros(shape=(len(zarray),filter_num))
     for i in range(filter_num):
-        predictions_newshape[:,i] = predictions_rescaled[i::filter_num]
+        predictions_newshape[:,i] = predictions_rescaled[:,i::filter_num]
 
     # BISPECTRUM ######################################
     # update bispectrum with inputs:
@@ -178,8 +190,11 @@ def execute(block, config):
 
     sctname = "map3"
 
+    y = []
+
     for sample_combination in config['sample-combinations']:
 
+        name = sample_combination[0] + sample_combination[1] + sample_combination[2]
         chi = bs.z2chi(zarray)
 
         z2g0 = bs.z2g_dict[sample_combination[0]]
@@ -188,9 +203,23 @@ def execute(block, config):
 
         weight = z2g0(zarray) * z2g1(zarray) * z2g2(zarray) / chi * (1+zarray)**3
 
-        map3 = np.einsum('ij,i->ij',predictions_newshape,weight)
+        map3 = np.einsum('ij,i->j',predictions_newshape,weight)
+        print('map3shape', np.shape(map3))
 
+        y.append(map3)
         block[sctname, f'map3-bin_{name}'] = map3
+
+    print('shapey', np.shape(y))
+    y = np.array(y)
+    y_all = y.flatten()
+
+    # likelihood
+    w = y_all-config['y_obs']
+    chi2 = np.matmul(w,np.matmul(config['inv_cov'],w))
+    block[names.likelihoods, name_likelihood] = -0.5 * np.real(chi2)
+    print(y)
+    np.save("emulated_map3_trial0", y_all)
+    print(config['y_obs'])
 
     return 0
 
