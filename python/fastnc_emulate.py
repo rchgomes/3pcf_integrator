@@ -203,7 +203,8 @@ def execute(block, config):
 
         weight = z2g0(zarray) * z2g1(zarray) * z2g2(zarray) / chi * (1+zarray)**3
 
-        map3 = np.einsum('ij,i->j',predictions_newshape,weight)
+        tmp = np.einsum('ij,i->ij',predictions_newshape,weight)
+        map3 = np.trapz(tmp,chi, axis=0)
         print('map3shape', np.shape(map3))
 
         y.append(map3)
@@ -218,7 +219,7 @@ def execute(block, config):
     chi2 = np.matmul(w,np.matmul(config['inv_cov'],w))
     block[names.likelihoods, name_likelihood] = -0.5 * np.real(chi2)
     print(y)
-    np.save("emulated_map3_trial0", y_all)
+    #np.save("emulated_map3_trial1", y_all)
     print(config['y_obs'])
 
     return 0
