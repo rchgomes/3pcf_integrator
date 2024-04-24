@@ -37,6 +37,7 @@ def execute(block, config):
     chi2 = np.matmul(diff, np.matmul(icov, diff))
 
     block[names.likelihoods, 'map3_like'] = -0.5*chi2
+    block[names.data_vector, 'map3_chi2'] = chi2
 
     return 0
 
