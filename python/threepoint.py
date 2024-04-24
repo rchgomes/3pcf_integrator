@@ -746,7 +746,7 @@ class ThreePointDataClass:
         ax.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
         return ax
     
-    def _plot_signal(self, ax, color, s=None, errorbar=True, yscale='lin', sel=None):
+    def _plot_signal(self, ax, color, s=None, errorbar=True, yscale='linear', sel=None):
         """
         Plot the signal.
 
@@ -819,7 +819,7 @@ class ThreePointDataClass:
         axes[2].set_xlabel('Data index')
         return fig
 
-    def plot_residual(self, s, figsize=(10,6), signal_colors=None, bin_colors=None, errorbar=True, yscale='lin'):
+    def plot_residual(self, s, figsize=(10,6), signal_colors=None, bin_colors=None, errorbar=True, yscale='linear'):
         """
         Plot the 3pt data.
 
