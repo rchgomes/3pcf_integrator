@@ -93,9 +93,25 @@ def main5():
     nsims = 400
     convert_pkl2dataclass(fname_pkl, z1, z2, z3, t1, t2, t3, nsims, fname_out)
 
+def main6():
+    """full bin 320 sims"""
+    fname_pkl = 'data/nz/map3_dv_NOISY_COSMOGRID_11Apr24_ALL_ZCORRELATIONS_320SIMS.pkl'
+    fname_out = 'data/nz/map3_dv_NOISY_COSMOGRID_11Apr24_ALL_ZCORRELATIONS_320SIMS.fits'
+    z = np.array([[1,1,1], [1,1,2], [1,1,3], [1,1,4], [1,2,2], 
+                  [1,2,3], [1,2,4], [1,3,3], [1,3,4], [1,4,4], 
+                  [2,2,2], [2,2,3], [2,2,4], [2,3,3], [2,3,4], 
+                  [2,4,4], [3,3,3], [3,3,4], [3,4,4], [4,4,4]])
+    z1, z2, z3 = z.T
+    t1 = [7.0, 14.0, 25.0, 40.0]
+    t2 = [7.0, 14.0, 25.0, 40.0]
+    t3 = [7.0, 14.0, 25.0, 40.0]
+    nsims = 400
+    convert_pkl2dataclass(fname_pkl, z1, z2, z3, t1, t2, t3, nsims, fname_out)
+
 if __name__ == '__main__':
     # main1()
     # main2()
     # main3()
     # main4()
-    main5()
+    # main5()
+    main6()

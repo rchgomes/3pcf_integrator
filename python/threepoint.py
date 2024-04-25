@@ -541,6 +541,11 @@ class ThreePointDataClass:
         else:
             return self.cov[np.ix_(sel, sel)]
     
+    def get_std(self, sel=None):
+        cov = self.get_covariance(sel)
+        std = np.sqrt(np.diag(cov))
+        return std
+    
     def get_inverse_covariance(self, sel=None, Hartlap=True):
         """
         Get the inverse covariance matrix.
@@ -701,6 +706,49 @@ class ThreePointDataClass:
         obj.replace(sel)
         return obj
 
+    def reduce_by_z_bin_selection(self, scombs, verbose=False):
+        """
+        scombs must be a list of followings:
+        - all
+        - auto
+        - cross
+        - #,#,#  (e.g. 1.1.1   or 1.2.3)
+        """
+        if len(scombs) == 0:
+            scombs = ['all']
+        
+        n = np.max(self.get_z_bin(unique=True)) # number of zbins
+        scombs2 = []
+        for scomb in scombs:
+            if scomb == 'all':
+                for i in range(1,n+1):
+                    for j in range(i, n+1):
+                        for k in range(j, n+1):
+                            scombs2.append([i,j,k])
+            if scomb == 'auto':
+                for i in range(1,n+1):
+                    scombs2.append([i,i,i])
+            if scomb == 'cross':
+                for i in range(1,n+1):
+                    for j in range(i, n+1):
+                        for k in range(j, n+1):
+                            if not (i==j==k):
+                                scombs2.append([i,j,k])
+            if ',' in scomb:
+                scombs2.append([int(i) for i in scomb.split(',')])
+        scombs = np.array(scombs2)
+        del scombs2
+
+        if verbose:
+            print('Preselection on sample_combination', self.size) 
+        sel = np.zeros(self.size, dtype=bool)
+        for scomb in scombs:
+            sel |= self.selection_z_bin(scomb, 'z123', condition='==')
+        assert np.sum(sel) > 0, 'No data after selection!'
+        self.replace(sel)
+        if verbose:
+            print('Postselection on sample_combination', self.size)
+
     def _plot_z_bin(self, ax, colors, sel=None):
         """
         Plot the redshift bins.
@@ -746,7 +794,7 @@ class ThreePointDataClass:
         ax.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
         return ax
     
-    def _plot_signal(self, ax, color, s=None, errorbar=True, yscale='linear', sel=None):
+    def _plot_signal(self, ax, color, s=None, errorbar=True, yscale='linear', sel=None, nt=0):
         """
         Plot the signal.
 
@@ -756,12 +804,15 @@ class ThreePointDataClass:
             s (array): The signal array, default is None.
             errorbar (bool): Whether to plot the error bars.
             yscale (str): The yscale of the plot.
+            sel (array): The selection array.
+            nt (int): The power of t to multiply the signal.
         """
         s = self.get_signal(sel=sel) if s is None else s
+        resc = self.get_t_bin(sel=sel)[0,:]**nt
         ax.set_yscale(yscale)
         if errorbar and hasattr(self, 'cov'):
-            cov = self.get_covariance(sel=sel)
-            ax.errorbar(np.arange(s.size), s, yerr=np.sqrt(np.diag(cov)), fmt='.', color=color)
+            std = self.get_std(sel=sel)
+            ax.errorbar(np.arange(s.size), s*resc, yerr=std*resc, fmt='.', color=color)
         else:
             ax.plot(s, color=color)
         ax.set_ylabel(r'signal')
@@ -791,7 +842,7 @@ class ThreePointDataClass:
         ax.grid()
         return ax
 
-    def plot(self, figsize=(10,6), signal_color=None, bin_colors=None, errorbar=True, yscale='linear', sel=None):
+    def plot(self, figsize=(10,6), signal_color=None, bin_colors=None, errorbar=True, yscale='linear', sel=None, nt=0):
         """
         Plot the 3pt data.
 
@@ -814,7 +865,7 @@ class ThreePointDataClass:
         # triangle bin
         self._plot_t_bin(axes[1], bin_colors, sel=sel)
         # signal
-        self._plot_signal(axes[2], signal_color, errorbar=errorbar, yscale=yscale, sel=sel)
+        self._plot_signal(axes[2], signal_color, errorbar=errorbar, yscale=yscale, sel=sel, nt=nt)
         # set x label
         axes[2].set_xlabel('Data index')
         return fig

@@ -1,9 +1,10 @@
 from cosmosis.datablock import option_section, names
 import numpy as np
 import os
-import fastnc
+import pickle
 from astropy.cosmology import wCDM
 from cosmopower import cosmopower_NN
+import fastnc
 
 def get_healpix_window_function(nside):
     import healpy as hp
@@ -137,13 +138,12 @@ def execute(block, config):
             name = '_'.join([str(s) for s in scomb])
 
         chi = bs.z2chi(zarray)
-        z2g0 = bs.z2g_dict[sample_combination[0]]
-        z2g1 = bs.z2g_dict[sample_combination[1]]
-        z2g2 = bs.z2g_dict[sample_combination[2]]
+        z2g0 = bs.z2g_dict[scomb[0]]
+        z2g1 = bs.z2g_dict[scomb[1]]
+        z2g2 = bs.z2g_dict[scomb[2]]
         weight = z2g0(zarray) * z2g1(zarray) * z2g2(zarray) / chi * (1+zarray)**3
         tmp = np.einsum('ij,i->ij',predictions_newshape,weight)
         map3 = np.trapz(tmp,chi, axis=0)
-        print('map3shape', np.shape(map3))
         block[sctname, f'map3-bin_{name}'] = map3
 
     return 0
