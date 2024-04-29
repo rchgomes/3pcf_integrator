@@ -794,7 +794,7 @@ class ThreePointDataClass:
         ax.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
         return ax
     
-    def _plot_signal(self, ax, color, s=None, errorbar=True, yscale='linear', sel=None, nt=0):
+    def _plot_signal(self, ax, color, s=None, errorbar=True, yscale='linear', sel=None, nt=0, xshift=0):
         """
         Plot the signal.
 
@@ -812,7 +812,7 @@ class ThreePointDataClass:
         ax.set_yscale(yscale)
         if errorbar and hasattr(self, 'cov'):
             std = self.get_std(sel=sel)
-            ax.errorbar(np.arange(s.size), s*resc, yerr=std*resc, fmt='.', color=color)
+            ax.errorbar(np.arange(s.size)+xshift, s*resc, yerr=std*resc, fmt='.', color=color)
         else:
             ax.plot(s, color=color)
         ax.set_ylabel(r'signal')
