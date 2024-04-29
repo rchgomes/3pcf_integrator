@@ -1,5 +1,6 @@
 from cosmosis.datablock import option_section, names
 import numpy as np
+from scipy.interpolate import interp1d
 import os
 import pickle
 from astropy.cosmology import wCDM
@@ -35,6 +36,16 @@ def post_process(array, scale):
         out_array[:, i] = 10 ** (tmp)
 
     return (out_array)
+
+def upsampling(z, pred, n):
+    if n <= len(z):
+        return z, pred
+    z_new = np.linspace(z.min(), z.max(), n)
+    pred_new = np.zeros((n, pred.shape[1]))
+    for i in range(pred.shape[1]):
+        f = interp1d(z, pred[:, i])
+        pred_new[:, i] = f(z_new)
+    return z_new, pred_new
 
 def setup(options):
     """
@@ -76,6 +87,7 @@ def setup(options):
     config["filter_num"] = filter_num
     config['zarray'] = zarray
     config['network'] = cp_nn
+    config['nz_upsampling'] = options.get_int(option_section, "nz_upsampling", default=100)
 
     return config
 
@@ -130,6 +142,8 @@ def execute(block, config):
     bs.compute_kernel()
 
     sctname = "map3"
+
+    zarray, predictions_newshape = upsampling(zarray, predictions_newshape, 100)
 
     for scomb in block['natural_components', 'sample_combinations']:
         if np.isscalar(scomb):
