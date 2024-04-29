@@ -1,5 +1,6 @@
 from cosmosis.datablock import option_section, names
 import numpy as np
+from scipy.interpolate import interp1d
 import os
 import fastnc
 from astropy.cosmology import wCDM
@@ -192,18 +193,28 @@ def execute(block, config):
 
     y = []
 
+    zarray_long = np.linspace(0.05,1.4,num=100)
+    predict_long = np.zeros(shape=(len(zarray_long), filter_num))
+
+    for theta_ind in range(filter_num):
+        predict_interp = interp1d(zarray, predictions_newshape[:,theta_ind])
+        predict_long[:, theta_ind] = predict_interp(zarray_long)
+
     for sample_combination in config['sample-combinations']:
 
         name = sample_combination[0] + sample_combination[1] + sample_combination[2]
-        chi = bs.z2chi(zarray)
+        #chi = bs.z2chi(zarray)
+        chi = bs.z2chi(zarray_long)
 
         z2g0 = bs.z2g_dict[sample_combination[0]]
         z2g1 = bs.z2g_dict[sample_combination[1]]
         z2g2 = bs.z2g_dict[sample_combination[2]]
 
-        weight = z2g0(zarray) * z2g1(zarray) * z2g2(zarray) / chi * (1+zarray)**3
+        #weight = z2g0(zarray) * z2g1(zarray) * z2g2(zarray) / chi * (1+zarray)**3
+        weight = z2g0(zarray_long) * z2g1(zarray_long) * z2g2(zarray_long) / chi * (1 + zarray_long) ** 3
 
-        tmp = np.einsum('ij,i->ij',predictions_newshape,weight)
+        #tmp = np.einsum('ij,i->ij',predictions_newshape,weight)
+        tmp = np.einsum('ij,i->ij', predict_long, weight)
         map3 = np.trapz(tmp,chi, axis=0)
         print('map3shape', np.shape(map3))
 
@@ -219,7 +230,8 @@ def execute(block, config):
     chi2 = np.matmul(w,np.matmul(config['inv_cov'],w))
     block[names.likelihoods, name_likelihood] = -0.5 * np.real(chi2)
     print(y)
-    #np.save("emulated_map3_trial1", y_all)
+    #np.save("emulated_map3_trial2", y_all)
+    #np.save("emulated_map3_29Apr_network", y_all)
     print(config['y_obs'])
 
     return 0
