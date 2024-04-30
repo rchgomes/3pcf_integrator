@@ -146,10 +146,7 @@ def execute(block, config):
     zarray, predictions_newshape = upsampling(zarray, predictions_newshape, 100)
 
     for scomb in block['natural_components', 'sample_combinations']:
-        if np.isscalar(scomb):
-            name = str(scomb)
-        else:
-            name = '_'.join([str(s) for s in scomb])
+        name = '_'.join([str(s) for s in scomb])
 
         chi = bs.z2chi(zarray)
         z2g0 = bs.z2g_dict[scomb[0]]
