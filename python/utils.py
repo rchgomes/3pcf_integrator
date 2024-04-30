@@ -1,3 +1,4 @@
+
 import numpy as np
 import matplotlib.pyplot as plt
 from getdist import MCSamples
@@ -52,15 +53,17 @@ def read_des_chain(fname, take=None):
         'intrinsic_alignment_parameters--a1':['a1', r'A_1'], \
         'intrinsic_alignment_parameters--a2':['a2', r'A_2'], \
         'intrinsic_alignment_parameters--alpha1': ['alpha1', r'\alpha_1'], \
-        'intrinsic_alignment_parameters--alpha2': ['alpha2', r'\alpha_2']}
+        'intrinsic_alignment_parameters--alpha2': ['alpha2', r'\alpha_2'], \
+        'DATA_VECTOR--2PT_CHI2': ['2pt-chi2', r'\chi^2_{\rm 2pt}'], \
+        'DATA_VECTOR--MAP3_CHI2': ['map3-chi2', r'\chi^2_{\rm map3}']}
     chain, params, labels = read_cosmosis_chain(fname, mapping)
     print(params)
     chain, params, labels = preduce(chain, params, labels, take)
     return chain, params, labels
 
-def to_mcsamples(chain, params, labels):
+def to_mcsamples(chain, params, labels, **kwargs):
     w = chain[:,params.index('weight')]
-    samples = MCSamples(samples=chain, names=params, labels=labels, weights=w)
+    samples = MCSamples(samples=chain, names=params, labels=labels, weights=w, **kwargs)
     return samples
 
 def wplot(chain, params, labels):
