@@ -14,7 +14,28 @@ def load_obj(name):
         except:
             with open(name + '.pkl', 'rb') as f:
                 return pickle.load(f, encoding='latin1')
-                
+
+def get_string_array_1d(options, section, name):
+    # I was not able to utilize
+    # CosmoSIS python API 
+    # options.get_string_array_1d.
+    # This is tentative...
+    o = options.get_string(section, name).split()
+    o = [x for x in o if x]  # Remove empty strings
+    return o    
+    
+def get_sample_sombinations(options, separator=',',):
+    try:
+        o = get_string_array_1d(options, option_section, "sample_combinations")
+        o = [tuple(x.split(separator)) for x in o]
+        return o
+    except:
+        # special case for preparing the sample_combinations
+        # used for preparing the training data for emulator.
+        # We will train for Gamma w/o LoS integration.
+        print('<<<<< Special case for preparing the training data for emulator. >>>>>>')
+        o = options.get_double_array_1d(option_section, "sample_combinations")
+        return o    
 
 def setup(options):
 
@@ -36,9 +57,7 @@ def setup(options):
     config["filters"] = all_filters
 
     # sample combinations
-    config['sample-combinations'] = options.get_string(option_section, "sample_combinations", default = "all")
-    config['sample-combinations'] = config['sample-combinations'].split(' ')
-    config['sample-combinations'] = [tuple(x.split(',')) for x in config['sample-combinations']]
+    config['sample-combinations'] = get_sample_sombinations(options)
 
     config["num_sample"] = len(config['sample-combinations'])
     config["num_aperture"] = len(filter_1)
@@ -50,22 +69,14 @@ def execute(block, config):
     name_likelihood = 'map3_like'
 
     filters = config["filters"]
-    mu = block["ggg", 'mu']
-    phi = block["ggg", 'phi']
-    t1 = block["ggg", 't1'] * 180*60/np.pi # in arcmin
-    t2 = block["ggg", 't2'] * 180*60/np.pi # in arcmin
 
-    '''TO DO: Get the bin size in logr from input.
-    Temporarily, I'm taking the bin size directly from the t2 array values,
-    I'm assuming the phi bin size will remain hard coded, but we could put 
-    it as an input for fastnc. In this case, we would also change the 
-    phi_bin_size parameter here.'''
-
+    # Get bins for natural component predictions:
+    section_nc = 'natural_components'
+    phi = block[section_nc, 'phi']
+    t1  = block[section_nc, 't1'] * 180*60/np.pi # in arcmin
+    t2  = block[section_nc, 't2'] * 180*60/np.pi # in arcmin
     logr_bin_size = np.log(t2[1])-np.log(t2[0])
     phi_bin_size = phi[1]-phi[0]
-
-    '''END OF TO DO'''
-
     phi, t1, t2 = np.meshgrid(phi, t1, t2, indexing='ij')
 
     zbin_combinations = config["sample-combinations"]
@@ -80,19 +91,26 @@ def execute(block, config):
         print(zbin_combinations[i])
         print(zbin_combinations)
         print(num_zbin_combinations)
-        name = ','.join(zbin_combinations[i])
-        gamma = block["ggg", f'Gamma-real-{name}'] + 1j*block["ggg", f'Gamma-imag-{name}']
+        if isinstance(zbin_combinations[i], tuple):
+            name = '_'.join(zbin_combinations[i])
+        else:
+            name = str(zbin_combinations[i])
+        gamma = block[section_nc, f'real-bin_{name}'] + 1j*block[section_nc, f'imag-bin_{name}']
 
-        y_temp = calculateMap3(gamma, t2, t1, phi, logr_bin_size, phi_bin_size, filters)
-        y[i*num_aperture_combinations:(i+1)*num_aperture_combinations] = y_temp
+        y_temp = np.real(calculateMap3(gamma, t2, t1, phi, logr_bin_size, phi_bin_size, filters))
+        #y_temp = calculateMap3(gamma, t1, t2, phi, logr_bin_size, phi_bin_size, filters)
+        block['map3', f'map3-bin_{name}'] = y_temp
+        y[i*num_aperture_combinations:(i+1)*num_aperture_combinations] = y_temp 
+    block['map3', 'filters'] = filters
 
+    # likelihood
     w = y-config['y_obs']
-
     chi2 = np.matmul(w,np.matmul(config['inv_cov'],w))
     block[names.likelihoods, name_likelihood] = -0.5 * np.real(chi2)
     print(y)
     print(config['y_obs'])
-    #np.save("theory_test_autocorrelations_map3", y)
+    #np.save("theory_19April_map3_new_zbins_los-trial3", y)
+    np.save("theory_29Apr_cosmogrid_params_no_IA", y)
 
     return 0
 

@@ -1,11 +1,10 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/03/14 14:46:48
+Last edit  : 2024/04/10 17:39:01
 
 
 TODO:
 - IA
-- allow for user-defined t1 and t2 binning to be consistent with treecorr output. (currently the output is on FFT grid of fastnc)
 '''
 from cosmosis.datablock import option_section, names
 import numpy as np
@@ -22,10 +21,27 @@ def get_string_array_1d(options, section, name):
     o = [x for x in o if x]  # Remove empty strings
     return o    
 
-def get_sample_sombinations(options):
-    o = get_string_array_1d(options, option_section, "sample_combinations")
-    o = [tuple(x.split(',')) for x in o]
-    return o
+def get_sample_sombinations(options, separator=',',):
+    try:
+        o = get_string_array_1d(options, option_section, "sample_combinations")
+        o = [tuple(x.split(separator)) for x in o]
+        return o
+    except:
+        # special case for preparing the sample_combinations
+        # used for preparing the training data for emulator.
+        # We will train for Gamma w/o LoS integration.
+        print('<<<<< Special case for preparing the training data for emulator. >>>>>>')
+        o = options.get_double_array_1d(option_section, "sample_combinations")
+        return o    
+
+def get_healpix_window_function(nside):
+    import healpy as hp
+    from scipy.interpolate import interp1d
+    w = hp.sphtfunc.pixwin(nside)
+    l = np.arange(3*nside)
+    fnc = interp1d(l, w, kind='linear', bounds_error=False, fill_value=(1,0))
+    window = lambda l1, l2, l3: fnc(l1) * fnc(l2) * fnc(l3)
+    return window
 
 def setup(options):
     """
@@ -38,41 +54,53 @@ def setup(options):
     # config
     config = {}
 
+    # Common setups
+    Lmax   = options.get_int(option_section, "Lmax", default = 50)
+    multipole_type = options.get_string(option_section, "multipole_type", default = "legendre")
+
+    ########################################################################################
     # bisppectrum model (halofit)
-    config['bispectrum'] = fastnc.bispectrum.BispectrumHalofit()
+    config_halofit = {'Lmax':Lmax, 
+                      'multipole_type':multipole_type, 
+                      'NLA':True, 
+                      'multiply_Rb':options.get_bool(option_section, "multiply_Rb", default = False)}
+    bs = fastnc.bispectrum.BispectrumHalofit(config_halofit)
+    if options.has_value(option_section, "use-pixwin") and options.get_bool(option_section, "use-pixwin"):
+        bs.set_window_function(get_healpix_window_function(options.get_int(option_section, "nside")))
+    config['bispectrum'] = bs
 
-    # multipole-based 3pcf model (fastnc)
-    Lmax   = options.get_int(option_section, "Lmax", default = 30)
-    Mmax   = options.get_int(option_section, "Mmax", default = 50)
-    config['fastnc'] = fastnc.fastnc.FastNaturalComponents(
-        Lmax, Mmax, 
-        config_bin={'nell12bin':options.get_int(option_section, "nell12bin", default = 150)}
-    )
-
-    # projection
-    config['shear-projection'] = options.get_string(option_section, "projection", default = "x")
+    ########################################################################################    
+    # 3PCF model (fastnc)
+    t1 = np.logspace(
+        np.log10(options.get_double(option_section, "theta-min") * np.pi/(180*60.0)), # radians
+        np.log10(options.get_double(option_section, "theta-max") * np.pi/(180*60.0)), # radians
+        options.get_int(option_section, "n-theta-bin"))
+    t2 = np.logspace(
+        np.log10(options.get_double(option_section, "theta-min") * np.pi/(180*60.0)), # radians
+        np.log10(options.get_double(option_section, "theta-max") * np.pi/(180*60.0)), # radians
+        options.get_int(option_section, "n-theta-bin"))
+    phi = np.linspace(
+        options.get_double(option_section, "phi-min"), 
+        options.get_double(option_section, "phi-max"),
+        options.get_int(option_section, "n-phi-bin"))
+    config_3pcf = { \
+            'Lmax':Lmax, \
+            'Mmax':options.get_int(option_section, "Mmax", default = 30), \
+            'projection': options.get_string(option_section, "projection", default = "x"), \
+            'nfft': options.get_int(option_section, "nfft", default = 150), \
+            't1':t1, 
+            't2':t2, \
+            'phi':phi, \
+            'dlnt':options.get_double(option_section, "dlnt", default = None), \
+            'mu':options.get_int_array_1d(option_section, "mu") if options.has_value(option_section, "mu") else [0,1,2,3], \
+            'multipole_type':multipole_type, \
+            'cache':options.get_bool(option_section, 'use_cache', default = False)}
+    config['fastnc'] = fastnc.fastnc.FastNaturalComponents(config_3pcf)
 
     # sample combinations
     config['sample-combinations'] = get_sample_sombinations(options)
     print(config['sample-combinations'])
-
-    # natural component indices
-    if options.has_value(option_section, "mu"):
-        config['mu'] = options.get_int_array_1d(option_section, "mu")
-    else:
-        print('Setting detault mu to [0,1,2,3].')
-        config['mu'] = [0,1,2,3]
-
-    # binning
-    config['phi'] = np.linspace(0, np.pi, 20)
-
-    # bin size in log(theta1) = log(theta2)
-    if options.has_value(option_section, "dlnt"):
-        config['dlnt'] = options.get_double(option_section, "dlnt")
-    else:
-        print('Setting detault dlnt to None.')
-        config['dlnt'] = None
-
+    
     return config
 
 def execute(block, config):
@@ -89,15 +117,17 @@ def execute(block, config):
                         'n':block[names.cosmological_parameters, 'n_s']}
     )
     bs.set_cosmology(cosmo)
+    # Intrinsic parameter
+    bs.set_NLA_param({'AIA':block['intrinsic_alignment_parameters', 'a1'], \
+            'alphaIA':block['intrinsic_alignment_parameters', 'alpha1'] , \
+            'z0':block['intrinsic_alignment_parameters', 'z_piv']})
     # set source distribution
     nzbin = block['nz_source', "nbin"]
     bs.set_source_distribution(
         [block['nz_source', "z"] for _ in range(nzbin)],
         [block['nz_source', "bin_%d" % (i+1)] for i in range(nzbin)],
-        ['bin_%d' % (i+1) for i in range(nzbin)]
+        ['%d' % (i+1) for i in range(nzbin)]
     )
-    # set lensing kernel
-    bs.compute_lensing_kernel()
     # set linear matter power spectrum
     bs.set_pklin(
         block[names.matter_power_lin, 'k_h'],
@@ -109,43 +139,54 @@ def execute(block, config):
         block[names.growth_parameters, "d_z"]
     )
     # update the interpolation.
-    bs.interpolate()
+    bs.compute_kernel()
+    bs.interpolate(scombs=config['sample-combinations'])
+    bs.decompose(scombs=config['sample-combinations'])
 
     # 3PCF ############################################
     nc = config['fastnc']
-    sctname = "ggg"
+    sctname = "natural_components"
 
     for sample_combination in config['sample-combinations']:
         print('calculating sample_combination:', sample_combination)
         # set bispectrum
-        nc.set_bispectrum(bs, sample_combinations=[sample_combination])
-    
-        # compute 3PCF
-        Gamma = nc.Gamma(
-            mu=config['mu'], 
-            phi=config['phi'],
-            projection=config['shear-projection'],
-            dlnt=config['dlnt'],
-            sample_combination=sample_combination,
-            )
+        nc.set_bispectrum(bs)
+        # nc.set_grid()
+        nc.compute(scomb=sample_combination)
+
+        # stack the Gamma
+        Gamma = np.array([nc.Gamma0, nc.Gamma1, nc.Gamma2, nc.Gamma3])
 
         # write to block
         # Note that the Gamma has the shape of 
         # (mu.size, phi.size, t1.size, t2.size)
-        # where 
-        # mu = config['mu']
-        # phi = config['phi']
-        # t1 = nc.t1
-        # t2 = nc.t2
-        name = ','.join(sample_combination)
-        block[sctname, f'Gamma-real-{name}'] = Gamma.real
-        block[sctname, f'Gamma-imag-{name}'] = Gamma.imag
+        if isinstance(sample_combination, tuple):
+            name = '_'.join(sample_combination)
+        else:
+            name = str(sample_combination)
+        block[sctname, f'real-bin_{name}'] = Gamma.real
+        block[sctname, f'imag-bin_{name}'] = Gamma.imag
     
     # write common parameters
-    block[sctname, 'mu'] = config['mu']
-    block[sctname, 'phi'] = config['phi']
-    block[sctname, 't1'] = nc.t1
-    block[sctname, 't2'] = nc.t2
+    block[sctname, 'mu'] = nc.mu
+    block[sctname, 'phi'] = nc.phi
+    # nc.t1 and nc.t2 is the lower edges of bins
+    # block[sctname, 't1'] = nc.t1
+    # block[sctname, 't2'] = nc.t2
+    # Conversion of Gamma to map3 in measurement
+    # uses mean t1 and mean t2 as bin values 
+    # (meand2, meand3 in TreeCorr)
+    # (The other option is to use exp(logmeand2) etc)
+    dlnt = np.diff(np.log(nc.t1))[0]
+    # 1. meant1 = t1min * 2/3 (exp(3dlnt)-1)/(exp(2dlnt)-1)
+    factor = 2.0/3.0*(np.exp(3*dlnt)-1)/(np.exp(2*dlnt)-1)
+    block[sctname, 't1'] = nc.t1 * factor
+    block[sctname, 't2'] = nc.t2 * factor
+    # 2. exp(logmeant1) = t1min * exp( (exp(2dlnt)(2dlnt-1)+1)/2/(exp(2dlnt)-1) )
+    # factor = (np.exp(2*dlnt)*(2*dlnt-1)+1)/2/(np.exp(2*dlnt)-1)
+    # factor = np.exp(factor)
+    # block[sctname, 'meant1'] = nc.t1 * factor
+    # block[sctname, 'meant2'] = nc.t2 * factor
 
     return 0
 

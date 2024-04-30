@@ -22,19 +22,22 @@ cosmogrid_params = {
 my_k_reduced = np.logspace(-4, np.log10(k_max), num=1000)
 z = np.linspace(0,3,100)
 
-theta_1 = np.logspace(np.log10(0.5), np.log10(90), num = 30)
-theta_2 = np.logspace(np.log10(0.5), np.log10(90), num = 30)
-theta_3 = np.logspace(np.log10(0.5), np.log10(90), num = 30)
+#theta_1 = np.logspace(np.log10(0.5), np.log10(90), num = 30)
+#theta_2 = np.logspace(np.log10(0.5), np.log10(90), num = 30)
+#theta_3 = np.logspace(np.log10(0.5), np.log10(90), num = 30)
+theta_1 = [7,14,25,50]
+theta_2 = [7,14,25,50]
+theta_3 = [7,14,25,50]
 
 dndz1 = np.load("bin_01_desy3_source_nz_FROM_DV_DEC7.npy")
 dndz2 = np.load("bin_02_desy3_source_nz_FROM_DV_DEC7.npy")
 dndz3 = np.load("bin_03_desy3_source_nz_FROM_DV_DEC7.npy")
 dndz4 = np.load("bin_04_desy3_source_nz_FROM_DV_DEC7.npy")
 
-compute_map3(cosmogrid_params, dndz1, theta_1, theta_2, theta_3, "THEORY_7Feb24_Map3_zbin1_lmax15000_COSMOGRID", lmax=15000, niter = 7, neval=200000)
-compute_map3(cosmogrid_params, dndz2, theta_1, theta_2, theta_3, "THEORY_7Feb24_Map3_zbin2_lmax15000_COSMOGRID", lmax=15000, niter = 7, neval=200000)
-compute_map3(cosmogrid_params, dndz3, theta_1, theta_2, theta_3, "THEORY_7Feb24_Map3_zbin3_lmax15000_COSMOGRID", lmax=15000, niter = 7, neval=200000)
-compute_map3(cosmogrid_params, dndz4, theta_1, theta_2, theta_3, "THEORY_7Feb24_Map3_zbin4_lmax15000_COSMOGRID", lmax=15000, niter = 7, neval=200000)
+compute_map3(cosmogrid_params, dndz1, theta_1, theta_2, theta_3, "ModelMap3FromBispec_15Mar_zbin111_COSMOGRID", lmax=10000, niter = 7, neval=200000)
+compute_map3(cosmogrid_params, dndz2, theta_1, theta_2, theta_3, "ModelMap3FromBispec_15Mar_zbin222_COSMOGRID", lmax=10000, niter = 7, neval=200000)
+compute_map3(cosmogrid_params, dndz3, theta_1, theta_2, theta_3, "ModelMap3FromBispec_15Mar_zbin333_COSMOGRID", lmax=10000, niter = 7, neval=200000)
+compute_map3(cosmogrid_params, dndz4, theta_1, theta_2, theta_3, "ModelMap3FromBispec_15Mar_zbin444_COSMOGRID", lmax=10000, niter = 7, neval=200000)
 
 #compute_3pcf_ro(params, dndz, d2, u_theory, v_theory, "Theory_d2eq3_neval10e5_isoc", neval=100000)
 #compute_3pcf_ro(params, dndz, d2, u_theory, v_theory, "Theory_d2eq3_neval10e5_almost_isoc", neval=100000)
