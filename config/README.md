@@ -21,7 +21,7 @@ so 'desy3c' indicates DES-Y3 cosmology. This is more reasonable test, because
 we would get contour around the DES Y3 2pt cosmic shear best-fit params.
 
 ### [test-desy3c-baryon-run](test-desy3c-baryon-run)
-Same as [test-baryon-run] but using DES-Y3 cosmology for input.
+Same as [test-baryon-run](test-baryon-run) but using DES-Y3 cosmology for input.
 
 ### [test-desy3c-emu-run](test-desy3c-emu-run)
 Same as [test-desy3c-run](test-desy3c-run), but using the emulator.
@@ -37,5 +37,5 @@ configs to generate the training dataset for emulator.
 ### [try-des-y3-shear](try-des-y3-shear)
 Some configs used to setup baseline pipeline in cosmosis.
 
-### [dev]
+### [dev](dev)
 configs for development.
