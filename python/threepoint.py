@@ -794,7 +794,7 @@ class ThreePointDataClass:
         ax.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
         return ax
     
-    def _plot_signal(self, ax, color, s=None, errorbar=True, yscale='linear', sel=None, nt=0, xshift=0):
+    def _plot_signal(self, ax, color, s=None, errorbar=True, yscale='linear', sel=None, nt=0, xshift=0, ls='-'):
         """
         Plot the signal.
 
@@ -812,9 +812,9 @@ class ThreePointDataClass:
         ax.set_yscale(yscale)
         if errorbar and hasattr(self, 'cov'):
             std = self.get_std(sel=sel)
-            ax.errorbar(np.arange(s.size)+xshift, s*resc, yerr=std*resc, fmt='.', color=color)
+            ax.errorbar(np.arange(s.size)+xshift, s*resc, yerr=std*resc, fmt='.', color=color, ls=ls)
         else:
-            ax.plot(s, color=color)
+            ax.plot(np.arange(s.size)+xshift, s, color=color, ls=ls)
         ax.set_ylabel(r'signal')
         return ax
 
@@ -836,7 +836,7 @@ class ThreePointDataClass:
             err = np.ones(res.size) if norm else np.sqrt(np.diag(self.cov)) 
             ax.errorbar(np.arange(res.size), res, yerr=err, fmt='.', color=color)
         else:
-            ax.plot(s, color=color)
+            ax.plot(res, color=color)
         ax.set_ylabel(r'residual')
         ax.axhline(0.0, color='gray')
         ax.grid()
@@ -895,9 +895,9 @@ class ThreePointDataClass:
         # triangle bin
         self._plot_t_bin(axes[1], bin_colors)
         # signal in this class
-        self._plot_signal(axes[2], signal_colors[0], errorbar=errorbar, yscale=yscale)
+        self._plot_signal(axes[2], signal_colors[0], errorbar=errorbar, yscale=yscale, ls='-')
         # external signal
-        self._plot_signal(axes[2], signal_colors[1], s=s, errorbar=errorbar, yscale=yscale)
+        self._plot_signal(axes[2], signal_colors[1], s=s, errorbar=errorbar, yscale=yscale, ls='--', xshift=0.5)
         # plot residual
         self._plot_residual(axes[3], signal_colors[0], s, errorbar=errorbar)
         # set x label
