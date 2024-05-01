@@ -1,38 +1,12 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/04/10 17:39:01
-
-
-TODO:
-- IA
+Last edit  : 2024/04/19 16:31:52
 '''
 from cosmosis.datablock import option_section, names
 import numpy as np
 import os
 import fastnc
 from astropy.cosmology import wCDM
-
-def get_string_array_1d(options, section, name):
-    # I was not able to utilize
-    # CosmoSIS python API 
-    # options.get_string_array_1d.
-    # This is tentative...
-    o = options.get_string(section, name).split()
-    o = [x for x in o if x]  # Remove empty strings
-    return o    
-
-def get_sample_sombinations(options, separator=',',):
-    try:
-        o = get_string_array_1d(options, option_section, "sample_combinations")
-        o = [tuple(x.split(separator)) for x in o]
-        return o
-    except:
-        # special case for preparing the sample_combinations
-        # used for preparing the training data for emulator.
-        # We will train for Gamma w/o LoS integration.
-        print('<<<<< Special case for preparing the training data for emulator. >>>>>>')
-        o = options.get_double_array_1d(option_section, "sample_combinations")
-        return o    
 
 def get_healpix_window_function(nside):
     import healpy as hp
@@ -44,13 +18,6 @@ def get_healpix_window_function(nside):
     return window
 
 def setup(options):
-    """
-    Necessary keys in the ini file:
-    - Lmax: maximum multipole
-    - Mmax: maximum multipole
-    - l12bin: number of bins for l12
-    - projection: projection of shear, x, cent, ortho (default: x)
-    """
     # config
     config = {}
 
@@ -95,10 +62,6 @@ def setup(options):
             'multipole_type':multipole_type, \
             'cache':options.get_bool(option_section, 'use_cache', default = False)}
     config['fastnc'] = fastnc.fastnc.FastNaturalComponents(config_3pcf)
-
-    # sample combinations
-    config['sample-combinations'] = get_sample_sombinations(options)
-    print(config['sample-combinations'])
     
     return config
 
@@ -126,7 +89,7 @@ def execute(block, config):
     bs.set_source_distribution(
         [block['nz_source', "z"] for _ in range(nzbin)],
         [block['nz_source', "bin_%d" % (i+1)] for i in range(nzbin)],
-        ['%d' % (i+1) for i in range(nzbin)]
+        [(i+1) for i in range(nzbin)]
     )
     # set linear matter power spectrum
     bs.set_pklin(
@@ -144,19 +107,19 @@ def execute(block, config):
         bs.set_baryon_param({'fb': fb})
     # update the interpolation.
     bs.compute_kernel()
-    bs.interpolate(scombs=config['sample-combinations'])
-    bs.decompose(scombs=config['sample-combinations'])
+    bs.interpolate(scombs=block['natural_components', 'sample_combinations'])
+    bs.decompose(scombs=block['natural_components', 'sample_combinations'])
 
     # 3PCF ############################################
     nc = config['fastnc']
     sctname = "natural_components"
 
-    for sample_combination in config['sample-combinations']:
-        print('calculating sample_combination:', sample_combination)
+    for scomb in block['natural_components', 'sample_combinations']:
+        print('calculating sample_combination:', scomb)
         # set bispectrum
         nc.set_bispectrum(bs)
         # nc.set_grid()
-        nc.compute(scomb=sample_combination)
+        nc.compute(scomb=scomb)
 
         # stack the Gamma
         Gamma = np.array([nc.Gamma0, nc.Gamma1, nc.Gamma2, nc.Gamma3])
@@ -164,10 +127,10 @@ def execute(block, config):
         # write to block
         # Note that the Gamma has the shape of 
         # (mu.size, phi.size, t1.size, t2.size)
-        if isinstance(sample_combination, tuple):
-            name = '_'.join(sample_combination)
+        if np.isscalar(scomb):
+            name = str(scomb)
         else:
-            name = str(sample_combination)
+            name = '_'.join([str(s) for s in scomb])
         block[sctname, f'real-bin_{name}'] = Gamma.real
         block[sctname, f'imag-bin_{name}'] = Gamma.imag
     

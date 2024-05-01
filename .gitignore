@@ -1,6 +1,6 @@
 # submit script
 submitjob*.sh
-
+*output/
 
 .DS_Store
 .vscode/
