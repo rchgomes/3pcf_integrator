@@ -110,7 +110,7 @@ def execute(block, config):
     print(y)
     print(config['y_obs'])
     #np.save("theory_19April_map3_new_zbins_los-trial3", y)
-    np.save("theory_29Apr_cosmogrid_params_no_IA", y)
+    np.save("theory_29Apr_cosmogrid_params_no_IA_debugbranch", y)
 
     return 0
 
