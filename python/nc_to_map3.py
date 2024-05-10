@@ -27,7 +27,8 @@ def execute(block, config):
             name = '_'.join([str(s) for s in scomb])
         filters = block['map3', 'filters_'+name]
         gamma = block[section_nc, f'real-bin_{name}'] + 1j*block[section_nc, f'imag-bin_{name}']
-        map3 = calculateMap3(gamma, t2, t1, phi, logr_bin_size, phi_bin_size, filters)
+        #map3 = calculateMap3(gamma, t2, t1, phi, logr_bin_size, phi_bin_size, filters)
+        map3 = calculateMap3(gamma, t1, t2, phi, logr_bin_size, phi_bin_size, filters)
         block['map3', f'map3-bin_{name}'] = map3
 
     return 0
