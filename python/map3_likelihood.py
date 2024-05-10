@@ -97,8 +97,8 @@ def execute(block, config):
             name = str(zbin_combinations[i])
         gamma = block[section_nc, f'real-bin_{name}'] + 1j*block[section_nc, f'imag-bin_{name}']
 
-        y_temp = np.real(calculateMap3(gamma, t2, t1, phi, logr_bin_size, phi_bin_size, filters))
-        #y_temp = calculateMap3(gamma, t1, t2, phi, logr_bin_size, phi_bin_size, filters)
+        #y_temp = np.real(calculateMap3(gamma, t2, t1, phi, logr_bin_size, phi_bin_size, filters))
+        y_temp = calculateMap3(gamma, t1, t2, phi, logr_bin_size, phi_bin_size, filters)
         block['map3', f'map3-bin_{name}'] = y_temp
         y[i*num_aperture_combinations:(i+1)*num_aperture_combinations] = y_temp 
     block['map3', 'filters'] = filters
@@ -109,8 +109,6 @@ def execute(block, config):
     block[names.likelihoods, name_likelihood] = -0.5 * np.real(chi2)
     print(y)
     print(config['y_obs'])
-    #np.save("theory_19April_map3_new_zbins_los-trial3", y)
-    np.save("theory_29Apr_cosmogrid_params_no_IA_debugbranch", y)
 
     return 0
 

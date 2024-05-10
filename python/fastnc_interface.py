@@ -179,7 +179,8 @@ def execute(block, config):
     # (The other option is to use exp(logmeand2) etc)
     dlnt = np.diff(np.log(nc.t1))[0]
     # 1. meant1 = t1min * 2/3 (exp(3dlnt)-1)/(exp(2dlnt)-1)
-    factor = 2.0/3.0*(np.exp(3*dlnt)-1)/(np.exp(2*dlnt)-1)
+    #factor = 2.0/3.0*(np.exp(3*dlnt)-1)/(np.exp(2*dlnt)-1)
+    factor = 2.0 / 3.0 * (np.exp(3 * dlnt) - 1) / (np.exp(2 * dlnt) - 1) - 0.015226 #empirical factor from COSMOGRID
     block[sctname, 't1'] = nc.t1 * factor
     block[sctname, 't2'] = nc.t2 * factor
     # 2. exp(logmeant1) = t1min * exp( (exp(2dlnt)(2dlnt-1)+1)/2/(exp(2dlnt)-1) )

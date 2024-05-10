@@ -171,5 +171,5 @@ def calculateMap3(three_pt, d2_vals, d3_vals, phi_vals, logr_bin_size, phi_bin_s
 
     map3 = 0.25 * np.real(mcmm + mmcm + mmmc + mmm)
 
-    return (mmm)
-    #return (map3)
+    #return (mmm)
+    return (map3)

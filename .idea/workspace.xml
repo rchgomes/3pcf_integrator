@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="584e8385-ff88-438f-b111-94a116e7a819" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/.name" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/nz/May7_test_shift1.npy" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/nz/May7_test_shift2.npy" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/nz/May7_test_shift3.npy" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/nz/May7_test_shift4.npy" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/nz/May7_test_shift5.npy" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/nz/May7_test_shift6.npy" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/nz/theory_29Apr_cosmogrid_params_no_IA_debug_corr.npy" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/nz/theory_29Apr_cosmogrid_params_no_IA_debug_corr_endat80.npy" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/nz/theory_29Apr_cosmogrid_params_no_IA_debug_corr_endat80_changet1.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/data_vector/2pt_simulation.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/data_vector/2pt_simulation.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/likelihoods/values.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/likelihoods/values.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_1_1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_1_1.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_1_2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_1_2.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_1_3.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_1_3.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_1_4.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_1_4.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_2_2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_2_2.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_2_3.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_2_3.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_2_4.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_2_4.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_3_3.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_3_3.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_3_4.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_3_4.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_4_4.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_1_4_4.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_2_2_2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_2_2_2.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_2_2_3.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_2_2_3.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_2_2_4.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_2_2_4.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_2_3_3.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_2_3_3.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_2_3_4.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_2_3_4.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_2_4_4.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_2_4_4.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_3_3_3.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_3_3_3.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_3_3_4.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_3_3_4.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_3_4_4.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_3_4_4.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_4_4_4.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/map3/map3-bin_4_4_4.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/natural_components/t1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/natural_components/t1.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/natural_components/t2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output/2pt-plus-3pt-19Apr-diff_max_theta/natural_components/t2.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/python/fast_map3.py" beforeDir="false" afterPath="$PROJECT_DIR$/python/fast_map3.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/python/fastnc_interface.py" beforeDir="false" afterPath="$PROJECT_DIR$/python/fastnc_interface.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/python/map3_likelihood.py" beforeDir="false" afterPath="$PROJECT_DIR$/python/map3_likelihood.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="2fi35YKfXOh1f5n8MBiBqPKEHdQ" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="584e8385-ff88-438f-b111-94a116e7a819" name="Changes" comment="" />
+      <created>1714269891505</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1714269891505</updated>
+    </task>
+    <servers />
+  </component>
+</project>
