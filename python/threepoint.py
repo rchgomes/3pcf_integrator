@@ -897,7 +897,7 @@ class ThreePointDataClass:
         # signal in this class
         self._plot_signal(axes[2], signal_colors[0], errorbar=errorbar, yscale=yscale, ls='-')
         # external signal
-        self._plot_signal(axes[2], signal_colors[1], s=s, errorbar=errorbar, yscale=yscale, ls='--', xshift=0.5)
+        self._plot_signal(axes[2], signal_colors[1], s=s, errorbar=errorbar, yscale=yscale, ls='--', xshift=0.1)
         # plot residual
         self._plot_residual(axes[3], signal_colors[0], s, errorbar=errorbar)
         # set x label
