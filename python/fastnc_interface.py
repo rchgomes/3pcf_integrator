@@ -1,6 +1,6 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/04/19 16:31:52
+Last edit  : 2024/05/15 16:30:55
 '''
 from cosmosis.datablock import option_section, names
 import numpy as np
@@ -29,8 +29,16 @@ def setup(options):
     # bisppectrum model (halofit)
     config_halofit = {'Lmax':Lmax, 
                       'multipole_type':multipole_type, 
-                      'NLA':options.get_bool(option_section, 'NLA', default=True)} 
-    bs = fastnc.bispectrum.BispectrumHalofit(config_halofit)
+                      'NLA':options.get_bool(option_section, 'NLA', default=True)}
+    # select model
+    if options.get_string(option_section, "bispectrum_model", default = "bihalofit") == "bihalofit":
+        print('Bispectrum model = halofit')
+        bs = fastnc.bispectrum.BispectrumHalofit(config_halofit)
+    elif options.get_string(option_section, "bispectrum_model") == 'gilmarin':
+        print('Bispectrum model = gilmarin')
+        bs = fastnc.bispectrum.BispectrumGilMarin(config_halofit)
+    else:
+        raise ValueError('Invalid bispectrum model')
     if options.has_value(option_section, "use-pixwin") and options.get_bool(option_section, "use-pixwin"):
         bs.set_window_function(get_healpix_window_function(options.get_int(option_section, "nside")))
     config['bispectrum'] = bs
