@@ -72,7 +72,7 @@ def setup(options):
     modes = np.arange(filter_num*len(zarray))
     cp_nn = cosmopower_NN(parameters=['Omega_m', 's8', 'h0', 'Omega_b', 'ns'],
                           modes=modes,
-                          n_hidden=[64, 256, 1024, 1024, 512, 256, 128],
+                          n_hidden=[64, 256, 1024, 1024, 384, 192],
                           )
 
     model_filename = options.get_string(option_section, "model_filename")
@@ -144,6 +144,7 @@ def execute(block, config):
     sctname = "map3"
 
     zarray, predictions_newshape = upsampling(zarray, predictions_newshape, 100)
+    #zarray, predictions_newshape = upsampling(zarray, predictions_newshape, 300)
 
     for scomb in block['natural_components', 'sample_combinations']:
         name = '_'.join([str(s) for s in scomb])
