@@ -1,6 +1,6 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/05/15 16:30:55
+Last edit  : 2024/05/20 11:51:48
 '''
 from cosmosis.datablock import option_section, names
 import numpy as np
@@ -70,6 +70,7 @@ def setup(options):
             'multipole_type':multipole_type, \
             'cache':options.get_bool(option_section, 'use_cache', default = False)}
     config['fastnc'] = fastnc.fastnc.FastNaturalComponents(config_3pcf)
+    config['save_multipoles'] = options.get_bool(option_section, 'save_multipoles', default = False)
     
     return config
 
@@ -130,7 +131,12 @@ def execute(block, config):
         nc.compute(scomb=scomb)
 
         # stack the Gamma
-        Gamma = np.array([nc.Gamma0, nc.Gamma1, nc.Gamma2, nc.Gamma3])
+        # Because the triangle notations are different in TreeCorr and Porth et al.
+        # we convert the theoretical prediction to TreeCorr convention.
+        Gamma = np.array(  [np.conjugate(np.moveaxis(nc.Gamma0, 1,2)), \
+                            np.conjugate(np.moveaxis(nc.Gamma1, 1,2)), \
+                            np.conjugate(np.moveaxis(nc.Gamma2, 1,2)), \
+                            np.conjugate(np.moveaxis(nc.Gamma3, 1,2))])
 
         # write to block
         # Note that the Gamma has the shape of 
@@ -141,6 +147,12 @@ def execute(block, config):
             name = '_'.join([str(s) for s in scomb])
         block[sctname, f'real-bin_{name}'] = Gamma.real
         block[sctname, f'imag-bin_{name}'] = Gamma.imag
+
+        if config['save_multipoles']:
+            # stack the Gamma Multipoles
+            GammaM = np.array([nc.Gamma0M, nc.Gamma1M, nc.Gamma2M, nc.Gamma3M])
+            block[sctname, f'real-bin_{name}_M'] = GammaM.real
+            block[sctname, f'imag-bin_{name}_M'] = GammaM.imag
     
     # write common parameters
     block[sctname, 'mu'] = nc.mu
@@ -162,6 +174,10 @@ def execute(block, config):
     # factor = np.exp(factor)
     # block[sctname, 'meant1'] = nc.t1 * factor
     # block[sctname, 'meant2'] = nc.t2 * factor
+
+    if config['save_multipoles']:
+        M = np.arange(-nc.Mmax, nc.Mmax+1)
+        block[sctname, 'M'] = M
 
     return 0
 
