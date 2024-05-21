@@ -2,8 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="584e8385-ff88-438f-b111-94a116e7a819" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/data/dv/sim_2pt-NLA-cosmoDESY3-20May24.fits" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/dv/sim_map3-NLA-cosmoDESY3-20May24.fits" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/dv/sim_map3-NLA-cosmogrid-20May24.fits" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/plot-notebooks/Theory_map3_cosmogrid-20May24.npy" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/cosmic-shear.ini" beforeDir="false" afterPath="$PROJECT_DIR$/config/cosmic-shear.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/emulator-train/sobol_params_and_z.ini" beforeDir="false" afterPath="$PROJECT_DIR$/config/emulator-train/sobol_params_and_z.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/test-desy3c-run/cosmogrid-shear-2pt-map3-sim.ini" beforeDir="false" afterPath="$PROJECT_DIR$/config/test-desy3c-run/cosmogrid-shear-2pt-map3-sim.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/test-desy3c-run/des-y3-shear-2pt-map3-sim.ini" beforeDir="false" afterPath="$PROJECT_DIR$/config/test-desy3c-run/des-y3-shear-2pt-map3-sim.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plot-notebooks/Open_fits.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/plot-notebooks/Open_fits.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/setup-3pcf-path.sh" beforeDir="false" afterPath="$PROJECT_DIR$/setup-3pcf-path.sh" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
