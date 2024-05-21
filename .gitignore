@@ -1,6 +1,7 @@
 # submit script
 submitjob*.sh
 *output/
+script/rsync*.sh
 
 .DS_Store
 .vscode/
