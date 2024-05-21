@@ -5,6 +5,11 @@ from threepoint import ThreePointDataClass
 def setup(options):
     config = dict()
     config['data'] = ThreePointDataClass.from_fits(options.get_string(option_section, "data_file"))
+    config['use_moped'] = options.get_bool(option_section, 'use_moped', default = False)
+
+    if config['use_moped']:
+        config['moped_tmatrix'] = config['data'].moped_tmatrix
+
     return config
 
 def execute(block, config):
@@ -25,13 +30,17 @@ def execute(block, config):
         # mark as used
         used[where] = True
 
-    # restrict oursefves to the elements that were used
+    # restrict ourselves to the elements that were used
     model.replace(used)
     data.replace(used)
     
     # compute chi2
     map3_data = data.get_signal()
     map3_model= model.get_signal()
+
+    if config['use_moped']:
+        map3_model = np.dot(config['moped_tmatrix'], map3_model)
+
     diff = map3_data - map3_model
     icov = data.get_inverse_covariance()
     chi2 = np.matmul(diff, np.matmul(icov, diff))

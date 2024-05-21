@@ -139,6 +139,20 @@ class ThreePointDataClass:
         self.signal = put(self.signal, signal, where)
         self.size = self.z1.size
 
+    def set_value_moped(self, signal):
+
+        """
+        Set the value of MOPED compressed 3pt data.
+
+        Args:
+            signal (float, array): The signal value.
+
+        Description:
+            This method sets the value of the MOPED compressed 3pt data
+            and stores it as an attribute of the object.
+        """
+        self.signal = signal
+
     def where_to_set(self, z1, z2, z3, b1, b2, b3):
         z1 = np.atleast_1d(z1)
         z2 = np.atleast_1d(z2)
@@ -186,6 +200,22 @@ class ThreePointDataClass:
         self.cov     = cov
         self.nsim4cov= nsim
 
+    def set_moped_tmatrix(self, tmatrix):
+
+        """
+        Set the transformation matrix for MOPED compression.
+
+        Args:
+            tmatrix (array): MOPED transformation matrix.
+
+        Description:
+            This method sets transformation matrix used to compress
+            the 3pt data using MOPED. The transformation matrix is
+            stored as an attribute of the object.
+        """
+
+        self.moped_tmatrix = tmatrix
+
     def to_fits(self, filename=None):
         """
         Write the 3pt data to the fits file.
@@ -210,6 +240,9 @@ class ThreePointDataClass:
         elif self.bin_type == 'Multipole':
             data = [self.z1, self.z2, self.z3, self.theta1, self.theta2, self.M, self.signal]
             names= ['BIN1', 'BIN2', 'BIN3', 'THETA1', 'THETA2', 'M', 'VALUE']
+        elif self.bin_type == 'Compressed':
+            data = [self.dv_index, self.signal]
+            names = ['DV_INDEX', 'VALUE']
         table = Table(data, names=names)
         # create header
         header = fits.Header()
@@ -233,6 +266,17 @@ class ThreePointDataClass:
             # create hdu
             hdu = fits.ImageHDU(self.cov, header=header)
             hdul.append(hdu)
+
+        ## ADD MOPED TRANSFORMATION MATRIX
+        if hasattr(self, 'moped_tmatrix'):
+            # create header
+            header = fits.Header()
+            header['EXTNAME']  = 'MOPED-TRANSFORM'
+            header['3PT_DATA'] = True
+            # create hdu
+            hdu = fits.ImageHDU(self.moped_tmatrix, header=header)
+            hdul.append(hdu)
+
         # Write to file
         if filename:
             hdul.writeto(filename, overwrite=True)
@@ -278,11 +322,19 @@ class ThreePointDataClass:
             b1 = data['THETA1']
             b2 = data['THETA2']
             b3 = data['M']
-        obj.set_value(data['BIN1'], data['BIN2'], data['BIN3'], b1, b2, b3, data['VALUE'])
+
+        if bin_type == 'Compressed':
+            obj.set_value_moped(data['VALUE'])
+        else:
+            obj.set_value(data['BIN1'], data['BIN2'], data['BIN3'], b1, b2, b3, data['VALUE'])
+
         # covariance
         if len(hdul) > 2:
             hdu = hdul[2]
             obj.set_covariance(hdu.data, hdu.header['NSIM'])
+        if len(hdul) > 3:
+            hdu = hdul[3]
+            obj.set_moped_tmatrix(hdu.data)
         return obj
 
     def _parse_selection(self, val, which, condition, helper):
