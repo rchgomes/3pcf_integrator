@@ -241,8 +241,8 @@ class ThreePointDataClass:
             data = [self.z1, self.z2, self.z3, self.theta1, self.theta2, self.M, self.signal]
             names= ['BIN1', 'BIN2', 'BIN3', 'THETA1', 'THETA2', 'M', 'VALUE']
         elif self.bin_type == 'Compressed':
-            data = [self.dv_index, self.signal]
-            names = ['DV_INDEX', 'VALUE']
+            data = [self.signal]
+            names = ['VALUE']
         table = Table(data, names=names)
         # create header
         header = fits.Header()
