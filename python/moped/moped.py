@@ -44,6 +44,7 @@ class MOPED(object):
         self.maxiter = maxiter
         self.step_size = step_size
         self.start_params = start_vector
+        self.ordering = ordering
         self.current_params = start_vector
         self.nparams = start_vector.shape[0]
         self.iterations = 0
@@ -106,16 +107,44 @@ class MOPED(object):
         return derivatives, inv_cov
 
 
-    def compute_moped_matrix(self):
+    def compute_moped_matrix(self, param_norm=None):
         derivatives, inv_cov = self.compute_derivatives()
+
+        # denormalize the parameter
+        if param_norm is not None:
+            assert derivatives.shape[0] == param_norm.size, 'norm lensgth does not match with derivatives shape'
+            derivatives/= param_norm[:,None]
 
         if not np.allclose(inv_cov, inv_cov.T):
             print("WARNING: The inverse covariance matrix produced by your pipeline")
             print("         is not symmetric. This probably indicates a mistake somewhere.")
             print("         If you are only using cosmosis-standard-library likelihoods please ")
             print("         open an issue about this on the cosmosis site.")
-        moped_matrix = np.einsum("il,lk,jk->ij", derivatives, inv_cov, derivatives)
-        return moped_matrix
+        # moped_matrix = np.einsum("il,lk,jk->ij", derivatives, inv_cov, derivatives)
+        # return moped_matrix
+
+        # order the parameters
+        derivatives = derivatives[self.ordering, :]
+
+        # Compute moped transformation matrix
+        nparam, ndata = derivatives.shape
+        B = np.zeros((nparam, ndata))
+
+        for m in range(nparam):
+            # projection of mu_m vector to b_q vector, dim = (nparam)
+            mum_bq = np.einsum('i,qi->q', derivatives[m,:], B)
+            # 
+            bm = np.dot(inv_cov, derivatives[m,:])
+            bm-= np.einsum('q,qi->i', mum_bq, B)
+            # 
+            norm = np.dot(derivatives[m,:], np.dot(inv_cov, derivatives[m,:]))
+            norm-= np.sum(mum_bq**2)
+            # 
+            bm/= norm
+            # update matrix
+            B[m,:] = bm
+
+        return np.transpose(B)
 
     def five_points_stencil_points(self, param_index):
         delta = np.zeros(self.nparams)
@@ -165,7 +194,8 @@ def test():
             return theory
 
     best_fit_params = np.array([0.1, 1.0, 2.0, 4.0,])
-    moped_calculator = MOPED(theory_prediction, best_fit_params, 0.01, 0.0, 100)
+    ordering = np.arange(4).astype(int)
+    moped_calculator = MOPED(theory_prediction, best_fit_params, 0.01, ordering, 0.0, 100)
     F = moped_calculator.compute_moped_matrix()
     print(F)
     return F

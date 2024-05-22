@@ -1,6 +1,6 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/05/20 11:51:48
+Last edit  : 2024/05/21 21:11:41
 '''
 from cosmosis.datablock import option_section, names
 import numpy as np

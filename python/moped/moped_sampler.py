@@ -68,6 +68,7 @@ class MOPEDSampler(ParallelSampler):
         self.tolerance = self.read_ini("tolerance", float, 0.01)
         self.maxiter = self.read_ini("maxiter", int, 10)
         self.use_numdifftools = self.read_ini("use_numdifftools", bool, False)
+        self.set_params_ordering()
 
         if self.output:
             for p in self.pipeline.extra_saves:
@@ -75,29 +76,50 @@ class MOPEDSampler(ParallelSampler):
                 logs.warning("NOTE: You set extra_output to include parameter %s in the parameter file" % name)
                 logs.warning("      But the MOPED Sampler cannot do that, so this will be ignored.")
                 self.output.del_column(name)
+        
+        # replace the header with ordered params
+        for p in self.pipeline.varied_params:
+            self.output.del_column('%s--%s'%(p.section, p.name))
+        columns = []
+        for ordered_name in self.ordered_names:
+            columns.append([ordered_name, float, ""])
+        self.output.columns = columns + self.output.columns
 
         self.converged = False
 
-    def compute_prior_matrix(self):
-        #We include the priors as an additional matrix term
-        #This is just added to the moped matrix
+    def set_params_ordering(self):
+        # param_names = self.read_ini('ordering')
+        param_names = self.read_ini('ordering', str).split()
+
+        # list of varied parameters' names
+        parameters = [(p.section, p.name) for p in self.pipeline.varied_params]
+
+        ordering = []
+        ordered_names = []
+
+        # put the parameters' indices as in user input
+        for param_name in param_names:
+            section, name = param_name.split('--')
+            i = parameters.index((section.lower(), name.lower()))
+            ordering.append(i)
+            ordered_names.append(param_name)
+
+        # append unspecified parameters' index as in the pipeline
+        for i, param in enumerate(parameters):
+            if i not in ordering:
+                ordering.append(i)
+                ordered_names.append('--'.join(param))
+
+        self.ordering = np.array(ordering)
+        self.ordered_names = ordered_names
+
+    def get_param_norm(self):
         n = len(self.pipeline.varied_params)
-        P = np.zeros((n,n))
-        for i, param in enumerate(self.pipeline.varied_params):
-            if isinstance(param.prior, prior.GaussianPrior) or isinstance(param.prior, prior.TruncatedGaussianPrior):
-                logs.important("Applying additional prior sigma = {0} to {1}".format(param.prior.sigma, param))
-                logs.important("This will be assumed to be centered at the parameter center regardless of what the ini file says")
-                logs.important("The limits of the parameter will also not be respected.") 
-                P[i,i] = 1./param.prior.sigma**2
-            elif isinstance(param.prior, prior.ExponentialPrior) or isinstance(param.prior, prior.TruncatedExponentialPrior):
-                logs.important("There is an exponential prior applied to parameter {0}".format(param))
-                logs.important("This is *not* accounted for in the MOPED matrix")
-            #uniform prior should have no effect on the moped matrix.
-            #at least up until the assumptions of the FM are violated anyway
-        return P
-
-
-
+        norm = np.zeros(n)
+        for i in range(n):
+            p = self.pipeline.varied_params[i]
+            norm[i] = p.limits[1] - p.limits[0]
+        return norm
 
     def execute(self):
         #Load the starting point and covariance matrix
@@ -108,8 +130,11 @@ class MOPEDSampler(ParallelSampler):
         if len(self.pipeline.varied_params)==0:
             raise ValueError("Your values file did not include any varied parameters so we cannot make a MOPED matrix")
 
-        for i,x in enumerate(start_vector):
-            self.output.metadata("mu_{0}".format(i), x)
+        # We save the values for the ordered params
+        for i0, i in enumerate(self.ordering):
+            x = start_vector[i]
+            self.output.metadata("mu_{0}".format(i0), x)
+            
         start_vector = self.pipeline.normalize_vector(start_vector)
 
         #calculate the moped matrix.
@@ -119,10 +144,15 @@ class MOPEDSampler(ParallelSampler):
         else:
             moped_class = moped.MOPED
         moped_calc = moped_class(compute_moped_vector, start_vector, 
-            self.step_size, self.tolerance, self.maxiter, pool=self.pool)
+            self.step_size, self.ordering, self.tolerance, self.maxiter, pool=self.pool)
+
+        # Obtain the parameter normalization factor from pipeline
+        # Because the derivative is given for normalized param,
+        # we denormalize each param.
+        param_norm = self.get_param_norm()
 
         try:
-            moped_matrix = moped_calc.compute_moped_matrix()
+            moped_matrix = moped_calc.compute_moped_matrix(param_norm=param_norm)
         except moped.MOPEDParameterError as error:
             param = str(self.pipeline.varied_params[error.parameter_index])
             if error.parameter_index==0:
@@ -146,21 +176,11 @@ starting value, so the points used to calculate the derivative are outside the r
 If that is the case you should try calculating the MOPED Matrix at a different starting point.
 """)
 
-        moped_matrix = self.pipeline.denormalize_matrix(moped_matrix,inverse=True)
-
-        P = self.compute_prior_matrix()
-        moped_matrix += P
-
         self.converged = True
 
         if self.converged:
             for row in moped_matrix:
                 self.output.parameters(row)
-        try:
-            covariance_matrix = utils.symmetric_positive_definite_inverse(moped_matrix)
-            self.distribution_hints.set_cov(covariance_matrix)
-        except ValueError:
-            logs.error("Generated covariance matrix was not positive definite - beware! ")
-
+        
     def is_converged(self):
         return self.converged

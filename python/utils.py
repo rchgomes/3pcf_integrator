@@ -3,31 +3,54 @@ import numpy as np
 import matplotlib.pyplot as plt
 from getdist import MCSamples
 
+##################################
+# parameter name and label mapping
+def get_preset_mapping(names):
+    # mcmc related output
+    mcmc = {'prior':['prior', 'prior'], \
+            'like':['like', 'like'], \
+            'post':['post', 'post'], \
+            'weight':['weight', 'weight']}
+    # DES related model params
+    des  = {'cosmological_parameters--omega_m':['om', r'\Omega_{\rm m}'], \
+            'cosmological_parameters--s_8': ['s8', r'S_8'], \
+            'COSMOLOGICAL_PARAMETERS--SIGMA_8': ['sig8', r'\sigma_8'], \
+            'cosmological_parameters--w': ['w0', r'w_0'], \
+            'shear_calibration_parameters--m1': ['m1', r'm_1'], \
+            'shear_calibration_parameters--m2': ['m2', r'm_2'], \
+            'shear_calibration_parameters--m3': ['m3', r'm_3'], \
+            'shear_calibration_parameters--m4': ['m4', r'm_4'], \
+            'intrinsic_alignment_parameters--a1':['a1', r'A_1'], \
+            'intrinsic_alignment_parameters--a2':['a2', r'A_2'], \
+            'intrinsic_alignment_parameters--alpha1': ['alpha1', r'\alpha_1'], \
+            'intrinsic_alignment_parameters--alpha2': ['alpha2', r'\alpha_2'], \
+            'DATA_VECTOR--2PT_CHI2': ['2pt-chi2', r'\chi^2_{\rm 2pt}'], \
+            'DATA_VECTOR--MAP3_CHI2': ['map3-chi2', r'\chi^2_{\rm map3}']}
+    # make output
+    if isinstance(names, str):
+        names = [names]
+    mapping = {}
+    for name in names:
+        if name == 'des':
+            mapping |= des
+        if name == 'mcmc':
+            mapping |= mcmc
+    return mapping
+
+##################################
 # Utilities of post analysis
-def read_cosmosis_chain(fname, mapping=None):
-    """
-    fname (str): path to the chain file
-    mapping (dict): mapping of parameter names
-    """
+def read_cosmosis_param_header(fname, mapping=None):
     # get params from header
     with open(fname, 'r') as f:
         params = f.readline().replace('#','').strip().split()
         labels = [None for p in params]
-        index  = np.arange(len(params))
-    # if mapping is provided, use it
+    # mapping of params and labels
     if mapping is not None:
-        mapping['prior'] = mapping.get('prior', ['prior', 'prior'])
-        mapping['like']  = mapping.get('like', ['like', 'like'])
-        mapping['post']  = mapping.get('post', ['post', 'post'])
-        mapping['weight']= mapping.get('weight', ['weight', 'weight'])
-        index  = [i for i, p in zip(index, params) if p in mapping]
-        labels = [mapping[p][1] for p in params if p in mapping]
-        params = [mapping[p][0] for p in params if p in mapping]
-    # get chain
-    chain = np.loadtxt(fname)[:,index]
-    return chain, params, labels
+        labels = [mapping[param][1] if param in mapping else param for param in params]
+        params = [mapping[param][0] if param in mapping else param for param in params]
+    return params, labels
 
-def preduce(chain, params, labels, take=None):
+def select_name(params, take=None):
     if take is not None:
         if isinstance(take, str):
             take = [take]
@@ -36,36 +59,84 @@ def preduce(chain, params, labels, take=None):
         if 'post' not in take: take.append('post')
         if 'weight' not in take: take.append('weight')
         index = [i for i, p in enumerate(params) if p in take]
-        chain = chain[:,index]
-        params= [params[i] for i in index]
-        labels= [labels[i] for i in index]
+    else:
+        index = np.arange(len(params))
+    return index
+
+##################################
+# mcmc chain reader
+def read_cosmosis_mcmc_chain(fname, mapping=None, take=None):
+    params, labels = read_cosmosis_param_header(fname, mapping)
+    chain = np.loadtxt(fname)
+    index = select_name(params, take)
+    # apply selection
+    chain = chain[:, index]
+    params= list(np.array(params)[index])
+    labels= list(np.array(labels)[index])
     return chain, params, labels
 
-def read_des_chain(fname, take=None):
-    mapping = {'cosmological_parameters--omega_m':['om', r'\Omega_{\rm m}'], \
-        'cosmological_parameters--s_8': ['s8', r'S_8'], \
-        'COSMOLOGICAL_PARAMETERS--SIGMA_8': ['sig8', r'\sigma_8'], \
-        'cosmological_parameters--w': ['w0', r'w_0'], \
-        'shear_calibration_parameters--m1': ['m1', r'm_1'], \
-        'shear_calibration_parameters--m2': ['m2', r'm_2'], \
-        'shear_calibration_parameters--m3': ['m3', r'm_3'], \
-        'shear_calibration_parameters--m4': ['m4', r'm_4'], \
-        'intrinsic_alignment_parameters--a1':['a1', r'A_1'], \
-        'intrinsic_alignment_parameters--a2':['a2', r'A_2'], \
-        'intrinsic_alignment_parameters--alpha1': ['alpha1', r'\alpha_1'], \
-        'intrinsic_alignment_parameters--alpha2': ['alpha2', r'\alpha_2'], \
-        'DATA_VECTOR--2PT_CHI2': ['2pt-chi2', r'\chi^2_{\rm 2pt}'], \
-        'DATA_VECTOR--MAP3_CHI2': ['map3-chi2', r'\chi^2_{\rm map3}']}
-    chain, params, labels = read_cosmosis_chain(fname, mapping)
-    print(params)
-    chain, params, labels = preduce(chain, params, labels, take)
+def read_cosmosis_mcmc_des_chain(fname, mapping=None, take=None):
+    if mapping is None:
+        mapping = get_preset_mapping('des')
+    else:
+        mapping |= get_preset_mapping('des')
+    params, labels = read_cosmosis_param_header(fname, mapping)
+    chain = np.loadtxt(fname)
+    index = select_name(params, take)
+    # apply selection
+    chain = chain[:, index]
+    params= list(np.array(params)[index])
+    labels= list(np.array(labels)[index])
     return chain, params, labels
 
-def to_mcsamples(chain, params, labels, **kwargs):
+##################################
+# fisher output
+def _read_cosmosis_fisher_mu(fname, ndim):
+    mu = np.zeros(ndim)
+    i = 0
+    with open(fname, 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            if '#mu_{}='.format(i) in line:
+                mu[i] = float(line.split('=')[1])
+                i += 1
+            else:
+                continue
+            if i>ndim:
+                break
+    # check
+    assert i==ndim, 'i={} while ndim={}'.format(i, ndim)
+    
+    return mu
+
+def read_cosmosis_fisher(fname, mapping=None, take=None):
+    # read param, label, matrix
+    params, labels = read_cosmosis_param_header(fname, mapping)
+    F = np.loadtxt(fname)
+    index = select_name(params, take)
+    # read reference model parameter:
+    mu = _read_cosmosis_fisher_mu(fname, F.shape[0])
+    # apply selection
+    mu = mu[index]
+    F = F[np.ix_(index, index)]
+    params= list(np.array(params)[index])
+    labels= list(np.array(labels)[index])
+    return mu, F, params, labels
+
+##################################
+# getdist interface
+def chain_to_mcsamples(chain, params, labels, **kwargs):
     w = chain[:,params.index('weight')]
     samples = MCSamples(samples=chain, names=params, labels=labels, weights=w, **kwargs)
     return samples
 
+def fisher_to_mcsamples(mu, F, params, labels, seed=0, size=5000, **kwargs):
+    rng = np.random.default_rng(seed)
+    _ = rng.multivariate_normal(mu, np.linalg.inv(F), size=size)
+    samples = MCSamples(samples=_, names=params, labels=labels, **kwargs)
+    return samples
+
+# utils
 def wplot(chain, params, labels):
     w = chain[:,params.index('weight')]
     plt.figure(figsize=(4,2))
