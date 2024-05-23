@@ -27,7 +27,8 @@ def setup(options):
 
     ########################################################################################
     # bisppectrum model (halofit)
-    config_halofit = {'Lmax':Lmax, 
+    config_halofit = {'zmin':1e-4, 'zmid':0.1, 'nzbin_log':30, 'nzbin_lin':100,
+                        'Lmax':Lmax,
                       'multipole_type':multipole_type, 
                       'NLA':options.get_bool(option_section, 'NLA', default=True)}
     # select model
