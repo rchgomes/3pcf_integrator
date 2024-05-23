@@ -132,6 +132,11 @@ def execute(block, config):
                         'n':block[names.cosmological_parameters, 'n_s']}
     )
     bs.set_cosmology(cosmo)
+    # Intrinsic alignment parameter
+    bs.set_NLA_param({'AIA':block['intrinsic_alignment_parameters', 'a1'], \
+            'alphaIA':block['intrinsic_alignment_parameters', 'alpha1'] , \
+            'z0':block['intrinsic_alignment_parameters', 'z_piv']})
+    bs.config_IA['NLA'] = True
     # set source distribution
     nzbin = block['nz_source', "nbin"]
     bs.set_source_distribution(
@@ -139,12 +144,26 @@ def execute(block, config):
         [block['nz_source', "bin_%d" % (i+1)] for i in range(nzbin)],
         [(i+1) for i in range(nzbin)]
     )
+    # set linear matter power spectrum
+    bs.set_pklin(
+        block[names.matter_power_lin, 'k_h'],
+        block[names.matter_power_lin, 'p_k'][0,:]
+    )
+    # set lienar growth rate
+    bs.set_lgr(
+        block[names.growth_parameters, "z"],
+        block[names.growth_parameters, "d_z"]
+    )
+    # set baryon paramter
+    if block.has_value('baryon_parameters', 'fb'):
+        fb = block['baryon_parameters', 'fb']
+        bs.set_baryon_param({'fb': fb})
+    # compute kernel
     bs.compute_kernel()
 
     sctname = "map3"
 
-    zarray, predictions_newshape = upsampling(zarray, predictions_newshape, 100)
-    #zarray, predictions_newshape = upsampling(zarray, predictions_newshape, 300)
+    #zarray, predictions_newshape = upsampling(zarray, predictions_newshape, 100)
 
     for scomb in block['natural_components', 'sample_combinations']:
         name = '_'.join([str(s) for s in scomb])
