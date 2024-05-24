@@ -144,7 +144,7 @@ class MOPED(object):
             # update matrix
             B[m,:] = bm
 
-        return np.transpose(B)
+        return B
 
     def five_points_stencil_points(self, param_index):
         delta = np.zeros(self.nparams)

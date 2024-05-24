@@ -5,6 +5,8 @@ import numpy as np
 import scipy.linalg
 from ...runtime import prior, utils, logs
 import sys
+from astropy.io import fits
+from astropy.table import Table
 
 def compute_moped_vector(p, cov=False):
     # use normalized parameters - mopedPipeline is a global
@@ -50,6 +52,35 @@ def compute_moped_vector(p, cov=False):
     #Return numpy vector
     return v, M
 
+# def collect_data_vector(p):
+#     # use normalized parameters - mopedPipeline is a global
+#     # variable because it has to be picklable)
+#     try:
+#         x = mopedPipeline.denormalize_vector(p)
+#     except ValueError:
+#         logs.error("Parameter vector outside limits: %r" % p)
+#         return None
+#
+#     #Run the pipeline, generating a data block
+#     data = mopedPipeline.run_parameters(x)
+#
+#     #If the pipeline failed, return "None"
+#     #This might happen if the parameters stray into
+#     #a bad region.
+#     if data is None:
+#         return None
+#
+#     v = []
+#     for like_name in mopedPipeline.likelihood_names:
+#         v.append(data["data_vector", like_name + "_data"])
+#
+#     v = np.concatenate(v)
+#     #Might be only length-one, conceivably, so convert to a vector
+#     v = np.atleast_1d(v)
+#
+#     return v
+
+
 class SingleProcessPool(object):
     def map(self, function, tasks):
         return list(map(function, tasks))
@@ -69,6 +100,14 @@ class MOPEDSampler(ParallelSampler):
         self.maxiter = self.read_ini("maxiter", int, 10)
         self.use_numdifftools = self.read_ini("use_numdifftools", bool, False)
         self.set_params_ordering()
+        # output to fits file
+        # self.filename = self.read_ini("filename", str, "")
+        # self.moped_name = self.read_ini("name", str, "")
+        # self.overwrite = self.read_ini("overwrite", bool, False)
+        # if self.filename:
+        #     assert len(self.moped_name) > 0, \
+        #             "You must specify a MOPED name in the parameter file. " \
+        #             "Use 'name' option."
 
         if self.output:
             for p in self.pipeline.extra_saves:
@@ -179,8 +218,18 @@ If that is the case you should try calculating the MOPED Matrix at a different s
         self.converged = True
 
         if self.converged:
-            for row in moped_matrix:
+            for row in moped_matrix.T:
                 self.output.parameters(row)
+
+            # if self.filename:
+            #     hdul = fits.HDUList([fits.PrimaryHDU()])
+            #     # Table: Moped compressed data
+            #     data  = np.dot(moped_matrix, collect_data_vector(start_vector))
+            #     table = Table([data], names=['moped'])
+            #     hdul.append(fits.BinTableHDU(table, name='MOPED-DATA-{}'.format(self.moped_name)))
+            #     # mattrix
+            #     hdul.append(fits.ImageHDU(moped_matrix, name='MOPED-TRANSFORM-{}'.format(self.moped_name)))
+            #     hdul.writeto(self.filename, overwrite=self.overwrite)
         
     def is_converged(self):
         return self.converged
