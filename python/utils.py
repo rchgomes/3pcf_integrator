@@ -15,6 +15,7 @@ def get_preset_mapping(names):
     des  = {'cosmological_parameters--omega_m':['om', r'\Omega_{\rm m}'], \
             'cosmological_parameters--s_8': ['s8', r'S_8'], \
             'COSMOLOGICAL_PARAMETERS--SIGMA_8': ['sig8', r'\sigma_8'], \
+            'cosmological_parameters--h0': ['h0', 'h_0'], \
             'cosmological_parameters--w': ['w0', r'w_0'], \
             'shear_calibration_parameters--m1': ['m1', r'm_1'], \
             'shear_calibration_parameters--m2': ['m2', r'm_2'], \
@@ -63,17 +64,55 @@ def select_name(params, take=None):
         index = np.arange(len(params))
     return index
 
+def read_cosmosis_value(filename, mapping=None):
+    with open(filename, 'r') as f:
+        s_mark = 'START_OF_VALUES_INI'
+        e_mark = 'END_OF_VALUES_INI'
+
+        lines = f.readlines()
+
+        for i in range(len(lines)):
+            if s_mark in lines[i]:
+                i_s = i
+            if e_mark in lines[i]:
+                i_e = i
+                break
+        
+        lines = lines[i_s+1:i_e]
+        
+        params = {}
+        for line in lines:
+            if '[' in line and ']' in line:
+                section = line[line.find('[')+1:line.find(']')]
+            if '=' in line:
+                name, values = line.split('=')
+                name = name.replace('##', '').replace(' ', '')
+                name = '%s--%s'%(section, name)
+                if mapping is not None:
+                    name = mapping.get(name, [name, None])[0]
+                values = [float(_) for _ in values.split()]
+                params[name] = values
+    return params
+
+def convert_cosmosis_value_to_range(params):
+    ranges = {}
+    for name, values in params.items():
+        if len(values) == 3:
+            ranges[name] = [min(values), max(values)]
+    return ranges
+
 ##################################
 # mcmc chain reader
 def read_cosmosis_mcmc_chain(fname, mapping=None, take=None):
     params, labels = read_cosmosis_param_header(fname, mapping)
+    ranges = convert_cosmosis_value_to_range(read_cosmosis_value(fname, mapping))
     chain = np.loadtxt(fname)
     index = select_name(params, take)
     # apply selection
     chain = chain[:, index]
     params= list(np.array(params)[index])
     labels= list(np.array(labels)[index])
-    return chain, params, labels
+    return chain, params, labels, ranges
 
 def read_cosmosis_mcmc_des_chain(fname, mapping=None, take=None):
     if mapping is None:
@@ -81,13 +120,14 @@ def read_cosmosis_mcmc_des_chain(fname, mapping=None, take=None):
     else:
         mapping |= get_preset_mapping('des')
     params, labels = read_cosmosis_param_header(fname, mapping)
+    ranges = convert_cosmosis_value_to_range(read_cosmosis_value(fname, mapping))
     chain = np.loadtxt(fname)
     index = select_name(params, take)
     # apply selection
     chain = chain[:, index]
     params= list(np.array(params)[index])
     labels= list(np.array(labels)[index])
-    return chain, params, labels
+    return chain, params, labels, ranges
 
 ##################################
 # fisher output
@@ -112,6 +152,7 @@ def _read_cosmosis_fisher_mu(fname, ndim):
 def read_cosmosis_fisher(fname, mapping=None, take=None):
     # read param, label, matrix
     params, labels = read_cosmosis_param_header(fname, mapping)
+    ranges = convert_cosmosis_value_to_range(read_cosmosis_value(fname, mapping))
     F = np.loadtxt(fname)
     index = select_name(params, take)
     # read reference model parameter:
@@ -121,7 +162,27 @@ def read_cosmosis_fisher(fname, mapping=None, take=None):
     F = F[np.ix_(index, index)]
     params= list(np.array(params)[index])
     labels= list(np.array(labels)[index])
-    return mu, F, params, labels
+    return mu, F, params, labels, ranges
+
+def read_cosmosis_fisher_des(fname, mapping=None, take=None):
+    if mapping is None:
+        mapping = get_preset_mapping('des')
+    else:
+        mapping |= get_preset_mapping('des')
+    return read_cosmosis_fisher(fname, mapping=mapping, take=take)
+
+def approximate_range_by_Gauss_in_F(F, params, ranges):
+    """
+    Fisher matrix does not care about the prior range.
+    Here, we approximate prior range by Gaussian distribution
+    whose width corresponds to range length: sigma=(max-min)/2
+    """
+    for i, param in enumerate(params):
+        if param not in ranges:
+            continue
+        sigma = (ranges[param][1]-ranges[param][0])/2
+        F[i,i]+= 1/sigma**2
+    return F
 
 ##################################
 # getdist interface
