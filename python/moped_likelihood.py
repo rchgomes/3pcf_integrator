@@ -3,6 +3,9 @@ import numpy as np
 from threepoint import ThreePointDataClass
 
 def setup(options):
+    # name of this likelihood
+    name = option_section.replace('_like', '')
+
     # List of likelihood names
     likelihoods = options.get_string(option_section, "likelihoods").split()
 
@@ -15,7 +18,7 @@ def setup(options):
     # max_n = maximum number of MOPED mode to use
     # moped_index = index of the MOPED mode to use
 
-    config = {"likelihoods": likelihoods, "transform_matrix": transform_matrix}
+    config = {"name":name, "likelihoods": likelihoods, "transform_matrix": transform_matrix}
     return config
 
 def execute(block, config):
@@ -41,13 +44,13 @@ def execute(block, config):
     # MOPED modes are uncorrelated to each other and normalized
     # by construction, so the covariance matrix is unity.
     chi2 = np.sum((transformed_data - transformed_theo)**2)
-    block[names.likelihoods, f'{option_section}_like'] = -0.5*chi2
-    block[names.data_vector, f'{option_section}_chi2'] = chi2
+    block[names.likelihoods, f'{config["name"]}_like'] = -0.5*chi2
+    block[names.data_vector, f'{config["name"]}_chi2'] = chi2
 
     # save data vector
-    block[names.data_vector, f'{option_section}_data'] = transformed_data
-    block[names.data_vector, f'{option_section}_theory'] = transformed_theo
-    block[names.data_vector, f'{option_section}_inverse_covariance'] = np.eye(len(transformed_data))
+    block[names.data_vector, f'{config["name"]}_data'] = transformed_data
+    block[names.data_vector, f'{config["name"]}_theory'] = transformed_theo
+    block[names.data_vector, f'{config["name"]}_inverse_covariance'] = np.eye(len(transformed_data))
 
     return 0
 
