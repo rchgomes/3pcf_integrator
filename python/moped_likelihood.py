@@ -4,7 +4,7 @@ from threepoint import ThreePointDataClass
 
 def setup(options):
     # name of this likelihood
-    name = option_section.replace('_like', '')
+    name = options.get_string(option_section, "like_name", 'moped')
 
     # List of likelihood names
     likelihoods = options.get_string(option_section, "likelihoods").split()
