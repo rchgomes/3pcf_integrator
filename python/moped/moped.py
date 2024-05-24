@@ -131,14 +131,24 @@ class MOPED(object):
         B = np.zeros((nparam, ndata))
 
         for m in range(nparam):
+            # Here we compute the MOPED matrix based on 
+            # Eq.14 of https://arxiv.org/pdf/astro-ph/9911102
+            # 
+            # In that paper, the definition of b_1(Eq.11) and 
+            # b_m(Eq.14) are different. However, we can use Eq.14
+            # in a programming manner, we initially have b_m=0 for 
+            # all m. Then we update b_m for each m, which holds the
+            # expression of Eq.14.
+            #
             # projection of mu_m vector to b_q vector, dim = (nparam)
             mum_bq = np.einsum('i,qi->q', derivatives[m,:], B)
-            # 
+            # numerator
             bm = np.dot(inv_cov, derivatives[m,:])
             bm-= np.einsum('q,qi->i', mum_bq, B)
-            # 
+            # denominator
             norm = np.dot(derivatives[m,:], np.dot(inv_cov, derivatives[m,:]))
             norm-= np.sum(mum_bq**2)
+            norm = norm**0.5
             # 
             bm/= norm
             # update matrix
