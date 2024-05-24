@@ -154,6 +154,11 @@ class MOPED(object):
             # update matrix
             B[m,:] = bm
 
+        # Orthogonarity and normalization check
+        u = np.einsum('mi,ij,nj->mn', B, np.linalg.inv(inv_cov), B)
+        print('Orthogonarity check:')
+        print(u)
+
         return B
 
     def five_points_stencil_points(self, param_index):
