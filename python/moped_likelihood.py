@@ -3,8 +3,8 @@ import numpy as np
 from threepoint import ThreePointDataClass
 
 def setup(options):
-    # name of this moped likelihood
-    name = options.get_string(option_section, "name", 'moped')
+    # name of this likelihood
+    name = options.get_string(option_section, "like_name", 'moped')
 
     # List of likelihood names
     likelihoods = options.get_string(option_section, "likelihoods").split()
