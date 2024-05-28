@@ -39,6 +39,11 @@ def execute(block, config):
     block[names.likelihoods, 'map3_like'] = -0.5*chi2
     block[names.data_vector, 'map3_chi2'] = chi2
 
+    # append data vector
+    block[names.data_vector, 'map3_data'] = map3_data
+    block[names.data_vector, 'map3_theory'] = map3_model
+    block[names.data_vector, 'map3_inverse_covariance'] = icov
+
     return 0
 
 def cleanup(config):
