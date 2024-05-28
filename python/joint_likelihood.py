@@ -12,6 +12,7 @@ import numpy as np
 import os
 from astropy.io import fits
 import scipy.linalg
+from time import time
 
 def read_covariance(filename, covmat_name, data_sets=None):
     # Read the covariance matrix from the data file
@@ -163,9 +164,10 @@ def execute(block, config):
     transformation_matrix = scipy.linalg.block_diag(*transformation_matrix)
 
     # Transform the data vector
+    t0 = time()
     data_vector = np.dot(transformation_matrix, data_vector)
     theory_vector = np.dot(transformation_matrix, theory_vector)
-    covariance_masked = np.einsum('ij,jk,lk->il', transformation_matrix, covariance_masked, transformation_matrix)
+    covariance_masked = np.dot(np.dot(transformation_matrix, covariance_masked), transformation_matrix.T)
 
     # Compute the joint likelihood
     diff = data_vector - theory_vector

@@ -154,7 +154,7 @@ class MOPED(object):
             # norm-= np.sum(mum_bq**2)
             # norm = norm**0.5
 
-            bm/= np.einsum('i,ij,j->', bm, cov, bm)
+            bm/= np.einsum('i,ij,j->', bm, cov, bm)**0.5
             # update matrix
             B[m,:] = bm
 
