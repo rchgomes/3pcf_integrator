@@ -227,9 +227,11 @@ class ThreePointDataClass:
         if hasattr(self, 'cov'):
             # create header
             header = fits.Header()
-            header['EXTNAME']  = 'COV'
+            header['EXTNAME']  = 'COVMAT'
             header['NSIM']     = self.nsim4cov
             header['3PT_DATA'] = True
+            header['STRT_0'] = 0
+            header['name_0'] = 'map3'
             # create hdu
             hdu = fits.ImageHDU(self.cov, header=header)
             hdul.append(hdu)

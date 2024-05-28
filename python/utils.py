@@ -171,7 +171,7 @@ def read_cosmosis_fisher_des(fname, mapping=None, take=None):
         mapping |= get_preset_mapping('des')
     return read_cosmosis_fisher(fname, mapping=mapping, take=take)
 
-def approximate_range_by_Gauss_in_F(F, params, ranges):
+def approximate_range_by_Gauss_in_F(F, params, ranges, scale=1):
     """
     Fisher matrix does not care about the prior range.
     Here, we approximate prior range by Gaussian distribution
@@ -180,7 +180,7 @@ def approximate_range_by_Gauss_in_F(F, params, ranges):
     for i, param in enumerate(params):
         if param not in ranges:
             continue
-        sigma = (ranges[param][1]-ranges[param][0])/2
+        sigma = scale*(ranges[param][1]-ranges[param][0])/2
         F[i,i]+= 1/sigma**2
     return F
 

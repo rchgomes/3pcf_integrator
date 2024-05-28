@@ -46,11 +46,10 @@ def execute(block, config):
     chi2 = np.sum((transformed_data - transformed_theo)**2)
     block[names.likelihoods, f'{config["name"]}_like'] = -0.5*chi2
     block[names.data_vector, f'{config["name"]}_chi2'] = chi2
-
-    # save data vector
     block[names.data_vector, f'{config["name"]}_data'] = transformed_data
     block[names.data_vector, f'{config["name"]}_theory'] = transformed_theo
     block[names.data_vector, f'{config["name"]}_inverse_covariance'] = np.eye(len(transformed_data))
+    block[names.data_vector, f'{config["name"]}_transform_matrix'] = config["transform_matrix"]
 
     return 0
 

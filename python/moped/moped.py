@@ -130,6 +130,7 @@ class MOPED(object):
         nparam, ndata = derivatives.shape
         B = np.zeros((nparam, ndata))
 
+        cov = np.linalg.inv(inv_cov)
         for m in range(nparam):
             # Here we compute the MOPED matrix based on 
             # Eq.14 of https://arxiv.org/pdf/astro-ph/9911102
@@ -145,12 +146,15 @@ class MOPED(object):
             # numerator
             bm = np.dot(inv_cov, derivatives[m,:])
             bm-= np.einsum('q,qi->i', mum_bq, B)
-            # denominator
-            norm = np.dot(derivatives[m,:], np.dot(inv_cov, derivatives[m,:]))
-            norm-= np.sum(mum_bq**2)
-            norm = norm**0.5
-            # 
-            bm/= norm
+            # denominator: we compute the normalization 
+            # directly from unnormalized bm, instead of following 
+            # the Eq.14 to avoid numerical instability.
+
+            # norm = np.dot(derivatives[m,:], np.dot(inv_cov, derivatives[m,:]))
+            # norm-= np.sum(mum_bq**2)
+            # norm = norm**0.5
+
+            bm/= np.einsum('i,ij,j->', bm, cov, bm)**0.5
             # update matrix
             B[m,:] = bm
 
