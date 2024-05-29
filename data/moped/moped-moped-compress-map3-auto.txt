@@ -1,0 +1,520 @@
+#cosmological_parameters--S_8	cosmological_parameters--omega_m	cosmological_parameters--h0	cosmological_parameters--omega_b	cosmological_parameters--n_s	cosmological_parameters--mnu	shear_calibration_parameters--m1	shear_calibration_parameters--m2	shear_calibration_parameters--m3	shear_calibration_parameters--m4	wl_photoz_errors--bias_1	wl_photoz_errors--bias_2	wl_photoz_errors--bias_3	wl_photoz_errors--bias_4	intrinsic_alignment_parameters--a1	intrinsic_alignment_parameters--alpha1
+#sampler=moped
+#n_varied=16
+#module_0=consistency 1.1
+#module_1=BBN-Consistency 0705.0290
+## CITE Comp.Phys.Commun.178:956-971,2008
+#module_2=camb 2.0
+## CITE http://arxiv.org/abs/1201.3654
+## CITE http://arxiv.org/abs/astro-ph/9911177
+#module_3=fast_pt 1
+## CITE https://iopscience.iop.org/article/10.1088/1475-7516/2016/09/015
+#module_4=load_nz_fits 1
+#module_5=photoz_bias 1
+#module_6=IA_NLA #name from ini file
+#module_7=project_2d 1.0
+#module_8=add_intrinsic 1.0
+#module_9=map3_binning #name from ini file
+#module_10=fastnc_emulate #name from ini file
+#module_11=map3_like #name from ini file
+#timestamp=2024-05-29T12:28:56.707457
+#platform=Linux-3.10.0-514.6.1.el7.x86_64-x86_64-with-glibc2.17
+#platform_version=#1 SMP Wed Jan 18 13:06:36 UTC 2017
+#uuid=e7f14357e5f4479ca1ec7f98350c6e64
+#cosmosis_git_version=
+#csl_git_version=
+#cwd_git_version=7caeecf60426bfe5e491fa38858e6e36a8b14b0b
+#hostname=gw1.local
+#username=sunao.sugiyama
+#workdir=/work/sunao.sugiyama/3pcf/3pcf_integrator
+#step_size=0.01
+#tolerance=0.01
+#maxiter=10
+#use_numdifftools=False
+#ordering=cosmological_parameters--S_8  cosmological_parameters--omega_m
+## START_OF_PARAMS_INI
+## [DEFAULT]
+## 2pt_file = /work/sunao.sugiyama/3pcf/3pcf_integrator/data/dv/sim_2pt-NLA-cosmoDESY3.fits
+## map3_file = /work/sunao.sugiyama/3pcf/3pcf_integrator/data/dv/sim_map3-NLA-cosmoDESY3.fits
+## run_name = map3-auto
+## group_name = moped-compress
+## output_dir = not-used
+## 
+## [runtime]
+## sampler = moped
+## verbosity = standard
+## 
+## [pipeline]
+## modules = consistency  bbn_consistency 	camb  fast_pt 	fits_nz  source_photoz_bias 	IA_NLA 	pk_to_cl 	add_intrinsic 	map3_binning 	fastnc_emulate 	map3_like
+## timing = T
+## debug = T
+## priors = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//examples/des-y3-priors.ini
+## values = /work/sunao.sugiyama/3pcf/3pcf_integrator/config/%(GROUP_NAME)s/des-y3-shear-values.ini
+## extra_output = cosmological_parameters/sigma_8 cosmological_parameters/sigma_12 data_vector/map3_chi2
+## 
+## [output]
+## filename = data/moped/moped-%(group_name)s-%(RUN_NAME)s.txt
+## format = text
+## privacy = F
+## 
+## [map3_binning]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/python/map3_binning.py
+## data_file = %(MAP3_FILE)s
+## sample_combinations = auto
+## 
+## [fastnc]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/python/fastnc_interface.py
+## lmax = 50
+## mmax = 100
+## nfft = 150
+## projection = cent
+## dlnt = 0.253758
+## use-pixwin = T
+## nside = 1024
+## mu = 0 1 2 3
+## n-phi-bin = 63
+## phi-min = 0.01570796
+## phi-max = 3.12588469
+## n-theta-bin = 20
+## theta-min = 0.5
+## theta-max = 62.0703205
+## use_cache = T
+## nla = T
+## 
+## [nc_to_map3]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/python/nc_to_map3.py
+## 
+## [map3_like]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/python/map3_likelihood.py
+## data_file = %(MAP3_FILE)s
+## 
+## [save_map3]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/python/save_map3.py
+## copy_covariance = %(MAP3_FILE)s
+## 
+## [fastnc_emulate_v1]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/python/fastnc_emulate.py
+## theta_filter_1 = 7.0 14.0 25.0 40.0
+## theta_filter_2 = 7.0 14.0 25.0 40.0
+## theta_filter_3 = 7.0 14.0 25.0 40.0
+## z_values = 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1.0 1.05 1.1 1.15 1.2 1.25 1.3 1.35 1.4
+## model_filename = data/nz/map3_model_28zs-2
+## rescaling_filename = data/nz/rescaling_for_map3_network_28zs.pkl
+## 
+## [fastnc_emulate]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/python/fastnc_emulate.py
+## theta_filter_1 = 7.0 14.0 25.0 40.0
+## theta_filter_2 = 7.0 14.0 25.0 40.0
+## theta_filter_3 = 7.0 14.0 25.0 40.0
+## z_values = 0.005 0.01 0.02 0.03 0.04 0.05 0.07 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1.0 1.05 1.1 1.15 1.2 1.25 1.3 1.35 1.4 1.45 1.5
+## model_filename = data/train_emulator/map3_model_22May24-0
+## rescaling_filename = data/train_emulator/rescaling_for_map3_network_22May24.pkl
+## nz_upsampling = 100
+## 
+## [fast_pt]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//structure/fast_pt/fast_pt_interface.py
+## do_ia = T
+## k_res_fac = 0.5
+## verbose = F
+## 
+## [IA]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//intrinsic_alignments/tatt/tatt_interface.py
+## sub_lowk = F
+## do_galaxy_intrinsic = F
+## ia_model = tatt
+## 
+## [IA_NLA]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//intrinsic_alignments/tatt/tatt_interface.py
+## sub_lowk = F
+## do_galaxy_intrinsic = F
+## ia_model = nla
+## 
+## [baryon_ratio_OWLS_AGN]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//structure/baryon_power_scaling/baryonic_interface.py
+## ratio_table = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//structure/baryon_power_scaling/data/logPkRatio_owls_AGN.dat
+## 
+## [consistency]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//utility/consistency/consistency_interface.py
+## 
+## [sigma8toAs]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//kids/sigma8toAs.py
+## 
+## [sigma8_rs]
+## file = cosmosis-standard-library/utility/sample_sigma8/sigma8_rescale.py
+## 
+## [bbn_consistency]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//utility/bbn_consistency/bbn_consistency.py
+## 
+## [fits_nz]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//number_density/load_nz_fits/load_nz_fits.py
+## nz_file = %(2PT_FILE)s
+## data_sets = source
+## prefix_section = T
+## prefix_extension = T
+## 
+## [fits_nz_lens]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//number_density/load_nz_fits/load_nz_fits.py
+## nz_file = %(2PT_FILE)s
+## data_sets = lens
+## prefix_section = T
+## prefix_extension = T
+## 
+## [lens_photoz_width]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//number_density/photoz_width/photoz_width.py
+## mode = stretch
+## sample = nz_lens
+## bias_section = lens_photoz_errors
+## interpolation = linear
+## 
+## [lens_photoz_bias]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//number_density/photoz_bias/photoz_bias.py
+## mode = additive
+## sample = nz_lens
+## bias_section = lens_photoz_errors
+## interpolation = linear
+## 
+## [hyperrank]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//number_density/nz_multirank/nz_multirank.py
+## nz_file = %(2PT_FILE)s
+## data_set = source
+## dimensions = 3
+## bin_ranks = 1 2 4
+## 
+## [source_photoz_bias]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//number_density/photoz_bias/photoz_bias.py
+## mode = additive
+## sample = nz_source
+## bias_section = wl_photoz_errors
+## interpolation = linear
+## 
+## [pk_to_cl_gg]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//structure/projection/project_2d.py
+## lingal-lingal = lens-lens
+## do_exact = lingal-lingal
+## do_rsd = True
+## ell_min_linspaced = 1
+## ell_max_linspaced = 4
+## n_ell_linspaced = 5
+## ell_min_logspaced = 5.
+## ell_max_logspaced = 1.e5
+## n_ell_logspaced = 80
+## limber_ell_start = 200
+## auto_only = lingal-lingal
+## sig_over_dchi_exact = 3.5
+## 
+## [pk_to_cl]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//structure/projection/project_2d.py
+## ell_min_logspaced = 0.1
+## ell_max_logspaced = 5.0e5
+## n_ell_logspaced = 100
+## shear-shear = source-source
+## shear-intrinsic = source-source
+## intrinsic-intrinsic = source-source
+## intrinsicb-intrinsicb = source-source
+## verbose = F
+## get_kernel_peaks = F
+## sig_over_dchi = 20.
+## shear_kernel_dchi = 10.
+## 
+## [add_magnification]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//structure/magnification/add_magnification.py
+## include_intrinsic = T
+## 
+## [add_intrinsic]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//shear/add_intrinsic/add_intrinsic.py
+## shear-shear = T
+## position-shear = F
+## perbin = F
+## 
+## [add_eb]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//intrinsic_alignments/add_b_mode/add_b_mode_cl.py
+## 
+## [2pt_shear]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//shear/cl_to_xi_fullsky/cl_to_xi_interface.py
+## ell_max = 40000
+## xi_type = EB
+## theta_file = %(2PT_FILE)s
+## bin_avg = T
+## input_section_name = shear_cl  shear_cl_bb
+## output_section_name = shear_xi_plus  shear_xi_minus
+## 
+## [2pt_gal]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//shear/cl_to_xi_fullsky/cl_to_xi_interface.py
+## ell_max = 40000
+## xi_type = '00'
+## theta_file = %(2PT_FILE)s
+## bin_avg = T
+## 
+## [2pt_gal_shear]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//shear/cl_to_xi_fullsky/cl_to_xi_interface.py
+## ell_max = 40000
+## xi_type = '02'
+## theta_file = %(2PT_FILE)s
+## bin_avg = T
+## 
+## [shear_m_bias]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//shear/shear_bias/shear_m_bias.py
+## m_per_bin = True
+## cl_section = shear_xi_plus shear_xi_minus
+## cross_section = galaxy_shear_xi
+## verbose = F
+## 
+## [add_point_mass]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//shear/point_mass/add_gammat_point_mass.py
+## add_togammat = False
+## use_fiducial = True
+## sigcrit_inv_section = sigma_crit_inv_lens_source
+## 
+## [2pt_like]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//likelihood/2pt/2pt_point_mass/2pt_point_mass.py
+## do_pm_marg = True
+## do_pm_sigcritinv = True
+## sigma_a = 10000.0
+## no_det_fac = False
+## include_norm = True
+## data_file = %(2PT_FILE)s
+## data_sets = xip xim
+## make_covariance = F
+## covmat_name = COVMAT
+## angle_range_xip_1_1 = 2.475 999.0
+## angle_range_xip_1_2 = 6.21691892 999.0
+## angle_range_xip_1_3 = 6.21691892 999.0
+## angle_range_xip_1_4 = 4.93827423 999.0
+## angle_range_xip_2_2 = 6.21691892 999.0
+## angle_range_xip_2_3 = 6.21691892 999.0
+## angle_range_xip_2_4 = 6.21691892 999.0
+## angle_range_xip_3_3 = 6.21691892 999.0
+## angle_range_xip_3_4 = 6.21691892 999.0
+## angle_range_xip_4_4 = 4.93827423 999.0
+## angle_range_xim_1_1 = 24.75 999.0
+## angle_range_xim_1_2 = 62.16918918 999.0
+## angle_range_xim_1_3 = 62.16918918 999.0
+## angle_range_xim_1_4 = 49.3827423 999.0
+## angle_range_xim_2_2 = 62.16918918 999.0
+## angle_range_xim_2_3 = 78.26637209 999.0
+## angle_range_xim_2_4 = 78.26637209 999.0
+## angle_range_xim_3_3 = 78.26637209 999.0
+## angle_range_xim_3_4 = 78.26637209 999.0
+## angle_range_xim_4_4 = 62.16918918 999.0
+## angle_range_gammat_1_1 = 24.75 999.0
+## angle_range_gammat_1_2 = 24.75 999.0
+## angle_range_gammat_1_3 = 24.75 999.0
+## angle_range_gammat_1_4 = 24.75 999.0
+## angle_range_gammat_2_1 = 15.61619428 999.0
+## angle_range_gammat_2_2 = 15.61619428 999.0
+## angle_range_gammat_2_3 = 15.61619428 999.0
+## angle_range_gammat_2_4 = 15.61619428 999.0
+## angle_range_gammat_3_1 = 12.40438403 999.0
+## angle_range_gammat_3_2 = 12.40438403 999.0
+## angle_range_gammat_3_3 = 12.40438403 999.0
+## angle_range_gammat_3_4 = 12.40438403 999.0
+## angle_range_gammat_4_1 = 12.40438403 999.0
+## angle_range_gammat_4_2 = 12.40438403 999.0
+## angle_range_gammat_4_3 = 12.40438403 999.0
+## angle_range_gammat_4_4 = 12.40438403 999.0
+## angle_range_gammat_5_1 = 9.85315247 999.0
+## angle_range_gammat_5_2 = 9.85315247 999.0
+## angle_range_gammat_5_3 = 9.85315247 999.0
+## angle_range_gammat_5_4 = 9.85315247 999.0
+## angle_range_wtheta_1_1 = 39.22610651 999.0
+## angle_range_wtheta_2_2 = 24.75 999.0
+## angle_range_wtheta_3_3 = 19.65962381 999.0
+## angle_range_wtheta_4_4 = 15.61619428 999.0
+## angle_range_wtheta_5_5 = 12.40438403 999.0
+## 
+## [save_2pt]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//likelihood/2pt/save_2pt.py
+## theta_min = 2.5
+## theta_max = 250.0
+## n_theta = 20
+## real_space = T
+## make_covariance = F
+## shear_nz_name = nz_source
+## overwrite = T
+## auto_only = galaxy_xi
+## spectrum_sections = shear_xi_plus shear_xi_minus
+## output_extensions = xip xim
+## two_thirds_midpoint = T
+## copy_covariance = %(2PT_FILE)s
+## 
+## [camb]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//boltzmann/camb/camb_interface.py
+## mode = power
+## lmax = 2500
+## feedback = 3
+## accuracyboost = 1.1
+## do_tensors = T
+## do_lensing = T
+## nonlinear = pk
+## halofit_version = takahashi
+## zmin_background = 0.
+## zmax_background = 4.
+## nz_background = 401
+## kmin = 1e-4
+## kmax = 50.0
+## kmax_extrapolate = 500.0
+## nk = 700
+## 
+## [extrapolate]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//boltzmann/extrapolate/extrapolate_power.py
+## 
+## [growth]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//structure/growth_factor/interface.so
+## zmin = 0.
+## zmax = 4.
+## nz = 401
+## 
+## [camb_planck]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//boltzmann/camb/camb.so
+## mode = all
+## lmax = 3000
+## feedback = 0
+## do_tensors = T
+## do_lensing = T
+## do_nonlinear = T
+## high_ell_template = /work/sunao.sugiyama/miniconda3/envs/csis3pcf/lib/python3.11/site-packages/cosmosis/boltzmann/camb/camb_Jan15/HighLExtrapTemplate_lenspotentialCls.dat
+## accuracy_boost = 1.1
+## high_accuracy_default = T
+## 
+## [camb_mead2020]
+## file = /work/sunao.sugiyama/3pcf/3pcf_integrator/../cosmosis-standard-library//boltzmann/camb/camb_interface.py
+## mode = power
+## feedback = 0
+## accuracyboost = 1.1
+## do_tensors = F
+## do_lensing = F
+## kmin = 1e-4
+## kmax = 50.0
+## nk = 700
+## nonlinear = pk
+## neutrino_hierarchy = normal
+## halofit_version = mead2020_feedback
+## zmin_background = 0.
+## zmax_background = 4.
+## nz_background = 401
+## kmax_extrapolate = 500.0
+## 
+## [multinest]
+## max_iterations = 50000
+## multinest_outfile_root = %(OUTPUT_DIR)s/chain_checkpoints/mn_%(RUN_NAME)s
+## resume = F
+## live_points = 500
+## efficiency = 0.3
+## tolerance = 0.1
+## constant_efficiency = F
+## 
+## [polychord]
+## base_dir = %(OUTPUT_DIR)s/y3-polychord-checkpoints
+## polychord_outfile_root = y3
+## resume = F
+## feedback = 3
+## fast_fraction = 0.1
+## live_points = 250
+## num_repeats = 30
+## tolerance = 0.1
+## 
+## [emcee]
+## walkers = 80
+## samples = 10000
+## nsteps = 5
+## 
+## [star]
+## nsample_dimension = 20
+## 
+## [moped]
+## step_size = 0.01
+## ordering = cosmological_parameters--S_8  cosmological_parameters--omega_m
+## 
+## END_OF_PARAMS_INI
+## START_OF_VALUES_INI
+## [cosmological_parameters]
+## omega_m = 0.1     0.290   0.5
+## h0 = 0.55    0.69    0.91
+## omega_b = 0.03    0.048   0.07
+## n_s = 0.87    0.97    1.07
+## w = -1.0
+## s_8 = 0.7    0.759   0.84
+## mnu = 0.06  0.0773   0.6
+## num_massive_neutrinos = 3
+## nnu = 3.046
+## omega_k = 0.0
+## tau = 0.0697186
+## 
+## [shear_calibration_parameters]
+## m1 = -0.1  0.0  0.1
+## m2 = -0.1  0.0  0.1
+## m3 = -0.1  0.0  0.1
+## m4 = -0.1  0.0  0.1
+## 
+## [wl_photoz_errors]
+## bias_1 = -0.1   0.0   0.1
+## bias_2 = -0.1   0.0   0.1
+## bias_3 = -0.1   0.0   0.1
+## bias_4 = -0.1   0.0   0.1
+## 
+## [intrinsic_alignment_parameters]
+## z_piv = 0.62
+## a1 = -5.0   0.7  5.0
+## alpha1 = -5.0  -1.7  5.0
+## 
+## END_OF_VALUES_INI
+## START_OF_PRIORS_INI
+## [wl_photoz_errors]
+## bias_1 = gaussian 0.00 0.018
+## bias_2 = gaussian 0.00 0.015
+## bias_3 = gaussian 0.00 0.011
+## bias_4 = gaussian 0.0  0.017
+## 
+## [shear_calibration_parameters]
+## m1 = gaussian -0.0063 0.0091
+## m2 = gaussian -0.0198 0.0078
+## m3 = gaussian -0.0241 0.0076
+## m4 = gaussian -0.0369 0.0076
+## 
+## [lens_photoz_errors]
+## bias_1 = gaussian  0.006 0.004
+## bias_2 = gaussian  0.001 0.003
+## bias_3 = gaussian  0.004 0.003
+## bias_4 = gaussian -0.002 0.005
+## bias_5 = gaussian -0.007 0.010
+## width_5 = gaussian  1.23  0.054
+## 
+## [planck]
+## a_planck = gaussian 1.0 0.0025
+## 
+## END_OF_PRIORS_INI
+#mu_0=0.759
+#mu_1=0.29
+#mu_2=0.69
+#mu_3=0.048
+#mu_4=0.97
+#mu_5=0.0773
+#mu_6=0.0
+#mu_7=0.0
+#mu_8=0.0
+#mu_9=0.0
+#mu_10=0.0
+#mu_11=0.0
+#mu_12=0.0
+#mu_13=0.0
+#mu_14=0.7
+#mu_15=-1.7
+-1220167.0568755695	-12252998.987541556	10606102.337283934	9047290.161798745	-4376091.808543827	6429992.342773764	-23122310.655735686	-0.17677669529663687	-0.17677669529663687	-0.17677669529663687	-9459268.603618423	23643967.619319774	1171717.9653844119	-3068748.063409129	-746681.8097494483	-18022399.396129277
+10535780.750189142	559211399.187488	-410577373.7070004	106480869.0958349	122502324.12499358	267940545.97814554	677607912.2988869	0.0	0.0	0.0	404806027.6876422	-1578033290.4163628	442746382.9753362	-627545023.7287469	-328476303.83079433	-123994964.22120658
+622413213.4736867	-778134793.6042362	-929832531.9698199	-1661665401.958131	4055886389.273941	3700185331.4460135	-3444804761.1652923	0.0	0.0	0.0	6641377576.482383	6128308532.088651	2076892183.4362016	7052642719.308621	392865756.5037389	3777986078.6615286
+2285874704.175294	6089386969.10683	-5720045766.105337	9900148422.4602	-19657157982.159958	-13255032233.622988	10894500080.669865	0.0	0.0	0.0	14108087945.272865	5689230771.97143	-32743650254.30503	-33759161544.916645	8751302187.955608	-24356556186.346077
+5792529.047222985	-7896642.681534062	8600886.128555665	-5629625.123416335	-7201915.397338912	1306625.8918892257	1222273.4690375854	0.0	0.0	0.0	6890346.851972861	820531.9134067367	7307374.123172966	11160978.455224395	31584288.047172997	-39320513.35306913
+310346707.20455223	634542563.8979911	-94003023.68845597	320768172.33979654	329433067.7263999	62989446.18619676	-597301323.188105	-8.48528137423857	-8.48528137423857	-8.48528137423857	-493683269.2280075	-297657797.7929071	-567696409.6682239	-569425862.20198	-229961321.96949825	302876270.2661648
+-32118964.639730528	1431113618.8705676	-2296359084.050984	-246014687.78260824	-3223724449.3429885	2133864825.9380972	5019732097.085037	45.25483399593904	45.25483399593904	45.25483399593904	-385990417.9273717	612995397.6536193	121432683.40834057	6150501910.137417	-706142007.0999705	-1693611171.6501718
+5211140489.660969	259659621.59497085	2609459233.47432	-807389504.2676376	6896619646.997275	2759077374.280131	-12366936151.509369	-90.50966799187808	-90.50966799187808	-90.50966799187808	-9871699271.389242	18176110037.877304	21803364381.62576	-27994594609.31426	10855022574.809961	6831068879.561227
+-8535244.59339384	1497999.298616153	-500987.09250800346	85422.97069551775	-11897223.06042131	14511053.96928635	-40001365.60569	-0.7071067811865475	-0.7071067811865475	-0.7071067811865475	1003787.3971891154	-2787078.772092707	5477798.415355076	3873197.6194506707	-11955269.916027682	-10798197.356363906
+622376644.043985	305693578.64638615	493810270.9851536	468469213.529514	523818644.6219374	-656537293.7605494	528631869.8127687	0.0	0.0	0.0	39310906.84147627	23768748.794134516	86891640.70812112	203859369.64003718	416700325.0985559	356222280.92181027
+2648061259.379604	-536709526.30683553	-1503708961.8242626	-5105918537.059656	-5543049341.452661	-163534220.88887477	-2478217965.555836	0.0	0.0	0.0	711419441.3919878	-1155115685.8495102	-184181680.2186743	-1586999190.0915873	-753615230.2016908	168283155.38449526
+4113300523.9046054	-5789456623.667711	-14787752925.056463	16924964577.869778	23292634615.974308	-10988441914.2191	6141840567.073476	0.0	0.0	0.0	868035522.9190567	5618139270.785283	469321666.98593986	4185498854.2642913	-8323985095.605665	-13417792332.011385
+-2634648.3781258124	961025.8594893577	-6298609.698364313	2978511.8558294983	-3865016.540734076	-3467237.988577628	-6485678.575775534	-0.08838834764831843	-0.08838834764831843	-0.08838834764831843	-932955.5299369039	-1224334.119251203	2431082.3168219007	8650145.383876953	7010.827236236103	2831289.712752115
+249640334.64726275	-50179164.991864935	434873905.4833581	129236385.57054766	-147977141.52990648	241099927.0328467	35403409.65083641	0.0	0.0	0.0	62013246.13523126	179329615.0339512	84728355.95208468	-257993819.94791973	-246455800.10854256	-308416310.8332095
+680709663.2116656	-1094673108.2073972	-39600991.01392958	-2274400131.1277375	2341403239.337987	804763950.0714585	-588299446.988103	0.0	0.0	0.0	-588519780.7308022	-728730579.9355782	-772592564.2527398	1405706180.2813587	950776359.7122552	905706078.0468683
+-361045765.1165154	-4229415519.9705806	-6376041851.812553	13582272103.056831	-9698548790.008957	3388529270.073228	1008584812.6049341	0.0	0.0	0.0	1866461466.4307847	-2345474392.3159924	71330662.38031583	-2401922594.2042747	1597970944.0618367	3863675799.7079973
+#evaluations=65
+#successes=65
+#complete=1
