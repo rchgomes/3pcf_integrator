@@ -183,7 +183,6 @@ def execute(block, config):
     inv_cov = np.linalg.inv(covariance_masked)
     if config['Hartlap']:
         nsim = config['nsim']
-        raise nsim is not None
         n = inv_cov.shape[0]
         f = (nsim-n-2)/(nsim-1)
         inv_cov *= f
