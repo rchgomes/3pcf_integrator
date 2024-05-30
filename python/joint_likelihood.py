@@ -107,8 +107,11 @@ def setup(options):
         else:
             moped_names.append(None)
 
+    # option to exclude cross-covariance (for sanity check)
+    exclude_cross_cov = options.get_bool(option_section, 'exclude_cross_cov', False)
+
     # set config
-    config = {"name":name, "like_names": like_names, "covariance": covariance, "moped_names": moped_names}
+    config = {"name":name, "like_names": like_names, "covariance": covariance, "moped_names": moped_names, 'exclude_cross_cov':exclude_cross_cov}
 
     return config
 
@@ -121,7 +124,7 @@ def execute(block, config):
     # read masks for each likelihood
     masks = {}
     for like_name in like_names:
-        masks[like_name] = block[names.data_vector, "%s_mask"%like_name]
+        masks[like_name] = block[names.data_vector, "%s_mask"%like_name].astype(bool)
 
     # Build the masked covariance matrix based on the masks
     covariance_masked = []
@@ -135,6 +138,9 @@ def execute(block, config):
             cov = covariance[name]
             # mask
             cov_masked = cov[np.ix_(mask1, mask2)]
+            if config['exclude_cross_cov'] and like_name1!=like_name2:
+                print('Excluding {}-{} cross cov'.format(like_name1, like_name2))
+                cov_masked *= 0.0
             # append
             _.append(cov_masked)
         covariance_masked.append(_)
@@ -164,7 +170,6 @@ def execute(block, config):
     transformation_matrix = scipy.linalg.block_diag(*transformation_matrix)
 
     # Transform the data vector
-    t0 = time()
     data_vector = np.dot(transformation_matrix, data_vector)
     theory_vector = np.dot(transformation_matrix, theory_vector)
     covariance_masked = np.dot(np.dot(transformation_matrix, covariance_masked), transformation_matrix.T)
