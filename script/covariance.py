@@ -29,5 +29,33 @@ def create_full_cov_fits():
     filename = os.path.join(here, '../data/covariance/cov_xip_xim_map3.fits')
     hdul.writeto(filename, overwrite=True)
 
+def rotate_2ptcov_by_analytic_matix():
+    """
+    See ../plot-notebooks/covarianec-2pt-sim-vs-analytic.ipynb 
+    for the idea and details.
+    """
+    # read analytic covariance
+    hdul = fits.open(os.path.join(here,'../data/dv/sim_2pt-NLA.fits'))
+    cov_ana = hdul[1].data[:400, :400]
+    # compute rotation matrix
+    D_ana, R = np.linalg.eig(cov_ana)
+
+    # read simulation-based covariance
+    hdul = fits.open(os.path.join(here, '../data/covariance/cov_xip_xim_map3.fits'))
+    cov_sim = hdul['COVMAT'].data[:400, :400]
+
+    # Rotate the simulation-based covariance using the rotation matrix obtained above
+    D_sim = np.diag((R.T.dot(cov_sim)).dot(R))
+
+    # rescaling the diagonal elements
+    f = np.mean(D_ana/D_sim)
+    cov_sim_resc = f*(R.dot(np.diag(D_sim))).dot(R.T)
+
+    # write
+    hdul['COVMAT'].data[:400, :400] = cov_sim_resc
+    hdul.writeto(os.path.join(here, '../data/covariance/cov_xip_xim_map3_rotated.fits'), overwrite=True)
+
 if __name__ == '__main__':
-    create_full_cov_fits()
+    # create_full_cov_fits()
+
+    rotate_2ptcov_by_analytic_matix()

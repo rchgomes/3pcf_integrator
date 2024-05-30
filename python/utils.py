@@ -114,7 +114,7 @@ def read_cosmosis_mcmc_chain(fname, mapping=None, take=None):
     labels= list(np.array(labels)[index])
     return chain, params, labels, ranges
 
-def read_cosmosis_mcmc_des_chain(fname, mapping=None, take=None):
+def read_cosmosis_mcmc_des_chain(fname, mapping=None, take=None, to_mcsamples=False):
     if mapping is None:
         mapping = get_preset_mapping('des')
     else:
@@ -127,7 +127,12 @@ def read_cosmosis_mcmc_des_chain(fname, mapping=None, take=None):
     chain = chain[:, index]
     params= list(np.array(params)[index])
     labels= list(np.array(labels)[index])
-    return chain, params, labels, ranges
+
+    if to_mcsamples:
+        samples = chain_to_mcsamples(chain, params, labels, ranges=ranges)
+        return samples
+    else:
+        return chain, params, labels, ranges
 
 ##################################
 # fisher output
@@ -149,7 +154,7 @@ def _read_cosmosis_fisher_mu(fname, ndim):
     
     return mu
 
-def read_cosmosis_fisher(fname, mapping=None, take=None):
+def read_cosmosis_fisher(fname, mapping=None, take=None, to_mcsamples=False):
     # read param, label, matrix
     params, labels = read_cosmosis_param_header(fname, mapping)
     ranges = convert_cosmosis_value_to_range(read_cosmosis_value(fname, mapping))
@@ -162,14 +167,18 @@ def read_cosmosis_fisher(fname, mapping=None, take=None):
     F = F[np.ix_(index, index)]
     params= list(np.array(params)[index])
     labels= list(np.array(labels)[index])
-    return mu, F, params, labels, ranges
+    if to_mcsamples:
+        samples = fisher_to_mcsamples(mu, F, params, labels, ranges=ranges)
+        return samples
+    else:
+        return mu, F, params, labels, ranges
 
-def read_cosmosis_fisher_des(fname, mapping=None, take=None):
+def read_cosmosis_fisher_des(fname, mapping=None, take=None, to_mcsamples=False):
     if mapping is None:
         mapping = get_preset_mapping('des')
     else:
         mapping |= get_preset_mapping('des')
-    return read_cosmosis_fisher(fname, mapping=mapping, take=take)
+    return read_cosmosis_fisher(fname, mapping=mapping, take=take, to_mcsamples=to_mcsamples)
 
 def approximate_range_by_Gauss_in_F(F, params, ranges, scale=1):
     """
