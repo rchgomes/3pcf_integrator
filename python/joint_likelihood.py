@@ -22,7 +22,6 @@ def read_covariance(filename, covmat_name, data_sets=None):
     cov_name = extension.name
     covmat = extension.data
     header = extension.header
-    nsim = header.get('NSIM', None)
     i = 0
     measurement_names = []
     start_indices = []
@@ -50,7 +49,7 @@ def read_covariance(filename, covmat_name, data_sets=None):
     for i, measurement_name in enumerate(measurement_names):
         indices[measurement_name] = np.arange(start_indices[i], start_indices[i] + lengths[i]).astype(int)
 
-    return covmat, indices, nsim
+    return covmat, indices
 
 def setup(options):
     """
@@ -77,7 +76,7 @@ def setup(options):
         data_sets[like_name] = options.get_string(option_section, param).split()
 
     # Get full covariance
-    covmat, indices, nsim = read_covariance(data_file, covmat_name)
+    covmat, indices = read_covariance(data_file, covmat_name)
 
     # Get the indices for each likelihood
     like_indices = {}
@@ -111,11 +110,11 @@ def setup(options):
     # option to exclude cross-covariance (for sanity check)
     exclude_cross_cov = options.get_bool(option_section, 'exclude_cross_cov', False)
 
-    # Bool whether multiply the Hartlap factor or not
-    Hartlap = options.get_bool(option_section, 'Hartlap', True)
+    # Number of simulation realizations used for covariance estimation
+    nsim = options.get_int(option_section, 'covariance_realizations', -1)
 
     # set config
-    config = {"name":name, "like_names": like_names, "covariance": covariance, "moped_names": moped_names, 'exclude_cross_cov':exclude_cross_cov, 'Hartlap':Hartlap, 'nsim':nsim}
+    config = {"name":name, "like_names": like_names, "covariance": covariance, "moped_names": moped_names, 'exclude_cross_cov':exclude_cross_cov, 'nsim':nsim}
 
     return config
 
@@ -181,7 +180,8 @@ def execute(block, config):
     # Compute the joint likelihood
     diff = data_vector - theory_vector
     inv_cov = np.linalg.inv(covariance_masked)
-    if config['Hartlap']:
+    # hartlap
+    if config['nsim'] > 0:
         nsim = config['nsim']
         n = inv_cov.shape[0]
         f = (nsim-n-2)/(nsim-1)

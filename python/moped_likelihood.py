@@ -14,11 +14,14 @@ def setup(options):
     data_file = options.get_string(option_section, "data_file")
     transform_matrix = np.loadtxt(data_file).T
 
+    # number of simulations
+    nsim = options.get_int(option_section, 'covariance_realizations', -1)
+
     # Possible option to add:
     # max_n = maximum number of MOPED mode to use
     # moped_index = index of the MOPED mode to use
 
-    config = {"name":name, "likelihoods": likelihoods, "transform_matrix": transform_matrix}
+    config = {"name":name, "likelihoods": likelihoods, "transform_matrix": transform_matrix, 'nsim':nsim}
     return config
 
 def execute(block, config):
@@ -34,21 +37,29 @@ def execute(block, config):
         # append to full data/theory
         full_data.append(data)
         full_theo.append(theo)
-
-    # Transform data and theory
     full_data = np.hstack(full_data)
     full_theo = np.hstack(full_theo)
+
+    # Transform data and theory
     transformed_data = np.dot(config["transform_matrix"], full_data)
     transformed_theo = np.dot(config["transform_matrix"], full_theo)
 
+    # hartlap factor
+    if config['nsim'] > 0:
+        nsim = config['nsim']
+        n = transformed_data.size
+        f = (nsim-n-2)/(nsim-1)
+    else:
+        f = 1
+
     # MOPED modes are uncorrelated to each other and normalized
     # by construction, so the covariance matrix is unity.
-    chi2 = np.sum((transformed_data - transformed_theo)**2)
+    chi2 = np.sum((transformed_data - transformed_theo)**2)*f
     block[names.likelihoods, f'{config["name"]}_like'] = -0.5*chi2
     block[names.data_vector, f'{config["name"]}_chi2'] = chi2
     block[names.data_vector, f'{config["name"]}_data'] = transformed_data
     block[names.data_vector, f'{config["name"]}_theory'] = transformed_theo
-    block[names.data_vector, f'{config["name"]}_inverse_covariance'] = np.eye(len(transformed_data))
+    block[names.data_vector, f'{config["name"]}_inverse_covariance'] = np.eye(len(transformed_data))*f
     block[names.data_vector, f'{config["name"]}_transform_matrix'] = config["transform_matrix"]
 
     return 0

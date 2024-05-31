@@ -5,6 +5,7 @@ from threepoint import ThreePointDataClass
 def setup(options):
     config = dict()
     config['data'] = ThreePointDataClass.from_fits(options.get_string(option_section, "data_file"))
+    config['nsim'] = options.get_int(option_section, "covariance_realizations", -1)
     return config
 
 def execute(block, config):
@@ -33,9 +34,15 @@ def execute(block, config):
     map3_data = data.get_signal()
     map3_model= model.get_signal()
     diff = map3_data - map3_model
-    icov = data.get_inverse_covariance()
+    icov = data.get_inverse_covariance(Hartlap=False) # turn off Hartlap internal function
+    # hartlap
+    if config['nsim'] > 0:
+        nsim = config['nsim']
+        n = icov.shape[0]
+        f = (nsim-n-2)/(nsim-1)
+        icov*= f
+    
     chi2 = np.matmul(diff, np.matmul(icov, diff))
-
     block[names.likelihoods, 'map3_like'] = -0.5*chi2
     block[names.data_vector, 'map3_chi2'] = chi2
 
