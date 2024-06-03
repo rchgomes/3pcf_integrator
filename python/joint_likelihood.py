@@ -185,6 +185,7 @@ def execute(block, config):
         nsim = config['nsim']
         n = inv_cov.shape[0]
         f = (nsim-n-2)/(nsim-1)
+        print(f'Hartlap {nsim} {n} {f}')
         inv_cov *= f
     chi2 = np.dot(diff, np.dot(inv_cov, diff))
 
