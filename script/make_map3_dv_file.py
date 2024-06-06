@@ -17,12 +17,13 @@ def make(base_file, source_file, out_file):
 
     inc = 0
     for i, scomb in enumerate(scombs):
-        arr = np.load(source_file.format(*scomb))
+        arr = np.load(source_file.format(*scomb))[1,:] # r2, map3, var is saved in this file
         hdul[1].data['VALUE'][inc:inc+len(arr)] = arr
         inc += len(arr)
     # check size
     assert inc == len(hdul[1].data['VALUE'])
 
+    print('Writing to', out_file)
     hdul.writeto(out_file, overwrite=True)
 
 def main1():
