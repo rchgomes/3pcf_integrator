@@ -101,38 +101,50 @@ def convert_cosmosis_value_to_range(params):
             ranges[name] = [min(values), max(values)]
     return ranges
 
+def get_blind_shifts_cosmological_parameter(fname):
+    params, _ = read_cosmosis_param_header(fname, None)
+    chain = np.loadtxt(fname)
+    weight = chain[:,params.index('weight')]
+    blind_shifts = np.zeros(len(params))
+    blind_params = []
+    for i, param in enumerate(params):
+        if 'cosmological_parameters' in param.lower():
+            mean = np.sum(chain[:,i]*weight)/np.sum(weight)
+            blind_shifts[i] = mean
+            blind_params.append(param)
+    print('Blinding params:', blind_params)
+    return blind_shifts
+
 ##################################
 # mcmc chain reader
-def read_cosmosis_mcmc_chain(fname, mapping=None, take=None):
+def read_cosmosis_mcmc_chain(fname, mapping=None, take=None, blind=True, to_mcsamples=False):
     params, labels = read_cosmosis_param_header(fname, mapping)
     ranges = convert_cosmosis_value_to_range(read_cosmosis_value(fname, mapping))
     chain = np.loadtxt(fname)
-    index = select_name(params, take)
+    # blind
+    if blind:
+        blind_shifts = get_blind_shifts_cosmological_parameter(fname)
+        for i, param in enumerate(params):
+            chain[:,i] -= blind_shifts[i]
+            if param in ranges:
+                ranges[param] -= blind_shifts[i]
     # apply selection
+    index = select_name(params, take)
     chain = chain[:, index]
     params= list(np.array(params)[index])
     labels= list(np.array(labels)[index])
-    return chain, params, labels, ranges
-
-def read_cosmosis_mcmc_des_chain(fname, mapping=None, take=None, to_mcsamples=False):
-    if mapping is None:
-        mapping = get_preset_mapping('des')
-    else:
-        mapping |= get_preset_mapping('des')
-    params, labels = read_cosmosis_param_header(fname, mapping)
-    ranges = convert_cosmosis_value_to_range(read_cosmosis_value(fname, mapping))
-    chain = np.loadtxt(fname)
-    index = select_name(params, take)
-    # apply selection
-    chain = chain[:, index]
-    params= list(np.array(params)[index])
-    labels= list(np.array(labels)[index])
-
     if to_mcsamples:
         samples = chain_to_mcsamples(chain, params, labels, ranges=ranges)
         return samples
     else:
         return chain, params, labels, ranges
+
+def read_cosmosis_mcmc_des_chain(fname, mapping=None, take=None, blind=True, to_mcsamples=False):
+    if mapping is None:
+        mapping = get_preset_mapping('des')
+    else:
+        mapping |= get_preset_mapping('des')
+    return read_cosmosis_mcmc_chain(fname, mapping, take, blind, to_mcsamples)
 
 ##################################
 # fisher output
