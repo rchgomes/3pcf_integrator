@@ -4,8 +4,8 @@ from astropy.io import fits
 import os
 here = os.path.dirname(os.path.abspath(__file__))
 
-def create_full_cov_fits():
-    cov = np.loadtxt(os.path.join(here, '../data/covariance/cov_xip_xim_map3.dat'))
+def create_full_cov_fits(nsim=400, source='../data/covariance/cov_xip_xim_map3.dat', out='../data/covariance/cov_xip_xim_map3.fits'):
+    cov = np.loadtxt(os.path.join(here, source))
     # xip = 200
     # xim = 200
     # map3 = 80
@@ -14,7 +14,7 @@ def create_full_cov_fits():
     hdul = fits.HDUList([primary])
     header = fits.Header()
     header['EXTNAME']  = 'COVMAT'
-    header['NSIM']     = 400
+    header['NSIM']     = nsim
     header['3PT_DATA'] = True
     header['STRT_0'] = 0
     header['name_0'] = 'xip'
@@ -26,7 +26,7 @@ def create_full_cov_fits():
     hdu = fits.ImageHDU(cov, header=header)
     hdul.append(hdu)
 
-    filename = os.path.join(here, '../data/covariance/cov_xip_xim_map3.fits')
+    filename = os.path.join(here, out)
     hdul.writeto(filename, overwrite=True)
 
 def rotate_2ptcov_by_analytic_matix():
@@ -58,4 +58,5 @@ def rotate_2ptcov_by_analytic_matix():
 if __name__ == '__main__':
     # create_full_cov_fits()
 
-    rotate_2ptcov_by_analytic_matix()
+    #rotate_2ptcov_by_analytic_matix()
+    create_full_cov_fits(nsim=300, source='../data/covariance/cov_xip_xim_map3_nreal300.dat', out='../data/covariance/cov_xip_xim_map3_nreal300.fits')
