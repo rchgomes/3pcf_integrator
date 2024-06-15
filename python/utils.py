@@ -101,50 +101,64 @@ def convert_cosmosis_value_to_range(params):
             ranges[name] = [min(values), max(values)]
     return ranges
 
-def get_blind_shifts_cosmological_parameter(fname):
+def get_cosmological_parameter_mean(fname):
     params, _ = read_cosmosis_param_header(fname, None)
     chain = np.loadtxt(fname)
     weight = chain[:,params.index('weight')]
-    blind_shifts = np.zeros(len(params))
-    blind_params = []
+    means = []
+    index = []
     for i, param in enumerate(params):
         if 'cosmological_parameters' in param.lower():
             mean = np.sum(chain[:,i]*weight)/np.sum(weight)
-            blind_shifts[i] = mean
-            blind_params.append(param)
-    print('Blinding params:', blind_params)
-    return blind_shifts
+            means.append(mean)
+            index.append(i)
+    means = np.array(means)
+    index = np.array(index)
+    return index, means
+
+# weight plot
+def plot_weight(chain, params, nlive=500):
+    w = chain[:,params.index('weight')]
+    plt.figure(figsize=(4,2))
+    plt.plot(w[:-nlive]) # remove live points for ease of viewing
+    plt.show()
 
 ##################################
 # mcmc chain reader
-def read_cosmosis_mcmc_chain(fname, mapping=None, take=None, blind=True, to_mcsamples=False):
+def read_cosmosis_mcmc_chain(fname, mapping=None, take=None, blind=True, to_mcsamples=False, fname_mean=None, wplot=False):
     params, labels = read_cosmosis_param_header(fname, mapping)
     ranges = convert_cosmosis_value_to_range(read_cosmosis_value(fname, mapping))
     chain = np.loadtxt(fname)
     # blind
     if blind:
-        blind_shifts = get_blind_shifts_cosmological_parameter(fname)
-        for i, param in enumerate(params):
-            chain[:,i] -= blind_shifts[i]
-            if param in ranges:
-                ranges[param] -= blind_shifts[i]
+        fname_mean = fname_mean or fname
+        index, means = get_cosmological_parameter_mean(fname_mean)
+        print('Blinding ', [params[i] for i in index])
+        chain[:, index] -= means[None,:]
+        for i in index:
+            if params[i] in ranges:
+                ranges[params[i]] -= means[i]
+            labels[i] = r'\Delta '+labels[i]
     # apply selection
     index = select_name(params, take)
     chain = chain[:, index]
     params= list(np.array(params)[index])
     labels= list(np.array(labels)[index])
+    # wplot
+    if wplot:
+        plot_weight(chain, params)
     if to_mcsamples:
         samples = chain_to_mcsamples(chain, params, labels, ranges=ranges)
         return samples
     else:
         return chain, params, labels, ranges
 
-def read_cosmosis_mcmc_des_chain(fname, mapping=None, take=None, blind=True, to_mcsamples=False):
+def read_cosmosis_mcmc_des_chain(fname, mapping=None, take=None, blind=True, to_mcsamples=False, fname_mean=None, wplot=False):
     if mapping is None:
         mapping = get_preset_mapping('des')
     else:
         mapping |= get_preset_mapping('des')
-    return read_cosmosis_mcmc_chain(fname, mapping, take, blind, to_mcsamples)
+    return read_cosmosis_mcmc_chain(fname, mapping, take, blind, to_mcsamples, fname_mean, wplot)
 
 ##################################
 # fisher output
