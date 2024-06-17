@@ -24,6 +24,10 @@ def rescale_params(params, scale):
     params_rescaled[2] = (params[2] - scale['h0']['small']) / (scale['h0']['large'] - scale['h0']['small'])
     params_rescaled[3] = (params[3] - scale['Omega_b']['small']) / (scale['Omega_b']['large'] - scale['Omega_b']['small'])
     params_rescaled[4] = (params[4] - scale['ns']['small']) / (scale['ns']['large'] - scale['ns']['small'])
+
+    if len(params_rescaled) == 6:
+        params_rescaled[5] = (params[5] - scale['w']['small']) / (scale['w']['large'] - scale['w']['small'])
+
     return (params_rescaled)
 
 def post_process(array, scale):
@@ -67,10 +71,21 @@ def setup(options):
     filter_3 = options.get_double_array_1d(option_section, "theta_filter_3")
     filter_num = len(filter_1)
 
+    model_cosmo = options.get_string(option_section, "cosmo_model", default="LCDM")
+
     zarray = options.get_double_array_1d(option_section, "z_values")
 
     modes = np.arange(filter_num*len(zarray))
-    cp_nn = cosmopower_NN(parameters=['Omega_m', 's8', 'h0', 'Omega_b', 'ns'],
+
+    if model_cosmo == "wCDM":
+
+        cp_nn = cosmopower_NN(parameters=['Omega_m', 's8', 'h0', 'Omega_b', 'ns', 'w'],
+                              modes=modes,
+                              n_hidden=[64, 256, 1024, 1024, 256, 192],
+                              )
+    else:
+
+        cp_nn = cosmopower_NN(parameters=['Omega_m', 's8', 'h0', 'Omega_b', 'ns'],
                           modes=modes,
                           n_hidden=[64, 256, 1024, 1024, 384, 192],
                           )
@@ -88,6 +103,7 @@ def setup(options):
     config['zarray'] = zarray
     config['network'] = cp_nn
     config['nz_upsampling'] = options.get_int(option_section, "nz_upsampling", default=100)
+    config['model_cosmo'] = model_cosmo
 
     return config
 
@@ -99,19 +115,39 @@ def execute(block, config):
     zarray = config['zarray']
     cp_nn = config['network']
 
-    parameters = np.zeros(5)
-    parameters[0] = block[names.cosmological_parameters, 'omega_m']
-    parameters[1] = block[names.cosmological_parameters, 'S_8']
-    parameters[2] = block[names.cosmological_parameters, 'h0']
-    parameters[3] = block[names.cosmological_parameters, 'omega_b']
-    parameters[4] = block[names.cosmological_parameters, 'n_s']
+    if config['model_cosmo'] == 'wCDM':
 
-    params_for_network = rescale_params(parameters, config['rescaling_params'])
-    test_params_dict = {'Omega_m': [params_for_network[0]],
+        parameters = np.zeros(6)
+        parameters[0] = block[names.cosmological_parameters, 'omega_m']
+        parameters[1] = block[names.cosmological_parameters, 'S_8']
+        parameters[2] = block[names.cosmological_parameters, 'h0']
+        parameters[3] = block[names.cosmological_parameters, 'omega_b']
+        parameters[4] = block[names.cosmological_parameters, 'n_s']
+        parameters[5] = block[names.cosmological_parameters, 'w']
+
+        params_for_network = rescale_params(parameters, config['rescaling_params'])
+        test_params_dict = {'Omega_m': [params_for_network[0]],
                         's8': [params_for_network[1]],
                         'h0': [params_for_network[2]],
                         'Omega_b': [params_for_network[3]],
-                        'ns': [params_for_network[4]]}
+                        'ns': [params_for_network[4]],
+                        'w': [params_for_network[5]]}
+
+    else:
+
+        parameters = np.zeros(5)
+        parameters[0] = block[names.cosmological_parameters, 'omega_m']
+        parameters[1] = block[names.cosmological_parameters, 'S_8']
+        parameters[2] = block[names.cosmological_parameters, 'h0']
+        parameters[3] = block[names.cosmological_parameters, 'omega_b']
+        parameters[4] = block[names.cosmological_parameters, 'n_s']
+
+        params_for_network = rescale_params(parameters, config['rescaling_params'])
+        test_params_dict = {'Omega_m': [params_for_network[0]],
+                            's8': [params_for_network[1]],
+                            'h0': [params_for_network[2]],
+                            'Omega_b': [params_for_network[3]],
+                            'ns': [params_for_network[4]]}
 
     predictions = cp_nn.predictions_np(test_params_dict)
     predictions_rescaled = post_process(predictions, config['rescaling_features'])
@@ -124,13 +160,26 @@ def execute(block, config):
     # update bispectrum with inputs:
     bs = config['bispectrum']
     # cosmological parameters (fastnc accepts cosmo as astropy format)
-    cosmo = wCDM(
+
+    if config['model_cosmo'] == 'wCDM':
+        cosmo = wCDM(
+                H0=100*block[names.cosmological_parameters, 'h0'], \
+                Om0=block[names.cosmological_parameters, 'omega_m'], \
+                Ode0=1.0-block[names.cosmological_parameters, 'omega_m'], \
+                w0 = block[names.cosmological_parameters, 'w'], \
+                meta = {'sigma8':block[names.cosmological_parameters, 'sigma_8'], \
+                        'n':block[names.cosmological_parameters, 'n_s']}
+        )
+
+    else:
+        cosmo = wCDM(
                 H0=100*block[names.cosmological_parameters, 'h0'], \
                 Om0=block[names.cosmological_parameters, 'omega_m'], \
                 Ode0=1.0-block[names.cosmological_parameters, 'omega_m'], \
                 meta = {'sigma8':block[names.cosmological_parameters, 'sigma_8'], \
                         'n':block[names.cosmological_parameters, 'n_s']}
-    )
+        )
+
     bs.set_cosmology(cosmo)
     # Intrinsic alignment parameter
     bs.set_NLA_param({'AIA':block['intrinsic_alignment_parameters', 'a1'], \
