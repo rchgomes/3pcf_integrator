@@ -3,6 +3,8 @@ submitjob*.sh
 *output/
 script/rsync*.sh
 
+data/2pt_NG_final_2ptunblind_02_24_21_wnz_redmagic_covupdate.fits
+
 .DS_Store
 .vscode/
 output/
