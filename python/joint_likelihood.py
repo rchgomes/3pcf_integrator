@@ -165,12 +165,15 @@ def execute(block, config):
         # transformation matrix
         if moped_name is not None:
             mat = block[names.data_vector, f'{moped_name}_transform_matrix']
+            print('Compressed {} to {}: dims={}'.format(like_name, moped_name, mat.shape))
         else:
             _ = block[names.data_vector, f'{like_name}_data']
             mat = np.eye(_.size)
+            print('No compression for {}: dim={}'.format(like_name, mat.shape[0]))
         # append 
         transformation_matrix.append(mat)
     transformation_matrix = scipy.linalg.block_diag(*transformation_matrix)
+    print('Dimensions of after and before MOPED compression = {}'.format(transformation_matrix.shape))
 
     # Transform the data vector
     data_vector = np.dot(transformation_matrix, data_vector)
