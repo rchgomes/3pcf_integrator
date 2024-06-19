@@ -5,6 +5,10 @@ script/rsync*.sh
 
 data/2pt_NG_final_2ptunblind_02_24_21_wnz_redmagic_covupdate.fits
 
+#jobscript
+pbstmp*
+	
+
 .DS_Store
 .vscode/
 output/
