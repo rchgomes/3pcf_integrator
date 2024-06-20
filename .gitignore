@@ -4,6 +4,8 @@ submitjob*.sh
 script/rsync*.sh
 
 data/2pt_NG_final_2ptunblind_02_24_21_wnz_redmagic_covupdate.fits
+data/dv/sim_2pt-NLA-cosmoCosmoG-400sim-cov.fits
+data/dv/sim_2pt-NOISY-CosmoGrid-400sim-cov.fits
 
 #jobscript
 pbstmp*
