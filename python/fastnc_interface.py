@@ -138,6 +138,12 @@ def execute(block, config):
                             np.conjugate(np.moveaxis(nc.Gamma1, 1,2)), \
                             np.conjugate(np.moveaxis(nc.Gamma2, 1,2)), \
                             np.conjugate(np.moveaxis(nc.Gamma3, 1,2))])
+        # Note this is equivalent to have
+        # Gamma0 -> Gamma0
+        # Gamma1 -> Gamma1
+        # Gamma2 -> Gamma3
+        # Gamma3 -> Gamma2
+
 
         # write to block
         # Note that the Gamma has the shape of 
