@@ -1,4 +1,4 @@
-"""
+python/nc_to_map3.py"""
 This module convert natural-component (nc) of shear 3pcf to map3.
 """
 from cosmosis.datablock import option_section, names
@@ -17,7 +17,7 @@ def execute(block, config):
     t2  = block[section_nc, 't2'] * 180*60/np.pi # in arcmin
     logr_bin_size = np.log(t2[1])-np.log(t2[0])
     phi_bin_size = phi[1]-phi[0]
-    phi, t1, t2 = np.meshgrid(t1, t2, phi, indexing='ij')
+    t1, t2, phi = np.meshgrid(t1, t2, phi, indexing='ij')
 
     # convert natural component to map3:
     for scomb in block["map3", "sample_combinations"]:

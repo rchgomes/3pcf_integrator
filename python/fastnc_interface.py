@@ -1,6 +1,6 @@
 '''
 Author     : Sunao Sugiyama
-Last edit  : 2024/05/21 21:11:41
+Last edit  : 2024/07/10 23:18:00
 '''
 from cosmosis.datablock import option_section, names
 import numpy as np
@@ -27,7 +27,7 @@ def setup(options):
 
     ########################################################################################
     # bisppectrum model (halofit)
-    config_halofit = {'zmin':1e-4, 'zmid':0.1, 'nzbin_log':30, 'nzbin_lin':100,
+    config_halofit = {'zmin':1e-4, 'zmid':0.1, 'nzbin_log':70, 'nzbin_lin':100,
                         'Lmax':Lmax,
                       'multipole_type':multipole_type, 
                       'NLA':options.get_bool(option_section, 'NLA', default=True)}
@@ -134,10 +134,11 @@ def execute(block, config):
         # stack the Gamma
         # Because the triangle notations are different in TreeCorr and Porth et al.
         # we convert the theoretical prediction to TreeCorr convention.
-        Gamma = np.array(  [np.conjugate(np.moveaxis(nc.Gamma0, 1,2)), \
-                            np.conjugate(np.moveaxis(nc.Gamma1, 1,2)), \
-                            np.conjugate(np.moveaxis(nc.Gamma2, 1,2)), \
-                            np.conjugate(np.moveaxis(nc.Gamma3, 1,2))])
+        # Gamma = np.array(  [np.conjugate(np.moveaxis(nc.Gamma0, 0,1)), \
+        #                     np.conjugate(np.moveaxis(nc.Gamma1, 1,2)), \
+        #                     np.conjugate(np.moveaxis(nc.Gamma2, 1,2)), \
+        #                     np.conjugate(np.moveaxis(nc.Gamma3, 1,2))])
+        Gamma =-np.array([nc.Gamma0, nc.Gamma1, nc.Gamma3, nc.Gamma2])
         # Note this is equivalent to have
         # Gamma0 -> Gamma0
         # Gamma1 -> Gamma1

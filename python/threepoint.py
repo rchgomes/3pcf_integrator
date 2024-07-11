@@ -943,22 +943,31 @@ class ThreePointDataClass:
         else:
             print('Covariance matrix is not available.')
 
-    def plot2d(self, nx=5, ny=4, fs=20, figsize=(16, 20), scale=1e-8, t_sidx=1, zbins=None, title=''):
-        fig, axes = plt.subplots(nx, ny, figsize=figsize, sharex=True, sharey=True)
+    def plot2d(self, nx=5, ny=4, figaxes=None, ebar=True, fs=20, figsize=(16, 20), scale=1e-8, rescale_ebar=1, t_sidx=2, zbins=None, title=None, yscale='linear', ylim=(-10, 70), **kwargs):
+        if figaxes is None:
+            fig, axes = plt.subplots(nx, ny, figsize=figsize, sharex=True, sharey=True)
+        else:
+            fig, axes = figaxes
         plt.subplots_adjust(hspace=0.1, wspace=0.1)
 
-        fig.suptitle(title, fontsize=fs, y=0.9)
+        if title is not None:
+            fig.suptitle(title, fontsize=fs, y=0.9)
         zbins = self.get_z_bin(unique=True).T
         for i, ax in enumerate(axes.flatten()):
             sel = self.selection_z_bin(zbins[i], 'z123')
             sig = self.get_signal(sel)
-            std = self.get_std(sel)
+            std = self.get_std(sel)/2**0.5
             t = self.get_t_bin(sel)[0]
 
             z1, z2, z3 = zbins[i]
 
-            ax.set_yscale('log')
-            ax.errorbar(t, t**t_sidx*sig/scale, yerr=t**t_sidx*std/scale, fmt='.')
+            ax.set_yscale(yscale)
+            ax.set_ylim(ylim)
+            ax.axhline(0, color='gray', ls='--')
+            if ebar:
+                ax.errorbar(t, t**t_sidx*sig/scale, yerr=t**t_sidx*std/scale*rescale_ebar, fmt='.', **kwargs)
+            else:
+                ax.plot(t, t**t_sidx*sig/scale, **kwargs)
             ax.text(0.65, 0.85, '({}, {}, {})'.format(z1, z2, z3), transform=ax.transAxes, fontsize=fs)
 
             ax.grid()
@@ -966,7 +975,7 @@ class ThreePointDataClass:
                 if t_sidx == 1:
                     ax.set_ylabel(r'$\theta \times \langle \mathcal{M}_{{\rm ap}}^3\rangle(\theta)$', fontsize=fs)
                 else:
-                    ax.set_ylabel(r'$\theta^{{{}}} \times \langle \mathcal{M}_{{\rm ap}}^3\rangle(\theta)$'.format(t_sidx), fontsize=fs)
+                    ax.set_ylabel(r'$\theta^{} \times \langle \mathcal{{M}}_{{\rm ap}}^3\rangle(\theta)$'.format(t_sidx), fontsize=fs)
             if i >= ny*(nx-1):
                 ax.set_xlabel(r'$\theta$ [arcmin]', fontsize=fs)
 
