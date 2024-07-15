@@ -1,4 +1,4 @@
-python/nc_to_map3.py"""
+"""
 This module convert natural-component (nc) of shear 3pcf to map3.
 """
 from cosmosis.datablock import option_section, names

@@ -35,6 +35,11 @@ from cosmosis.main import run_cosmosis
 import argparse
 import os
 
+class JointHelpFormatter(
+    argparse.RawTextHelpFormatter, 
+    argparse.ArgumentDefaultsHelpFormatter):
+    pass
+
 def get_bestfit_values_ini(ini_file):
     if isinstance(ini_file, str):
         ini = Inifile(ini_file, print_include_messages=False)
@@ -195,7 +200,7 @@ def compute_chi2(ini_file, likename, save_dv=True):
     return chi2, n
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=JointHelpFormatter)
     parser.add_argument('inifile', type=str)
     parser.add_argument('--sampler', type=str, default='')
     parser.add_argument('--nsample', type=int, default=1000)
