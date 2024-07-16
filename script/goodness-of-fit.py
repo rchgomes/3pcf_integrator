@@ -27,13 +27,18 @@ Example:
 
     3. python script/goodness-of-fit.py config/test-desy3c-joint-2pt-moped-run/des-y3-shear-2pt-map3-NLA-all.ini --sampler=dof
 
-    4. python script/goodness-of-fit.py config/test-desy3c-joint-2pt-moped-run/des-y3-shear-2pt-map3-NLA-all.ini --sampler=gof --chi2name=joint_2pt_moped
+    4. python script/goodness-of-fit.py config/test-desy3c-joint-2pt-moped-run/des-y3-shear-2pt-map3-NLA-all.ini --sampler=gof --likename=joint_2pt_moped
 """
 import numpy as np
 from cosmosis import Inifile
 from cosmosis.main import run_cosmosis
 import argparse
 import os
+
+class JointHelpFormatter(
+    argparse.RawTextHelpFormatter, 
+    argparse.ArgumentDefaultsHelpFormatter):
+    pass
 
 def get_bestfit_values_ini(ini_file):
     if isinstance(ini_file, str):
@@ -160,10 +165,16 @@ def compute_effective_dof(ini_file):
     print(f'Nparam = {Nparam}, Neff = {Neff}')
     return Nparam, Neff
 
-def compute_chi2(ini_file, chi2name):
+def compute_chi2(ini_file, likename, save_dv=True):
     ini = Inifile(ini_file, print_include_messages=False)
     ini['runtime', 'sampler'] = 'test'
     ini['test', 'save_dir'] = ini['test', 'save_dir']+'-test'
+    if save_dv:
+        ini['pipeline', 'modules'] += ' save_2pt save_map3'
+        filename = ini['DEFAULT', '2PT_FILE'].replace('.fits', '_BESTFIT.fits')
+        ini['save_2pt', 'filename'] = filename
+        filename = ini['DEFAULT', 'MAP3_FILE'].replace('.fits', '_BESTFIT.fits')
+        ini['save_map3', 'filename'] = filename
     ini_value = get_bestfit_values_ini(ini_file)
     ini_prior = get_priors_ini(ini_file)
     run_cosmosis(ini, values=ini_value, priors=ini_prior)
@@ -173,21 +184,27 @@ def compute_chi2(ini_file, chi2name):
     with open(filename, 'r') as f:
         lines = f.readlines()
         for line in lines:
-            if chi2name in line:
+            if likename+'_chi2' in line:
+                print(f'using {line}')
                 chi2 = float(line.split('=')[1])
+                break
+        for line in lines:
+            if likename+'_n' in line:
+                print(f'using {line}')
+                n = float(line.split('=')[1])
                 break
     print('======================================================')
     print('Remove the test directory :', ini['test', 'save_dir'])
     print('because this directory contains the blinded values')
     print('======================================================')
-    return chi2
+    return chi2, n
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=JointHelpFormatter)
     parser.add_argument('inifile', type=str)
     parser.add_argument('--sampler', type=str, default='')
     parser.add_argument('--nsample', type=int, default=1000)
-    parser.add_argument('--chi2name', type=str, default='chi2', help='Name of the chi2 in the data_vector')
+    parser.add_argument('--likename', type=str, default='chi2', help='Name of the like in the data_vector')
     args = parser.parse_args()
 
     if args.sampler == 'fisher':
@@ -203,7 +220,7 @@ if __name__ == '__main__':
         compute_effective_dof(args.inifile)
     elif args.sampler == 'gof':
         _, Neff = compute_effective_dof(args.inifile)
-        chi2 = compute_chi2(args.inifile, args.chi2name)
-        print(f'Goodness-of-fit = {chi2}/{Neff} = {chi2/Neff}')
+        chi2, n = compute_chi2(args.inifile, args.likename)
+        print(f'Goodness-of-fit = {chi2}/({n}-{Neff}) = {chi2/(n-Neff)}')
     else:
         raise ValueError(f'Unknown sampler: {args.sampler}')

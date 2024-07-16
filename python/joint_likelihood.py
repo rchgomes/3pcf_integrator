@@ -199,6 +199,7 @@ def execute(block, config):
     block[names.data_vector, f"{name}_data"] = data_vector
     block[names.data_vector, f"{name}_theory"] = theory_vector
     block[names.data_vector, f"{name}_inverse_covariance"] = inv_cov
+    block[names.data_vector, f'{name}_n'] = diff.size
     
     return 0
 
