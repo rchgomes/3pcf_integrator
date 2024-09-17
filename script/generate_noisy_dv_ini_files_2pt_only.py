@@ -5,9 +5,9 @@ sampler = multinest
 verbosity = standard
 
 [DEFAULT]
-2PT_FILE = ${{COSMOSIS_3PCF_INTEGRATOR}}data/dv/noisy_sims_measurements/fits_files/meas_2pt-cosmogrid-NOISY_DV_{num}.fits
-MAP3_FILE = ${{COSMOSIS_3PCF_INTEGRATOR}}'/data/dv/noisy_sims_measurements/fits_files/meas_map3-cosmogrid-NOISY_DV_{num}.fits
-run_name = 2pt-map3-all-noisy-dv-{num}
+2PT_FILE = ${{COSMOSIS_3PCF_INTEGRATOR}}/data/dv/noisy_sims_measurements/fits_files/meas_2pt-cosmogrid-NOISY_DV_{num}.fits
+MAP3_FILE = ${{COSMOSIS_3PCF_INTEGRATOR}}/data/dv/noisy_sims_measurements/fits_files/meas_map3-cosmogrid-NOISY_DV_{num}.fits
+run_name = 2pt-noisy-dv-{num}
 group_name =noisy-dv-validation
 output_dir = ${{COSMOSIS_3PCF_INTEGRATOR}}/output/%(GROUP_NAME)s
 
@@ -21,17 +21,9 @@ modules =  consistency  bbn_consistency
            2pt_shear
            shear_m_bias
            2pt_like
-           map3_binning
-;           fastnc 
-;           nc_to_map3
-           fastnc_emulate
-           map3_m_bias
-           map3_like
            2pt_moped_like
-           2pt_mask
-           map3_mask
-           joint_2pt_moped_like
-likelihoods = joint_2pt_moped
+           
+likelihoods = 2pt_moped
 timing=T
 debug=T
 priors = ${{COSMOSIS_STD_LIB}}/examples/des-y3-priors.ini
@@ -61,16 +53,12 @@ fatal_errors=T
 %include ${{COSMOSIS_3PCF_INTEGRATOR}}/config/moped.ini
 
 ; replace the settings of included files for this analysis
-[map3_binning]
-sample_combinations = all
-
-[joint_2pt_moped_like]
+[2pt_moped_like]
 covariance_realizations = 500
-data_file = ${{COSMOSIS_3PCF_INTEGRATOR}}/data/covariance/cov_xip_xim_map3_weighted.fits
 """
 
-for i in range(1, 51):
-    filename = f"cosmogrid-shear-2pt-map3-NLA-all-noisy-dv-{i}.ini"
+for i in range(0, 50):
+    filename = f"cosmogrid-shear-2pt-NLA-noisy-dv-{i}.ini"
     with open(filename, "w") as f:
         f.write(template.format(num=i))
 
