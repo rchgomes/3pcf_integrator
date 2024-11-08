@@ -23,6 +23,21 @@ def setup(options):
     # moped_index = index of the MOPED mode to use
 
     config = {"name":name, "likelihoods": likelihoods, "transform_matrix": transform_matrix, 'nsim':nsim}
+
+    #If you want to directly input a compressed 2pt data file
+    #(for example, a noisy realization generated with the compressed covariance)
+    #Don't use the following if you want to use the full data vector as an input
+    #and perform compression when running the pipeline
+
+    compressed_2pt_data = None
+    if options.has_value(option_section, "use_input_compressed_data") and options.get_bool(option_section,
+                                                                                           "use_input_compressed_data"):
+        compressed_2pt_data_file = options.get_string(option_section, "compressed_2pt_data_file")
+        compressed_2pt_data = np.loadtxt(compressed_2pt_data_file)
+
+    config['compressed_2pt_data'] = compressed_2pt_data
+
+
     return config
 
 def execute(block, config):
@@ -46,7 +61,10 @@ def execute(block, config):
     full_cov  = scipy.linalg.block_diag(*full_cov)
 
     # Transform data and theory
-    transformed_data = np.dot(config["transform_matrix"], full_data)
+    if compressed_2pt_data == None:
+        transformed_data = np.dot(config["transform_matrix"], full_data)
+    else:
+        transformed_data = config["compressed_2pt_data"]
     transformed_theo = np.dot(config["transform_matrix"], full_theo)
     transformed_cov  = np.dot(config["transform_matrix"], np.dot(full_cov, config["transform_matrix"].T))
     transformed_icov = np.linalg.inv(transformed_cov)

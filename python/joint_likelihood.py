@@ -116,6 +116,19 @@ def setup(options):
     # set config
     config = {"name":name, "like_names": like_names, "covariance": covariance, "moped_names": moped_names, 'exclude_cross_cov':exclude_cross_cov, 'nsim':nsim}
 
+    #If you want to directly input a compressed 2pt data file
+    #(for example, a noisy realization generated with the compressed covariance)
+    #Don't use the following if you want to use the full 2pt data vector as an input
+    #and perform compression when running the pipeline
+
+    compressed_2pt_data = None
+    if options.has_value(option_section, "use_input_compressed_data") and options.get_bool(option_section,
+                                                                                           "use_input_compressed_data"):
+        compressed_2pt_data_file = options.get_string(option_section, "compressed_2pt_data_file")
+        compressed_2pt_data = np.loadtxt(compressed_2pt_data_file)
+
+    config['compressed_2pt_data'] = compressed_2pt_data
+
     return config
 
 def execute(block, config):
@@ -153,8 +166,13 @@ def execute(block, config):
     data_vector = []
     theory_vector = []
     for like_name in like_names:
-        data_vector.append(block[names.data_vector, f'{like_name}_data'])
+
+        if like_name == '2pt' and config['compressed_2pt_data'] is not None:
+            data_vector.append(config['compressed_2pt_data'])
+        else:
+            data_vector.append(block[names.data_vector, f'{like_name}_data'])
         theory_vector.append(block[names.data_vector, f'{like_name}_theory'])
+
     data_vector = np.hstack(data_vector)
     theory_vector = np.hstack(theory_vector)
 
