@@ -194,7 +194,8 @@ def execute(block, config):
     print('Dimensions of after and before MOPED compression = {}'.format(transformation_matrix.shape))
 
     # Transform the data vector
-    data_vector = np.dot(transformation_matrix, data_vector)
+    if config['compressed_2pt_data'] is None:
+        data_vector = np.dot(transformation_matrix, data_vector)
     theory_vector = np.dot(transformation_matrix, theory_vector)
     covariance_masked = np.dot(np.dot(transformation_matrix, covariance_masked), transformation_matrix.T)
 

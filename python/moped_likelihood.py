@@ -61,7 +61,7 @@ def execute(block, config):
     full_cov = scipy.linalg.block_diag(*full_cov)
 
     # Transform data and theory
-    if config['compressed_2pt_data'] == None:
+    if config['compressed_2pt_data'] is None:
         transformed_data = np.dot(config["transform_matrix"], full_data)
     else:
         transformed_data = config["compressed_2pt_data"]
