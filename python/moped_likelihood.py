@@ -58,10 +58,10 @@ def execute(block, config):
         full_cov.append(cov)
     full_data = np.hstack(full_data)
     full_theo = np.hstack(full_theo)
-    full_cov  = scipy.linalg.block_diag(*full_cov)
+    full_cov = scipy.linalg.block_diag(*full_cov)
 
     # Transform data and theory
-    config['compressed_2pt_data'] == None:
+    if config['compressed_2pt_data'] == None:
         transformed_data = np.dot(config["transform_matrix"], full_data)
     else:
         transformed_data = config["compressed_2pt_data"]
