@@ -25,11 +25,11 @@ source setup-3pcf-path.sh
 
 # Generate 50 files with appropriate content
 for i in range(50):
-    file_name = f"2pt_map3_{i}.ini"
+    file_name = f"2pt_only_{i}.ini"
     file_path = os.path.join(dir_name, file_name)
 
     # Last line specific to each file
-    last_line = f"srun cosmosis config/noisy-dv-validation/cosmogrid-shear-2pt-map3-NLA-all-noisy-dv-{i}.ini\n"
+    last_line = f"srun cosmosis config/noisy-dv-validation/cosmogrid-shear-2pt-NLA-noisy-dv-{i}.ini\n"
 
     # Write the file
     with open(file_path, 'w') as f:

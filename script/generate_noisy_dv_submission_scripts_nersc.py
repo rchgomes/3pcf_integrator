@@ -1,65 +1,39 @@
-template = """
-[runtime]
-sampler = multinest
-; sampler = test
-verbosity = standard
+import os
 
-[DEFAULT]
-2PT_FILE = ${{COSMOSIS_3PCF_INTEGRATOR}}/data/dv/noisy_sims_measurements/fits_files/meas_2pt-cosmogrid-NOISY_DV_{num}.fits
-MAP3_FILE = ${{COSMOSIS_3PCF_INTEGRATOR}}/data/dv/noisy_sims_measurements/fits_files/meas_map3-cosmogrid-NOISY_DV_{num}.fits
-run_name = 2pt-noisy-dv-{num}
-group_name =noisy-dv-validation
-output_dir = ${{COSMOSIS_3PCF_INTEGRATOR}}/output/%(GROUP_NAME)s
+# Create the directory
+dir_name = "submit_noisy_validation/"
+if not os.path.exists(dir_name):
+    os.makedirs(dir_name)
 
-[pipeline]
-modules =  consistency  bbn_consistency
-           camb  fast_pt
-           fits_nz  source_photoz_bias
-           IA_NLA
-           pk_to_cl
-           add_intrinsic
-           2pt_shear
-           shear_m_bias
-           2pt_like
-           2pt_moped_like
-           
-likelihoods = 2pt_moped
-timing=T
-debug=T
-priors = ${{COSMOSIS_STD_LIB}}/examples/des-y3-priors.ini
-values = ${{COSMOSIS_3PCF_INTEGRATOR}}/config/%(GROUP_NAME)s/des-y3-shear-values.ini
-extra_output = cosmological_parameters/sigma_8 cosmological_parameters/sigma_12 data_vector/2pt_chi2 data_vector/map3_chi2
-fast_slow = T
-first_fast_module = shear_m_bias
-; For some use cases this might be faster:
-;first_fast_module=lens_photoz_width
+# Base content for the .ini files (without the last line)
+base_content = """#!/bin/bash
 
-[output]
-filename = %(output_dir)s/cosmogrid-%(RUN_NAME)s.txt
-format=text
-privacy = F
+#SBATCH -A des 
+#SBATCH -C cpu 
+#SBATCH -q regular 
+#SBATCH -t 24:00:00 
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=128
+#SBATCH --ntasks=1
 
-[test]
-save_dir=%(output_dir)s/des-y3-%(RUN_NAME)s
-fatal_errors=T
+cd /global/cfs/cdirs/des/rchgoms1/3pcf_integrator
+module load python
+conda activate csis3pcf
 
-%include ${{COSMOSIS_3PCF_INTEGRATOR}}/config/3pt.ini
-%include ${{COSMOSIS_3PCF_INTEGRATOR}}/config/astrophysical.ini
-%include ${{COSMOSIS_3PCF_INTEGRATOR}}/config/cosmo.ini
-%include ${{COSMOSIS_3PCF_INTEGRATOR}}/config/cosmic-shear.ini
-%include ${{COSMOSIS_3PCF_INTEGRATOR}}/config/linear-power.ini
-%include ${{COSMOSIS_3PCF_INTEGRATOR}}/config/sampler.ini
-%include ${{COSMOSIS_3PCF_INTEGRATOR}}/config/joint.ini
-%include ${{COSMOSIS_3PCF_INTEGRATOR}}/config/moped.ini
-
-; replace the settings of included files for this analysis
-[2pt_moped_like]
-covariance_realizations = 500
+source setup-3pcf-path.sh
 """
 
-for i in range(0, 50):
-    filename = f"cosmogrid-shear-2pt-NLA-noisy-dv-{i}.ini"
-    with open(filename, "w") as f:
-        f.write(template.format(num=i))
+# Generate 50 files with appropriate content
+for i in range(50):
+    file_name = f"2pt_map3_{i}.ini"
+    file_path = os.path.join(dir_name, file_name)
 
-print("Files created successfully.")
+    # Last line specific to each file
+    last_line = f"srun cosmosis config/noisy-dv-validation/cosmogrid-shear-2pt-map3-NLA-all-noisy-dv-{i}.ini\n"
+
+    # Write the file
+    with open(file_path, 'w') as f:
+        f.write(base_content)
+        f.write(last_line)
+
+print("Files created successfully!")
