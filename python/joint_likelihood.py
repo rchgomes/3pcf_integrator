@@ -205,15 +205,15 @@ def execute(block, config):
     # Compute the joint likelihood
     diff = data_vector - theory_vector
     inv_cov = np.linalg.inv(covariance_masked)
-    # anderson-hartlap factor
+    # Anderson-Hartlap factor
     if config['nsim'] > 0:
         nsim = config['nsim']
         n = inv_cov.shape[0]
         f = (nsim-n-2)/(nsim-1)
         print(f'Hartlap {nsim} {n} {f}')
         inv_cov *= f
-    # dodelson-schneider factor
-    if config['npar'] > 0:
+    # Dodelson-Schneider factor
+    if config['npar'] > 0 and config['nsim'] > 0:
         npar = config['npar']
         n = inv_cov.shape[0]
         f2 = 1/(1 + (n-npar)*(nsim-n-2)/((nsim-n-1)*(nsim-n-4)))

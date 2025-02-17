@@ -6,6 +6,7 @@ def setup(options):
     config = dict()
     config['data'] = ThreePointDataClass.from_fits(options.get_string(option_section, "data_file"))
     config['nsim'] = options.get_int(option_section, "covariance_realizations", -1)
+    config['npar'] = options.get_int(option_section, "free_parameters", -1)
     return config
 
 def execute(block, config):
@@ -35,12 +36,20 @@ def execute(block, config):
     map3_model= model.get_signal()
     diff = map3_data - map3_model
     icov = data.get_inverse_covariance(Hartlap=False) # turn off Hartlap internal function
-    # hartlap
+    # Anderson-Hartlap factor
     if config['nsim'] > 0:
         nsim = config['nsim']
         n = icov.shape[0]
         f = (nsim-n-2)/(nsim-1)
         icov*= f
+
+    # Dodelson-Schneider factor
+    if config['npar'] > 0 and config['nsim'] > 0:
+        npar = config['npar']
+        n = inv_cov.shape[0]
+        f2 = 1/(1 + (n-npar)*(nsim-n-2)/((nsim-n-1)*(nsim-n-4)))
+        print(f'Dodelson-Schneider {nsim} {n} {npar} {f2}')
+        inv_cov *= f2
     
     chi2 = np.matmul(diff, np.matmul(icov, diff))
     block[names.likelihoods, 'map3_like'] = -0.5*chi2
