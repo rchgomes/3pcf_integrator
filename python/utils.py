@@ -17,6 +17,13 @@ def get_preset_mapping(names):
             'COSMOLOGICAL_PARAMETERS--SIGMA_8': ['sig8', r'\sigma_8'], \
             'cosmological_parameters--h0': ['h0', 'h_0'], \
             'cosmological_parameters--w': ['w0', r'w_0'], \
+            'cosmological_parameters--omega_b': ['ob', r'\Omega_{\rm b}'], \
+            'cosmological_parameters--n_s': ['ns', r'n_s'], \
+            'cosmological_parameters--mnu': ['mnu', r'\Sigma m_{\nu}'], \
+            'wl_photoz_errors--bias_1': ['dz1', r'\Delta z_1'], \
+            'wl_photoz_errors--bias_2': ['dz2', r'\Delta z_2'],\
+            'wl_photoz_errors--bias_3': ['dz3', r'\Delta z_3'], \
+            'wl_photoz_errors--bias_4': ['dz4', r'\Delta z_4'],\
             'shear_calibration_parameters--m1': ['m1', r'm_1'], \
             'shear_calibration_parameters--m2': ['m2', r'm_2'], \
             'shear_calibration_parameters--m3': ['m3', r'm_3'], \
@@ -152,6 +159,73 @@ def read_cosmosis_mcmc_chain(fname, mapping=None, take=None, blind=True, to_mcsa
         return samples
     else:
         return chain, params, labels, ranges
+
+def read_cosmosis_mcmc_des_blind_chains(fnames, mapping=None, take=None, to_mcsamples=False, fname_mean=None, wplot=False):
+    if mapping is None:
+        mapping = get_preset_mapping('des')
+    else:
+        mapping |= get_preset_mapping('des')
+    return read_cosmosis_mcmc_blind_chains(fnames, mapping, take, to_mcsamples, fname_mean, wplot)
+
+def read_cosmosis_mcmc_blind_chains(fnames, mapping=None, take=None, to_mcsamples=False, fname_mean=None, wplot=False):
+
+    fname = fnames[0]
+    print(fname)
+    params, labels = read_cosmosis_param_header(fname, mapping)
+    ranges = convert_cosmosis_value_to_range(read_cosmosis_value(fname, mapping))
+    chain = np.loadtxt(fname)
+
+    fname_mean = fname_mean or fname
+    index, means = get_cosmological_parameter_mean(fname_mean)
+    print(len(index))
+    print('Blinding ', [params[i] for i in index])
+    chain[:, index] -= means[None,:]
+    for i in index:
+        if params[i] in ranges:
+            ranges[params[i]] -= means[i]
+        labels[i] = r'\Delta '+labels[i]
+    # apply selection
+    index = select_name(params, take)
+    chain = chain[:, index]
+    params= list(np.array(params)[index])
+    labels= list(np.array(labels)[index])
+    # wplot
+    if wplot:
+        plot_weight(chain, params)
+
+    if to_mcsamples:
+        samples = []
+        samples.append(chain_to_mcsamples(chain, params, labels, ranges=ranges))
+
+    for chain_nums in range(1,len(fnames)):
+
+        fname = fnames[chain_nums]
+        print(fname)
+        params, labels = read_cosmosis_param_header(fname, mapping)
+        ranges = convert_cosmosis_value_to_range(read_cosmosis_value(fname, mapping))
+        chain = np.loadtxt(fname)
+
+        fname_mean = fname_mean or fname
+        index, means0 = get_cosmological_parameter_mean(fname_mean)
+        print('Blinding ', [params[i] for i in index])
+        chain[:, index] -= means[None, :]
+        for i in index:
+            if params[i] in ranges:
+                ranges[params[i]] -= means[i]
+            labels[i] = r'\Delta ' + labels[i]
+        # apply selection
+        index = select_name(params, take)
+        chain = chain[:, index]
+        params = list(np.array(params)[index])
+        labels = list(np.array(labels)[index])
+        # wplot
+        if wplot:
+            plot_weight(chain, params)
+
+        if to_mcsamples:
+            samples.append(chain_to_mcsamples(chain, params, labels, ranges=ranges))
+
+    return samples
 
 def read_cosmosis_mcmc_des_chain(fname, mapping=None, take=None, blind=True, to_mcsamples=False, fname_mean=None, wplot=False):
     if mapping is None:
