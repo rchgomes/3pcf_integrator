@@ -32,8 +32,8 @@ def get_preset_mapping(names):
             'intrinsic_alignment_parameters--a2':['a2', r'A_2'], \
             'intrinsic_alignment_parameters--alpha1': ['alpha1', r'\alpha_1'], \
             'intrinsic_alignment_parameters--alpha2': ['alpha2', r'\alpha_2'], \
-            'DATA_VECTOR--2PT_CHI2': ['2pt-chi2', r'\chi^2_{\rm 2pt}'], \
-            'DATA_VECTOR--MAP3_CHI2': ['map3-chi2', r'\chi^2_{\rm map3}']}
+            'DATA_VECTOR--2PT_CHI2': ['2pt_chi2', r'\chi^2_{\rm 2pt}'], \
+            'DATA_VECTOR--MAP3_CHI2': ['map3_chi2', r'\chi^2_{\rm map3}']}
     # make output
     if isinstance(names, str):
         names = [names]
@@ -132,7 +132,7 @@ def plot_weight(chain, params, nlive=500):
 
 ##################################
 # mcmc chain reader
-def read_cosmosis_mcmc_chain(fname, mapping=None, take=None, blind=True, to_mcsamples=False, fname_mean=None, wplot=False):
+def read_cosmosis_mcmc_chain(fname, mapping=None, take=None, blind=True, to_mcsamples=False, fname_mean=None, wplot=False, f_icov=None):
     params, labels = read_cosmosis_param_header(fname, mapping)
     ranges = convert_cosmosis_value_to_range(read_cosmosis_value(fname, mapping))
     chain = np.loadtxt(fname)
@@ -151,6 +151,9 @@ def read_cosmosis_mcmc_chain(fname, mapping=None, take=None, blind=True, to_mcsa
     chain = chain[:, index]
     params= list(np.array(params)[index])
     labels= list(np.array(labels)[index])
+    # apply rescaling of samples by the rescaling factor for inverse covariance
+    if f_icov is not None:
+        reweight_samples_by_icov_rescale_factor(chain, params, f_icov)
     # wplot
     if wplot:
         plot_weight(chain, params)
@@ -227,12 +230,13 @@ def read_cosmosis_mcmc_blind_chains(fnames, mapping=None, take=None, to_mcsample
 
     return samples
 
-def read_cosmosis_mcmc_des_chain(fname, mapping=None, take=None, blind=True, to_mcsamples=False, fname_mean=None, wplot=False):
+def read_cosmosis_mcmc_des_chain(fname, mapping=None, take=None, blind=True, to_mcsamples=False, fname_mean=None, wplot=False, f_icov=None):
+
     if mapping is None:
         mapping = get_preset_mapping('des')
     else:
         mapping |= get_preset_mapping('des')
-    return read_cosmosis_mcmc_chain(fname, mapping, take, blind, to_mcsamples, fname_mean, wplot)
+    return read_cosmosis_mcmc_chain(fname, mapping, take, blind, to_mcsamples, fname_mean, wplot, f_icov)
 
 ##################################
 # fisher output
@@ -322,3 +326,34 @@ def FoM_from_samples_names(samples, names):
     cov = cov_from_samples_names(samples, names)
     fom = np.linalg.det(cov)**-0.5
     return fom
+
+def reweight_samples_by_icov_rescale_factor(chain, params, f, minw=1e-3):
+    """
+    Rescale the weights of samples by a correction factor applied 
+    to the inverse covariance.
+
+    The factor can be either of Hartlap or Dodelson-Schneider factor,
+    or product of them. See e.g. Eq (23) and (24) of 
+    https://arxiv.org/pdf/2110.10141
+
+    This function assumes Gaussian likelihood so that the rescaling on
+    icov can be equivalent to the rescaling of loglike.
+    """
+    # Get loglikelihood and weight
+    like = chain[:,params.index('like')]
+    w    = chain[:,params.index('weight')]
+
+    # We discard the samples that has relative weight smaller than
+    # a certain threshold, for which the rewieghting can fail because of the 
+    # too much of upweighting. Intuitively, we are removing the samples
+    # at the posterior tails.
+    # We use 1e-3 as a default choice, but the final result should not 
+    # strongly depends on this choice, that one can always check by changing this value.
+    sel  = w > w.max()*minw
+
+    # Compute the rescaling factor
+    resc = (f-1.0) * like
+
+    # Rescale the posterior
+    # here the second term is intended to avoid overflow due to the large value.
+    w[sel] *= np.exp(resc[sel] - resc[sel].max())
