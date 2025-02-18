@@ -46,7 +46,7 @@ def execute(block, config):
     # Dodelson-Schneider factor
     if config['npar'] > 0 and config['nsim'] > 0:
         npar = config['npar']
-        n = inv_cov.shape[0]
+        n = icov.shape[0]
         f2 = 1/(1 + (n-npar)*(nsim-n-2)/((nsim-n-1)*(nsim-n-4)))
         print(f'Dodelson-Schneider {nsim} {n} {npar} {f2}')
         inv_cov *= f2
