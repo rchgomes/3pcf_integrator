@@ -49,7 +49,7 @@ def execute(block, config):
         n = icov.shape[0]
         f2 = 1/(1 + (n-npar)*(nsim-n-2)/((nsim-n-1)*(nsim-n-4)))
         print(f'Dodelson-Schneider {nsim} {n} {npar} {f2}')
-        inv_cov *= f2
+        icov *= f2
     
     chi2 = np.matmul(diff, np.matmul(icov, diff))
     block[names.likelihoods, 'map3_like'] = -0.5*chi2
