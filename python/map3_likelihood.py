@@ -7,6 +7,14 @@ def setup(options):
     config['data'] = ThreePointDataClass.from_fits(options.get_string(option_section, "data_file"))
     config['nsim'] = options.get_int(option_section, "covariance_realizations", -1)
     config['npar'] = options.get_int(option_section, "free_parameters", -1)
+
+    Percival = False
+    do_percival = options.get_string(option_section, "Percival")
+    if do_percival == 'T':
+        Percival = True
+
+    config['Percival'] = Percival
+
     return config
 
 def execute(block, config):
@@ -36,24 +44,40 @@ def execute(block, config):
     map3_model= model.get_signal()
     diff = map3_data - map3_model
     icov = data.get_inverse_covariance(Hartlap=False) # turn off Hartlap internal function
-    # Anderson-Hartlap factor
-    if config['nsim'] > 0:
-        nsim = config['nsim']
-        n = icov.shape[0]
-        f = (nsim-n-2)/(nsim-1)
-        icov*= f
 
-    # Dodelson-Schneider factor
-    if config['npar'] > 0 and config['nsim'] > 0:
-        npar = config['npar']
+    Percival = config['Percival']
+
+    if not Percival:
+        # Anderson-Hartlap factor
+        if config['nsim'] > 0:
+            nsim = config['nsim']
+            n = icov.shape[0]
+            f = (nsim-n-2)/(nsim-1)
+            icov*= f
+
+        # Dodelson-Schneider factor
+        if config['npar'] > 0 and config['nsim'] > 0:
+            npar = config['npar']
+            n = icov.shape[0]
+            f2 = 1/(1 + (n-npar)*(nsim-n-2)/((nsim-n-1)*(nsim-n-4)))
+            print(f'Dodelson-Schneider {nsim} {n} {npar} {f2}')
+            icov *= f2
+
+        chi2 = np.matmul(diff, np.matmul(icov, diff))
+        block[names.likelihoods, 'map3_like'] = -0.5 * chi2
+        block[names.data_vector, 'map3_chi2'] = chi2
+
+    else:
         n = icov.shape[0]
-        f2 = 1/(1 + (n-npar)*(nsim-n-2)/((nsim-n-1)*(nsim-n-4)))
-        print(f'Dodelson-Schneider {nsim} {n} {npar} {f2}')
-        icov *= f2
-    
-    chi2 = np.matmul(diff, np.matmul(icov, diff))
-    block[names.likelihoods, 'map3_like'] = -0.5*chi2
-    block[names.data_vector, 'map3_chi2'] = chi2
+        nsim = config['nsim']
+        npar = config['npar']
+        factor = (n-npar)*(nsim-n-2)/((nsim-n-1)*(nsim-n-4))
+        m_power = npar + 2 + (nsim-1+factor)/(1+factor)
+        chi2 = np.matmul(diff, np.matmul(icov, diff))
+        like = -m_power/2*np.log(1+(chi2/(nsim-1)))
+        block[names.likelihoods, 'map3_like'] = like
+        block[names.data_vector, 'map3_chi2'] = chi2
+
     block[names.data_vector, 'map3_n'] = diff.size
 
     # append data vector

@@ -116,8 +116,13 @@ def setup(options):
     # Number of free parameters -- used to compute the Dodelson-Schneider factor
     npar = options.get_int(option_section, 'free_parameters', -1)
 
+    Percival = False
+    do_percival = options.get_string(option_section, "Percival")
+    if do_percival == 'T':
+        Percival = True
+
     # set config
-    config = {"name":name, "like_names": like_names, "covariance": covariance, "moped_names": moped_names, 'exclude_cross_cov':exclude_cross_cov, 'nsim':nsim, 'npar':npar}
+    config = {"name":name, "like_names": like_names, "covariance": covariance, "moped_names": moped_names, 'exclude_cross_cov':exclude_cross_cov, 'nsim':nsim, 'npar':npar. 'Percival': Percival}
 
     #If you want to directly input a compressed 2pt data file
     #(for example, a noisy realization generated with the compressed covariance)
@@ -205,27 +210,44 @@ def execute(block, config):
     # Compute the joint likelihood
     diff = data_vector - theory_vector
     inv_cov = np.linalg.inv(covariance_masked)
-    # Anderson-Hartlap factor
-    if config['nsim'] > 0:
+
+    Percival = config['Percival']
+
+    if not Percival:
+        # Anderson-Hartlap factor
+        if config['nsim'] > 0:
+            nsim = config['nsim']
+            n = inv_cov.shape[0]
+            f = (nsim-n-2)/(nsim-1)
+            print(f'Hartlap {nsim} {n} {f}')
+            inv_cov *= f
+        # Dodelson-Schneider factor
+        if config['npar'] > 0 and config['nsim'] > 0:
+            npar = config['npar']
+            n = inv_cov.shape[0]
+            f2 = 1/(1 + (n-npar)*(nsim-n-2)/((nsim-n-1)*(nsim-n-4)))
+            print(f'Dodelson-Schneider {nsim} {n} {npar} {f2}')
+            inv_cov *= f2
+
+        chi2 = np.dot(diff, np.dot(inv_cov, diff))
+
+        # Set the result to the block
+        name = config["name"]
+        block[names.likelihoods, f"{name}_like"] = -0.5 * chi2
+        block[names.data_vector, f"{name}_chi2"] = chi2
+
+    else:
+
+        n = inv_cov.shape[0]
         nsim = config['nsim']
-        n = inv_cov.shape[0]
-        f = (nsim-n-2)/(nsim-1)
-        print(f'Hartlap {nsim} {n} {f}')
-        inv_cov *= f
-    # Dodelson-Schneider factor
-    if config['npar'] > 0 and config['nsim'] > 0:
         npar = config['npar']
-        n = inv_cov.shape[0]
-        f2 = 1/(1 + (n-npar)*(nsim-n-2)/((nsim-n-1)*(nsim-n-4)))
-        print(f'Dodelson-Schneider {nsim} {n} {npar} {f2}')
-        inv_cov *= f2
+        factor = (n-npar)*(nsim-n-2)/((nsim-n-1)*(nsim-n-4))
+        m_power = npar + 2 + (nsim-1+factor)/(1+factor)
+        chi2 = np.dot(diff, np.dot(inv_cov, diff))
+        like = -m_power/2*np.log(1+(chi2/(nsim-1)))
+        block[names.likelihoods, f'{config["name"]}_like'] = like
+        block[names.data_vector, f'{config["name"]}_chi2'] = chi2
 
-    chi2 = np.dot(diff, np.dot(inv_cov, diff))
-
-    # Set the result to the block
-    name = config["name"]
-    block[names.likelihoods, f"{name}_like"] = -0.5 * chi2
-    block[names.data_vector, f"{name}_chi2"] = chi2
     block[names.data_vector, f"{name}_data"] = data_vector
     block[names.data_vector, f"{name}_theory"] = theory_vector
     block[names.data_vector, f"{name}_inverse_covariance"] = inv_cov
