@@ -116,13 +116,10 @@ def setup(options):
     # Number of free parameters -- used to compute the Dodelson-Schneider factor
     npar = options.get_int(option_section, 'free_parameters', -1)
 
-    Percival = False
-    do_percival = options.get_string(option_section, "Percival")
-    if do_percival == 'T':
-        Percival = True
+    Percival = options.get_bool(option_section, "Percival", False)
 
     # set config
-    config = {"name":name, "like_names": like_names, "covariance": covariance, "moped_names": moped_names, 'exclude_cross_cov':exclude_cross_cov, 'nsim':nsim, 'npar':npar. 'Percival': Percival}
+    config = {"name":name, "like_names": like_names, "covariance": covariance, "moped_names": moped_names, 'exclude_cross_cov':exclude_cross_cov, 'nsim':nsim, 'npar':npar, 'Percival': Percival}
 
     #If you want to directly input a compressed 2pt data file
     #(for example, a noisy realization generated with the compressed covariance)
@@ -237,7 +234,7 @@ def execute(block, config):
         block[names.data_vector, f"{name}_chi2"] = chi2
 
     else:
-
+        print('Using Percival likelihood')
         n = inv_cov.shape[0]
         nsim = config['nsim']
         npar = config['npar']

@@ -8,10 +8,7 @@ def setup(options):
     config['nsim'] = options.get_int(option_section, "covariance_realizations", -1)
     config['npar'] = options.get_int(option_section, "free_parameters", -1)
 
-    Percival = False
-    do_percival = options.get_string(option_section, "Percival")
-    if do_percival == 'T':
-        Percival = True
+    Percival = options.get_bool(option_section, "Percival", False)
 
     config['Percival'] = Percival
 
@@ -68,6 +65,7 @@ def execute(block, config):
         block[names.data_vector, 'map3_chi2'] = chi2
 
     else:
+        print('Using Percival likelihood')
         n = icov.shape[0]
         nsim = config['nsim']
         npar = config['npar']
