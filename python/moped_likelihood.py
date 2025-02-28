@@ -23,10 +23,7 @@ def setup(options):
     # max_n = maximum number of MOPED mode to use
     # moped_index = index of the MOPED mode to use
 
-    Percival = False
-    do_percival = options.get_string(option_section, "Percival")
-    if do_percival == 'T':
-        Percival = True
+    Percival = options.get_bool(option_section, "Percival", False)
 
     config = {"name":name, "likelihoods": likelihoods, "transform_matrix": transform_matrix, 'nsim':nsim, 'npar':npar, 'Percival':Percival}
 
@@ -96,6 +93,7 @@ def execute(block, config):
         block[names.data_vector, f'{config["name"]}_chi2'] = chi2
 
     else:
+        print('Using Percival likelihood.')
         n = transformed_data.size
         nsim = config['nsim']
         npar = config['npar']
