@@ -132,7 +132,7 @@ def plot_weight(chain, params, nlive=500):
 
 ##################################
 # mcmc chain reader
-def read_cosmosis_mcmc_chain(fname, mapping=None, take=None, blind=True, to_mcsamples=False, fname_mean=None, wplot=False, f_icov=None):
+def read_cosmosis_mcmc_chain(fname, mapping=None, take=None, blind=True, to_mcsamples=False, fname_mean=None, wplot=False, f_icov=None, add_s8=True):
     params, labels = read_cosmosis_param_header(fname, mapping)
     ranges = convert_cosmosis_value_to_range(read_cosmosis_value(fname, mapping))
     chain = np.loadtxt(fname)
@@ -154,6 +154,13 @@ def read_cosmosis_mcmc_chain(fname, mapping=None, take=None, blind=True, to_mcsa
     # apply rescaling of samples by the rescaling factor for inverse covariance
     if f_icov is not None:
         reweight_samples_by_icov_rescale_factor(chain, params, f_icov)
+
+    # Add s8 if missing, from sigma8 and Omegam
+    if ('s8' not in params) and ('om' in params) and ('sig8' in params) and add_s8:
+        s8 = chain[:, params.index('sig8')] * (chain[:, params.index('om')]/0.3)**0.5
+        params.append('s8')
+        labels.append(r'S_8')
+        chain = np.column_stack((chain, s8))
     # wplot
     if wplot:
         plot_weight(chain, params)
