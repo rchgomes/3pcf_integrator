@@ -1,5 +1,9 @@
 """
 This script makes unblinded data vector file MAP3_FILE.
+
+
+NOTICE: we should not use this.
+Because this script would miss the scale cut on 3pcf.
 """
 
 import os
