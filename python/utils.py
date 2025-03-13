@@ -2,6 +2,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from getdist import MCSamples
+import os
+here = os.path.dirname(__file__)
 
 ##################################
 # parameter name and label mapping
@@ -364,3 +366,63 @@ def reweight_samples_by_icov_rescale_factor(chain, params, f, minw=1e-3):
     # Rescale the posterior
     # here the second term is intended to avoid overflow due to the large value.
     w[sel] *= np.exp(resc[sel] - resc[sel].max())
+
+
+## Post unblinding analysis
+def load_TTTEEElowE(to_mcsamples=True):
+    """
+    Planck TT, TE, EE, lowE
+    """
+    # Load parameter names
+    fname = '../data/planck2018/base_plikHM_TTTEEE_lowl_lowE.paramnames'
+    pnames, labels = np.loadtxt(os.path.join(here,fname), dtype=str, usecols=(0,1)).T
+    pnames = ['lnlike'] + list(pnames)
+    labels = ['lnlike'] + list(labels)
+
+    # Rename the param for consistency
+    pnames[pnames.index('S8*')] = 's8'
+    pnames[pnames.index('omegam*')] = 'om'
+    pnames[pnames.index('sigma8*')] = 'sig8'
+    pnames[pnames.index('omegabh2')] = 'ob' # Note we will scale later appropriately
+    pnames[pnames.index('H0*')] = 'h0' # Note we will scale later appropriately
+    pnames[pnames.index('omeganuh2*')] = 'mnu' # Note we will convert later appropriately
+    
+    # Stack chains
+    chains = []
+    weights= []
+    for i in [1,2,3,4]:
+        fname = '../data/planck2018/base_plikHM_TTTEEE_lowl_lowE_%d.txt'%i
+        chain = np.loadtxt(os.path.join(here,fname))
+        # We first separate out the weight
+        w     = chain[:,0]
+        chain = chain[:,1:]
+        # Flip the sign of the likelihood column: -Log(like) -> Log(like)
+        chain[:,0]*= -1
+        # H0 -> h0
+        idx = pnames.index('h0')
+        chain[:,idx] = chain[:,idx]/100.0
+        # omega_nu h2 -> mnu
+        idx = pnames.index('mnu')
+        chain[:,idx] = 0.06*(chain[:,idx]/0.00064)
+        # omega_b h^2 -> Omega_b
+        idx = pnames.index('ob')
+        idx_h0 = pnames.index('h0')
+        chain[:,idx] = chain[:,idx] / chain[:,idx_h0]**2
+        # append
+        chains.append(chain)
+        weights.append(w)
+    samples = np.vstack(chains)
+    weights = np.hstack(weights)
+
+    # Check
+    assert chains[0].shape[1] == len(pnames), \
+        'chain shape does not match with parameter names array.'
+    
+    # Make MCSamples
+    mc = MCSamples(samples=samples, names=pnames, labels=labels, weights=weights)
+
+    if to_mcsamples:
+        return mc
+    else:
+        return samples, weights, pnames, labels
+    
