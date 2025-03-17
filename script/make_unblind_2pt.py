@@ -41,6 +41,10 @@ def make(dirname_2pt, fname_out_2pt):
     hdul.writeto(fname_out_2pt, overwrite=True)
 
 if __name__ == '__main__':
+    ############################################################
+    #
+    # THIS VERSION WAS STILL DEBUGGING VERSION,
+    # NOT RELIABLE!
     if False:
         print('Working on unblinded catalog (latest)')
         # Unblinded catalog
@@ -84,10 +88,17 @@ if __name__ == '__main__':
     # - bin_slop=0 (we used None)
     # - wpos=ones (we used None)
     # The former makes the main differnece.
-    if True:
-        print('Working on unblinded catalog (old, g2 flip)')
+    if False:
+        print('Working on unblinded catalog (latest, g2 flip)')
         dirname_2pt   = '/global/cfs/cdirs/des/rchgoms1/y3-measurements/2PCF_data_unblinded_g2flip_matchElisa'
         fname_out_2pt = os.path.join(here, '../data/dv/real_2pt_desy3_unblind_g2flip_matchElisa_2025Mar10.fits')
+        make(dirname_2pt, fname_out_2pt)
+
+    # Unblidned but with sompzv04 for comaprison to publisehd version
+    if True:
+        print('Working on unblinded catalog (latest, g2 flip)')
+        dirname_2pt   = '/global/cfs/cdirs/des/rchgoms1/y3-measurements/2PCF_data_unblinded_old_g2flip_matchElisa'
+        fname_out_2pt = os.path.join(here, '../data/dv/real_2pt_desy3_unblind_g2flip_matchElisa_sompzv04_2025Mar14.fits')
         make(dirname_2pt, fname_out_2pt)
 
     # Blind
