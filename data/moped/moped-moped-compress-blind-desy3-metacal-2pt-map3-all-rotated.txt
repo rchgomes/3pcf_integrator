@@ -1,0 +1,847 @@
+#cosmological_parameters--S_8	cosmological_parameters--omega_m	cosmological_parameters--h0	cosmological_parameters--omega_b	cosmological_parameters--n_s	cosmological_parameters--mnu	shear_calibration_parameters--m1	shear_calibration_parameters--m2	shear_calibration_parameters--m3	shear_calibration_parameters--m4	wl_photoz_errors--bias_1	wl_photoz_errors--bias_2	wl_photoz_errors--bias_3	wl_photoz_errors--bias_4	intrinsic_alignment_parameters--a1	intrinsic_alignment_parameters--alpha1
+#sampler=moped
+#n_varied=16
+#module_0=consistency 1.1
+#module_1=BBN-Consistency 0705.0290
+## CITE Comp.Phys.Commun.178:956-971,2008
+#module_2=camb 2.0
+## CITE http://arxiv.org/abs/1201.3654
+## CITE http://arxiv.org/abs/astro-ph/9911177
+#module_3=fast_pt 1
+## CITE https://iopscience.iop.org/article/10.1088/1475-7516/2016/09/015
+#module_4=load_nz_fits 1
+#module_5=photoz_bias 1
+#module_6=IA_NLA #name from ini file
+#module_7=project_2d 1.0
+#module_8=add_intrinsic 1.0
+#module_9=2pt_shear #name from ini file
+#module_10=shear_bias 1
+#module_11=2pt_like #name from ini file
+#module_12=map3_binning #name from ini file
+#module_13=fastnc_emulate #name from ini file
+#module_14=map3_like #name from ini file
+#module_15=2pt_mask #name from ini file
+#module_16=map3_mask #name from ini file
+#module_17=joint_like #name from ini file
+#timestamp=2024-06-11T21:40:00.310674
+#platform=macOS-13.5-arm64-arm-64bit
+#platform_version=Darwin Kernel Version 22.6.0: Wed Jul  5 22:22:52 PDT 2023; root:xnu-8796.141.3~6/RELEASE_ARM64_T8103
+#uuid=ac96bc52da704bd4ba9df47f43ebb9d3
+#cosmosis_git_version=
+#csl_git_version=
+#cwd_git_version=d0e78be9163318060cb26818b734c89aacf43187
+#hostname=Gabriels-MacBook-Pro-2.local
+#username=gchgomes
+#workdir=/Users/gchgomes/3pcf_integrator
+#step_size=0.01
+#tolerance=0.01
+#maxiter=10
+#use_numdifftools=False
+#ordering=cosmological_parameters--S_8  cosmological_parameters--omega_m
+## START_OF_PARAMS_INI
+## [DEFAULT]
+## 2pt_file = /Users/gchgomes/3pcf_integrator/data/dv/sim_2pt-NLA-cosmoDESY3.fits
+## map3_file = /Users/gchgomes/3pcf_integrator/data/dv/real_map3_desy3_blind.fits
+## run_name = 2pt-map3-all-rotated
+## group_name = moped-compress-blind-desy3-metacal
+## output_dir = not-used
+## 2pt_nsim = -1
+## map3_nsim = -1
+## joint_nsim = -1
+## 
+## [runtime]
+## sampler = moped
+## verbosity = standard
+## 
+## [pipeline]
+## modules = consistency  bbn_consistency 	camb  fast_pt 	fits_nz  source_photoz_bias 	IA_NLA 	pk_to_cl 	add_intrinsic 	2pt_shear 	shear_m_bias 	2pt_like 	map3_binning 	fastnc_emulate 	map3_like 	2pt_mask 	map3_mask 	joint_like
+## likelihoods = joint
+## timing = T
+## debug = T
+## priors = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//examples/des-y3-priors.ini
+## values = /Users/gchgomes/3pcf_integrator/config/%(GROUP_NAME)s/des-y3-shear-values.ini
+## extra_output = cosmological_parameters/sigma_8 cosmological_parameters/sigma_12 data_vector/2pt_chi2 data_vector/map3_chi2
+## 
+## [output]
+## filename = data/moped/moped-%(group_name)s-%(RUN_NAME)s.txt
+## format = text
+## privacy = F
+## 
+## [map3_binning]
+## file = /Users/gchgomes/3pcf_integrator/python/map3_binning.py
+## data_file = %(MAP3_FILE)s
+## sample_combinations = all
+## 
+## [fastnc]
+## file = /Users/gchgomes/3pcf_integrator/python/fastnc_interface.py
+## lmax = 50
+## mmax = 100
+## nfft = 150
+## projection = cent
+## dlnt = 0.253758
+## use-pixwin = T
+## nside = 1024
+## mu = 0 1 2 3
+## n-phi-bin = 63
+## phi-min = 0.01570796
+## phi-max = 3.12588469
+## n-theta-bin = 20
+## theta-min = 0.5
+## theta-max = 62.0703205
+## use_cache = T
+## nla = T
+## 
+## [nc_to_map3]
+## file = /Users/gchgomes/3pcf_integrator/python/nc_to_map3.py
+## 
+## [map3_like]
+## file = /Users/gchgomes/3pcf_integrator/python/map3_likelihood.py
+## data_file = %(MAP3_FILE)s
+## covariance_realizations = %(MAP3_NSIM)s
+## 
+## [save_map3]
+## file = /Users/gchgomes/3pcf_integrator/python/save_map3.py
+## copy_covariance = %(MAP3_FILE)s
+## 
+## [fastnc_emulate_v1]
+## file = /Users/gchgomes/3pcf_integrator/python/fastnc_emulate.py
+## theta_filter_1 = 7.0 14.0 25.0 40.0
+## theta_filter_2 = 7.0 14.0 25.0 40.0
+## theta_filter_3 = 7.0 14.0 25.0 40.0
+## z_values = 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1.0 1.05 1.1 1.15 1.2 1.25 1.3 1.35 1.4
+## model_filename = data/nz/map3_model_28zs-2
+## rescaling_filename = data/nz/rescaling_for_map3_network_28zs.pkl
+## 
+## [fastnc_emulate]
+## file = /Users/gchgomes/3pcf_integrator/python/fastnc_emulate.py
+## theta_filter_1 = 7.0 14.0 25.0 40.0
+## theta_filter_2 = 7.0 14.0 25.0 40.0
+## theta_filter_3 = 7.0 14.0 25.0 40.0
+## z_values = 0.005 0.01 0.02 0.03 0.04 0.05 0.07 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1.0 1.05 1.1 1.15 1.2 1.25 1.3 1.35 1.4 1.45 1.5
+## model_filename = data/train_emulator/map3_model_22May24-0
+## rescaling_filename = data/train_emulator/rescaling_for_map3_network_22May24.pkl
+## nz_upsampling = 100
+## 
+## [fast_pt]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//structure/fast_pt/fast_pt_interface.py
+## do_ia = T
+## k_res_fac = 0.5
+## verbose = F
+## 
+## [IA]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//intrinsic_alignments/tatt/tatt_interface.py
+## sub_lowk = F
+## do_galaxy_intrinsic = F
+## ia_model = tatt
+## 
+## [IA_NLA]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//intrinsic_alignments/tatt/tatt_interface.py
+## sub_lowk = F
+## do_galaxy_intrinsic = F
+## ia_model = nla
+## 
+## [baryon_ratio_OWLS_AGN]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//structure/baryon_power_scaling/baryonic_interface.py
+## ratio_table = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//structure/baryon_power_scaling/data/logPkRatio_owls_AGN.dat
+## 
+## [consistency]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//utility/consistency/consistency_interface.py
+## 
+## [sigma8toAs]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//kids/sigma8toAs.py
+## 
+## [sigma8_rs]
+## file = cosmosis-standard-library/utility/sample_sigma8/sigma8_rescale.py
+## 
+## [bbn_consistency]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//utility/bbn_consistency/bbn_consistency.py
+## 
+## [fits_nz]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//number_density/load_nz_fits/load_nz_fits.py
+## nz_file = %(2PT_FILE)s
+## data_sets = source
+## prefix_section = T
+## prefix_extension = T
+## 
+## [fits_nz_lens]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//number_density/load_nz_fits/load_nz_fits.py
+## nz_file = %(2PT_FILE)s
+## data_sets = lens
+## prefix_section = T
+## prefix_extension = T
+## 
+## [lens_photoz_width]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//number_density/photoz_width/photoz_width.py
+## mode = stretch
+## sample = nz_lens
+## bias_section = lens_photoz_errors
+## interpolation = linear
+## 
+## [lens_photoz_bias]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//number_density/photoz_bias/photoz_bias.py
+## mode = additive
+## sample = nz_lens
+## bias_section = lens_photoz_errors
+## interpolation = linear
+## 
+## [hyperrank]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//number_density/nz_multirank/nz_multirank.py
+## nz_file = %(2PT_FILE)s
+## data_set = source
+## dimensions = 3
+## bin_ranks = 1 2 4
+## 
+## [source_photoz_bias]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//number_density/photoz_bias/photoz_bias.py
+## mode = additive
+## sample = nz_source
+## bias_section = wl_photoz_errors
+## interpolation = linear
+## 
+## [pk_to_cl_gg]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//structure/projection/project_2d.py
+## lingal-lingal = lens-lens
+## do_exact = lingal-lingal
+## do_rsd = True
+## ell_min_linspaced = 1
+## ell_max_linspaced = 4
+## n_ell_linspaced = 5
+## ell_min_logspaced = 5.
+## ell_max_logspaced = 1.e5
+## n_ell_logspaced = 80
+## limber_ell_start = 200
+## auto_only = lingal-lingal
+## sig_over_dchi_exact = 3.5
+## 
+## [pk_to_cl]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//structure/projection/project_2d.py
+## ell_min_logspaced = 0.1
+## ell_max_logspaced = 5.0e5
+## n_ell_logspaced = 100
+## shear-shear = source-source
+## shear-intrinsic = source-source
+## intrinsic-intrinsic = source-source
+## intrinsicb-intrinsicb = source-source
+## verbose = F
+## get_kernel_peaks = F
+## sig_over_dchi = 20.
+## shear_kernel_dchi = 10.
+## 
+## [add_magnification]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//structure/magnification/add_magnification.py
+## include_intrinsic = T
+## 
+## [add_intrinsic]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//shear/add_intrinsic/add_intrinsic.py
+## shear-shear = T
+## position-shear = F
+## perbin = F
+## 
+## [add_eb]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//intrinsic_alignments/add_b_mode/add_b_mode_cl.py
+## 
+## [2pt_shear]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//shear/cl_to_xi_fullsky/cl_to_xi_interface.py
+## ell_max = 40000
+## xi_type = EB
+## theta_file = %(2PT_FILE)s
+## bin_avg = T
+## input_section_name = shear_cl  shear_cl_bb
+## output_section_name = shear_xi_plus  shear_xi_minus
+## 
+## [2pt_gal]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//shear/cl_to_xi_fullsky/cl_to_xi_interface.py
+## ell_max = 40000
+## xi_type = '00'
+## theta_file = %(2PT_FILE)s
+## bin_avg = T
+## 
+## [2pt_gal_shear]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//shear/cl_to_xi_fullsky/cl_to_xi_interface.py
+## ell_max = 40000
+## xi_type = '02'
+## theta_file = %(2PT_FILE)s
+## bin_avg = T
+## 
+## [shear_m_bias]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//shear/shear_bias/shear_m_bias.py
+## m_per_bin = True
+## cl_section = shear_xi_plus shear_xi_minus
+## cross_section = galaxy_shear_xi
+## verbose = F
+## 
+## [add_point_mass]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//shear/point_mass/add_gammat_point_mass.py
+## add_togammat = False
+## use_fiducial = True
+## sigcrit_inv_section = sigma_crit_inv_lens_source
+## 
+## [2pt_like]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//likelihood/2pt/2pt_point_mass/2pt_point_mass.py
+## do_pm_marg = True
+## do_pm_sigcritinv = True
+## sigma_a = 10000.0
+## no_det_fac = False
+## include_norm = True
+## data_file = %(2PT_FILE)s
+## data_sets = xip xim
+## make_covariance = F
+## covmat_name = COVMAT
+## covariance_realizations = %(2PT_NSIM)s
+## angle_range_xip_1_1 = 2.475 999.0
+## angle_range_xip_1_2 = 6.21691892 999.0
+## angle_range_xip_1_3 = 6.21691892 999.0
+## angle_range_xip_1_4 = 4.93827423 999.0
+## angle_range_xip_2_2 = 6.21691892 999.0
+## angle_range_xip_2_3 = 6.21691892 999.0
+## angle_range_xip_2_4 = 6.21691892 999.0
+## angle_range_xip_3_3 = 6.21691892 999.0
+## angle_range_xip_3_4 = 6.21691892 999.0
+## angle_range_xip_4_4 = 4.93827423 999.0
+## angle_range_xim_1_1 = 24.75 999.0
+## angle_range_xim_1_2 = 62.16918918 999.0
+## angle_range_xim_1_3 = 62.16918918 999.0
+## angle_range_xim_1_4 = 49.3827423 999.0
+## angle_range_xim_2_2 = 62.16918918 999.0
+## angle_range_xim_2_3 = 78.26637209 999.0
+## angle_range_xim_2_4 = 78.26637209 999.0
+## angle_range_xim_3_3 = 78.26637209 999.0
+## angle_range_xim_3_4 = 78.26637209 999.0
+## angle_range_xim_4_4 = 62.16918918 999.0
+## angle_range_gammat_1_1 = 24.75 999.0
+## angle_range_gammat_1_2 = 24.75 999.0
+## angle_range_gammat_1_3 = 24.75 999.0
+## angle_range_gammat_1_4 = 24.75 999.0
+## angle_range_gammat_2_1 = 15.61619428 999.0
+## angle_range_gammat_2_2 = 15.61619428 999.0
+## angle_range_gammat_2_3 = 15.61619428 999.0
+## angle_range_gammat_2_4 = 15.61619428 999.0
+## angle_range_gammat_3_1 = 12.40438403 999.0
+## angle_range_gammat_3_2 = 12.40438403 999.0
+## angle_range_gammat_3_3 = 12.40438403 999.0
+## angle_range_gammat_3_4 = 12.40438403 999.0
+## angle_range_gammat_4_1 = 12.40438403 999.0
+## angle_range_gammat_4_2 = 12.40438403 999.0
+## angle_range_gammat_4_3 = 12.40438403 999.0
+## angle_range_gammat_4_4 = 12.40438403 999.0
+## angle_range_gammat_5_1 = 9.85315247 999.0
+## angle_range_gammat_5_2 = 9.85315247 999.0
+## angle_range_gammat_5_3 = 9.85315247 999.0
+## angle_range_gammat_5_4 = 9.85315247 999.0
+## angle_range_wtheta_1_1 = 39.22610651 999.0
+## angle_range_wtheta_2_2 = 24.75 999.0
+## angle_range_wtheta_3_3 = 19.65962381 999.0
+## angle_range_wtheta_4_4 = 15.61619428 999.0
+## angle_range_wtheta_5_5 = 12.40438403 999.0
+## 
+## [save_2pt]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//likelihood/2pt/save_2pt.py
+## theta_min = 2.5
+## theta_max = 250.0
+## n_theta = 20
+## real_space = T
+## make_covariance = F
+## shear_nz_name = nz_source
+## overwrite = T
+## auto_only = galaxy_xi
+## spectrum_sections = shear_xi_plus shear_xi_minus
+## output_extensions = xip xim
+## two_thirds_midpoint = T
+## copy_covariance = %(2PT_FILE)s
+## 
+## [camb]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//boltzmann/camb/camb_interface.py
+## mode = power
+## lmax = 2500
+## feedback = 3
+## accuracyboost = 1.1
+## do_tensors = T
+## do_lensing = T
+## nonlinear = pk
+## halofit_version = takahashi
+## zmin_background = 0.
+## zmax_background = 4.
+## nz_background = 401
+## kmin = 1e-4
+## kmax = 50.0
+## kmax_extrapolate = 500.0
+## nk = 700
+## 
+## [extrapolate]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//boltzmann/extrapolate/extrapolate_power.py
+## 
+## [growth]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//structure/growth_factor/interface.so
+## zmin = 0.
+## zmax = 4.
+## nz = 401
+## 
+## [camb_planck]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//boltzmann/camb/camb.so
+## mode = all
+## lmax = 3000
+## feedback = 0
+## do_tensors = T
+## do_lensing = T
+## do_nonlinear = T
+## high_ell_template = $COSMOSIS_SRC_DIR/boltzmann/camb/camb_Jan15/HighLExtrapTemplate_lenspotentialCls.dat
+## accuracy_boost = 1.1
+## high_accuracy_default = T
+## 
+## [camb_mead2020]
+## file = /Users/gchgomes/PycharmProjects/bispectrum_integrator/cosmosis-standard-library//boltzmann/camb/camb_interface.py
+## mode = power
+## feedback = 0
+## accuracyboost = 1.1
+## do_tensors = F
+## do_lensing = F
+## kmin = 1e-4
+## kmax = 50.0
+## nk = 700
+## nonlinear = pk
+## neutrino_hierarchy = normal
+## halofit_version = mead2020_feedback
+## zmin_background = 0.
+## zmax_background = 4.
+## nz_background = 401
+## kmax_extrapolate = 500.0
+## 
+## [multinest]
+## max_iterations = 50000
+## multinest_outfile_root = %(OUTPUT_DIR)s/chain_checkpoints/mn_%(RUN_NAME)s
+## resume = F
+## live_points = 500
+## efficiency = 0.3
+## tolerance = 0.1
+## constant_efficiency = F
+## 
+## [polychord]
+## base_dir = %(OUTPUT_DIR)s/y3-polychord-checkpoints
+## polychord_outfile_root = y3
+## resume = F
+## feedback = 3
+## fast_fraction = 0.1
+## live_points = 250
+## num_repeats = 30
+## tolerance = 0.1
+## 
+## [emcee]
+## walkers = 80
+## samples = 10000
+## nsteps = 5
+## 
+## [star]
+## nsample_dimension = 20
+## 
+## [fisher]
+## step_size = 0.01
+## 
+## [moped]
+## step_size = 0.01
+## ordering = cosmological_parameters--S_8  cosmological_parameters--omega_m
+## 
+## [2pt_mask]
+## file = /Users/gchgomes/3pcf_integrator/python/data_mask.py
+## data_file = %(2PT_FILE)s
+## data_sets = xip xim
+## like_name = 2pt
+## 
+## [map3_mask]
+## file = /Users/gchgomes/3pcf_integrator/python/data_mask.py
+## data_file = %(MAP3_FILE)s
+## data_sets = map3
+## like_name = map3
+## 
+## [joint_like]
+## file = /Users/gchgomes/3pcf_integrator/python/joint_likelihood.py
+## data_file = /Users/gchgomes/3pcf_integrator/data/covariance/cov_xip_xim_map3_rotated.fits
+## like_names = 2pt map3
+## 2pt_data_sets = xip xim
+## map3_data_sets = map3
+## like_name = joint
+## covariance_realizations = %(JOINT_NSIM)s
+## 
+## END_OF_PARAMS_INI
+## START_OF_VALUES_INI
+## [cosmological_parameters]
+## omega_m = 0.1     0.290   0.5
+## h0 = 0.55    0.69    0.91
+## omega_b = 0.03    0.048   0.07
+## n_s = 0.87    0.97    1.07
+## w = -1.0
+## s_8 = 0.7    0.759   0.84
+## mnu = 0.06  0.0773   0.6
+## num_massive_neutrinos = 3
+## nnu = 3.046
+## omega_k = 0.0
+## tau = 0.0697186
+## 
+## [shear_calibration_parameters]
+## m1 = -0.1  0.0  0.1
+## m2 = -0.1  0.0  0.1
+## m3 = -0.1  0.0  0.1
+## m4 = -0.1  0.0  0.1
+## 
+## [wl_photoz_errors]
+## bias_1 = -0.1   0.0   0.1
+## bias_2 = -0.1   0.0   0.1
+## bias_3 = -0.1   0.0   0.1
+## bias_4 = -0.1   0.0   0.1
+## 
+## [intrinsic_alignment_parameters]
+## z_piv = 0.62
+## a1 = -5.0   0.7  5.0
+## alpha1 = -5.0  -1.7  5.0
+## 
+## END_OF_VALUES_INI
+## START_OF_PRIORS_INI
+## [wl_photoz_errors]
+## bias_1 = gaussian 0.00 0.018
+## bias_2 = gaussian 0.00 0.015
+## bias_3 = gaussian 0.00 0.011
+## bias_4 = gaussian 0.0  0.017
+## 
+## [shear_calibration_parameters]
+## m1 = gaussian -0.0063 0.0091
+## m2 = gaussian -0.0198 0.0078
+## m3 = gaussian -0.0241 0.0076
+## m4 = gaussian -0.0369 0.0076
+## 
+## [lens_photoz_errors]
+## bias_1 = gaussian  0.006 0.004
+## bias_2 = gaussian  0.001 0.003
+## bias_3 = gaussian  0.004 0.003
+## bias_4 = gaussian -0.002 0.005
+## bias_5 = gaussian -0.007 0.010
+## width_5 = gaussian  1.23  0.054
+## 
+## [planck]
+## a_planck = gaussian 1.0 0.0025
+## 
+## END_OF_PRIORS_INI
+#mu_0=0.759
+#mu_1=0.29
+#mu_2=0.69
+#mu_3=0.048
+#mu_4=0.97
+#mu_5=0.0773
+#mu_6=0.0
+#mu_7=0.0
+#mu_8=0.0
+#mu_9=0.0
+#mu_10=0.0
+#mu_11=0.0
+#mu_12=0.0
+#mu_13=0.0
+#mu_14=0.7
+#mu_15=-1.7
+35237.19672988103	51980.3661384394	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-54568.4179612589	-56959.37843130434	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+219945.78809110526	370515.59674766177	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-140124.59350442415	-232031.59544277904	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-48150.641972433434	-117217.49002247154	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+167587.63282180644	421907.49081150105	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+196338.31163792673	431723.64562847157	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-95892.69751766081	-213392.31765371046	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-720024.07320414	-928138.4463819017	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+150611.7253185908	12798.57634639238	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1307951.638431448	2434412.1313946466	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-218695.60477033549	-687036.8223749181	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+314328.8774563507	284510.33106863004	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1458041.1645301396	932029.1549935229	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+660362.9848266207	822536.1170468766	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2535374.5514634526	3445181.0901063685	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1360928.370064287	-1950947.0001486398	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+7837667.271018284	12768128.409175923	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-502041.42689682246	-2652723.671083619	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+7812724.5952206375	12020057.49790421	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+397132.04270601744	738883.3706358132	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-112449.22666630318	-100431.48187298831	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+462500.72734513757	775342.743295357	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+301605.11818383244	333844.74402615457	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+341408.8445554758	554426.3422864088	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+150161.73413083988	538928.7026350709	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-3544711.8930835035	-5538869.324508237	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+3321610.3236645586	5293861.436381328	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-2127184.071179394	-3988110.193072195	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-2615860.5632802867	-4365981.091593254	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-7315699.2963059	-11760277.600967258	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1637161.8591811846	3228814.043661541	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-2434746.1565225497	-4148956.7839136645	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-3135449.4491427224	-4611600.5357045485	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-8354171.604551603	-14125041.295910928	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-2567710.3040199378	-1167414.359831605	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-123822.4725686779	-368507.7692252003	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+266567.74222132727	659599.6496115167	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-140885.38809398955	-393378.7009074464	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+293998.1772700987	609153.4127801488	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-805404.5694417245	-1474385.5998390885	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-864229.798160237	-1488234.5892691235	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1581182.2258027324	-1819106.58541549	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+599113.8128842403	949433.6977395697	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-104949.59128057549	774290.457452552	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-2600121.26132184	-3949730.321811297	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1971079.377335741	3008737.266155739	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-90009.88892548844	-1148553.3813874864	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2901213.7381197237	4391470.104938558	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+8715302.924106468	14090010.327801	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+8600650.855133899	13825701.264463069	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2331426.290948691	8659476.030798303	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+62036.44990435051	-41064.96701491489	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+199670.69013959423	238670.61466039403	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+18945.60818592973	86276.254243032	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1909.7611543081418	3443.2463784262845	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+227864.55653016255	852515.7301506092	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-566105.0981614362	-620155.8974637034	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-254345.26622349888	-355878.43394952244	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-256591.99000083667	-734677.9670176145	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1179221.4294805378	-1587469.8395656322	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-492133.52086367755	-1389578.0668023885	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-307900.61175333086	31638.315605355954	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-680654.9538039033	1807077.8789516932	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-3480224.200249349	-4926852.601968572	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+4830447.401832714	8502860.973344536	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1396751.2913837493	-1765334.8746724012	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-4758332.442128229	-4828395.514650676	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-6510336.9585878	-7421256.707526169	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-206807.70903643486	-345031.8802441176	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-181870.44243783108	-276940.1769229696	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-327625.8673573578	-543028.6646617276	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+164231.03543442072	72969.2988645827	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-408655.7156511284	-818992.7217520584	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-58178.382292191745	-581780.1978222802	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1254894.712680605	-1914203.9321895197	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-157513.27455876037	8247.276570195994	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2341147.5248447964	4076828.6574729434	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2271418.8383279867	2966400.822593882	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-737490.2825970778	-1376836.1265751207	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+745823.3561285029	1138423.8975328552	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1542056.4946123064	2311901.915964627	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-2254663.540866221	-1426302.3894205517	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2794620.888591308	4693325.241217753	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2537363.095858594	5623846.703685893	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-47496.439834473036	-305304.6538589748	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-60030.35713118113	74303.23563942181	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-388789.89591610513	-723952.2584774733	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+227554.80387478444	814535.0323915564	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+261721.37196831268	568312.4369464568	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+658805.8166861472	1213444.9497346322	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+340638.3322686789	366099.3700639512	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-701507.5476034359	-1928047.0335222015	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-633478.7622700873	-149773.2692071938	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1499784.5735652186	2522563.613461119	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1922614.0736271471	-3824469.7183290045	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1200872.2406377255	-1090432.0392974848	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1517426.9425675038	-2507743.63090996	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-3944621.575924001	-7705695.404767854	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+3249217.9039561157	2802850.1679041097	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-2360073.537117948	-5902565.57901697	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+91562.43714144581	172884.98944061383	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+347781.88147042965	783832.7405285735	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+277640.06957008265	353499.5509856558	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-54936.04671639604	-155161.40929717504	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1155485.602735579	1507383.1720721324	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-939866.367244251	-1821635.9135873776	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-347356.50640923594	-844728.2914081801	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1739327.6824095452	-3086823.722159207	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+3819985.0411005816	7472752.814896393	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-2741508.719087259	-3600953.2429030836	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2026427.921933957	3677062.5274820826	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+3362156.1131533645	5678438.457349603	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-5033330.377918595	-7911995.650490175	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2551248.262692415	1374397.2503917005	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-5746762.570576975	-6454999.919892857	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1310649.9186930803	2994972.240169173	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+31855.635346790354	5860.020610955185	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+269277.9506743968	425301.33412212384	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+207819.9414432595	328912.47871713934	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+180434.5485896086	222985.76929974975	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+668153.3002265884	1233109.8766392577	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+383437.10889932135	517229.35298766394	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-292342.392108912	-251244.6546267694	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+283707.6411793628	85242.32069428968	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2122712.9959882684	3993286.782698713	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-313530.4242520514	-1168396.067748267	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-762348.2307358222	-1236413.9441019876	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-3009323.6573830117	-5020868.47940137	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-602731.499075531	-1104618.4008661343	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-7263310.162203124	-13642136.717857355	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2382624.5058833854	5196847.144160207	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+7839260.093736536	11619643.006839136	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+255460.9418329291	325730.9858781003	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+120048.05015141002	365718.18300857634	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+434135.3490884783	583584.6973679155	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-540563.9892679816	-933804.4615962824	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+418251.2031378442	646025.9985943213	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-639852.6435218393	-1234869.2618935404	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-535980.2568084786	-1315628.5937866315	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1963863.7674120148	2332215.1225587106	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1299374.0977039204	-2175551.979241823	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1175118.7897563565	1559653.509385499	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+4389132.717788127	7914928.780010249	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+6408237.353019966	10598463.202918377	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-3443692.111275152	-5547925.90537581	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-2992293.1704895957	-4570035.334250718	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+507960.94927689485	-713122.13244803	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-2472749.080985162	-5696083.700293845	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-46748.87553522412	-96304.71599466306	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+9098.54079414932	-83942.2882891533	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+22045.504803768406	-42718.73177734298	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-9325.99287265879	-2931.706063198239	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+83086.17256166607	257711.72938187348	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+125452.4976275515	185070.07606838623	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+186993.3554692263	293764.2578173742	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+470999.50918142026	473710.8495610777	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+170492.95776982076	405868.38054306654	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1088928.2459995637	-1839624.8125771086	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+902209.8102805966	1078804.584365398	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1394041.8649080675	1532865.6292457143	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-2191187.8134516478	-4190070.70672048	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2216480.4810161907	2957009.969603658	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-3203274.598658234	-4627914.460190745	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+665104.0970367092	-394752.27861371846	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-238628.30249521797	-337802.85281585256	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+373984.329724141	721978.486748621	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2418674.0145293693	3365422.6452769856	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1049748.5385386003	-989387.8148216929	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1368815.1722494466	2060590.4169232927	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+3212406.546870599	4498000.070292267	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+4148746.135013903	6443469.134194981	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-4094736.7558180103	-7282593.608159182	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+117522.44601829944	-2408132.4076074734	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+6661227.015903196	12011377.596395342	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+11015787.67037509	20940576.914785866	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-318314.16582905356	634878.4378007764	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-3816406.800645979	-5157974.228337017	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-5151169.528353395	-10416776.155837055	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+3744878.4197910395	9342605.587945042	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+8497790.80902655	11778377.220391719	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-16672301.2280322	-22385920.979112387	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-346768.59437287477	-616007.0215469351	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+227969.14749120516	1350798.5241694052	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-2949197.880819764	-6686245.677638381	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-3341443.4957265886	-6714343.615197138	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+16200718.689086549	25686747.861514397	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+20808273.82114408	37958466.08167896	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-322011.5055002124	-933102.3518247877	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-4887431.997534658	-8959323.207410557	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2255580.7485567215	3334362.4097557557	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-357204.77444796095	-2009762.2405213828	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+5396248.447004618	9729357.444033023	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-10273015.985182855	-16541638.561881008	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+4101839.5717872307	3701062.579502254	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1131619.2406836986	588294.535078329	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-2595613.8770348737	-3304876.2946593184	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1406560.4971087829	-2923094.2242238526	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1143990.099073777	-2935349.2377101793	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+712977.592813728	3010519.366340392	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-2868910.079635761	-4210913.568748659	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2624240.8321051854	4677547.201677551	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-6957885.568746976	-7557428.289715172	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+6541601.250955174	11847008.981139557	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1480511.012369751	-5313127.4328618385	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+9114305.057608536	13683799.770205816	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-3997540.8659162456	-4899167.976106643	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2800358.3275630525	5137378.497180691	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2403822.843129019	1040918.4641679561	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+853415.7387863894	-1590212.4995929594	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-10866684.011616372	-18669197.429417763	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1162091.4270048058	-184386.44000424695	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-140603.6482116886	-1788920.2826465098	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1412246.8315478172	-2480182.697258721	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-7671608.562042476	-11179664.459236244	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-3295504.4725087583	-9032265.170213787	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-486280.332899047	-670145.3153377029	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+241575.70379215459	2714306.955328903	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-3052563.773565489	-5393410.800767948	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-6846341.873566731	-8298186.228496279	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-15995025.106892643	-24813163.534002315	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-458187.8959923973	-736652.0100422207	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1280982.5227991403	2283276.2252237108	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1682189.2990929645	-1065167.7117946087	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+812800.131744558	1183289.7428846338	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-2869119.709562317	-6420854.816495896	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2907440.851216445	6232645.025659586	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-30295971.201709386	-62197030.46261224	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-532204798.00303	-1128305251.5973337	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+20213893462.684433	43905578789.104836	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-126343621028.70963	-248108357583.18097	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+173802643.35102192	205543140.75951886	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+5221780208.810619	7744797166.810401	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-28370413881.976215	-71136454145.92442	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-27557380253.14206	-28440686361.56931	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+235325694.33973354	372990546.0741187	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-11376464086.691637	-17422820776.002617	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+8225578416.737298	8660938049.806973	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-111778563556.72383	-115178963989.96393	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-31629792.738287773	19279691.877477508	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+761264541.7149556	576189379.8200777	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1540742909.3833513	11474646455.340818	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-40383856061.69687	-89316908966.35448	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-289419200.16018224	-435305072.8593064	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+4703888407.077444	9130418340.644478	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+12091361719.793034	13419972656.108763	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-35625983767.89051	18208409617.825985	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+82654215.16383351	72336393.19444963	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2933130434.399115	8069150071.478055	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-797244834.9508328	5681040904.727645	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+16694307764.713308	-93625039906.76231	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+320064647.5790722	458400752.87467885	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-1723621335.032784	-2481504621.1272736	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+37697604065.23426	66073831116.87293	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-116482377060.0254	-178792534807.13617	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+10108827.566060266	-13632821.533280406	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-5729749510.957635	-9386829731.43936	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-10773932993.279955	-25910525835.283043	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+33055172896.607357	91293582603.85043	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-271016902.7345636	-592654091.5652217	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+11242161883.976374	19397033061.84602	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-12887959929.648367	-16807482070.74156	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+115634423719.47237	175974460267.768	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+218867084.39006728	348354992.4421796	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+329686965.4580923	812536326.9388807	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-11351668695.148737	-22702430432.12437	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+82459121832.66315	133013378785.71686	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+76727217.68345636	136054630.70320404	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-3303674123.396322	-6731488393.086278	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-5504263743.534594	-6061587327.517805	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+60189193503.91971	75638793700.71037	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+148262357.04691014	406529604.1650976	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-2721228813.38891	-7886255460.066056	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+15798424255.74359	34509952371.44275	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-126226972696.74472	-245732079489.98813	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+174234316.57853281	252417831.70025906	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+894654103.2792896	957789695.2793127	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-5612733856.460752	-15272134660.35133	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-53334371335.18191	-79074738995.7108	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-230026420.9559023	-396730118.42976207	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+2064566976.9706454	4525058688.010858	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1597000004.384172	-1148054750.4098525	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-71590745950.53375	-114512353340.32526	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-180028021.03247806	-367683463.04344845	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+4824954247.949331	9688500700.322498	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-18232136962.39085	-43104414054.198875	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+141397558314.68845	268171506494.6568	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-59553248.510276645	-57154198.68777062	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1210909714.9903698	1202093099.8262975	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-12008394888.349865	-16150385627.441313	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+45423631944.35598	91662858531.79839	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-42439122.52213406	-97159108.25297108	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1405821197.097216	2078275026.1082106	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-6728770977.096385	-12649742236.731009	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+112370648741.96484	183760301719.1458	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+20484467.753714442	59067979.251761906	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-337853586.03459245	-2703516601.7653966	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-12456689298.425003	-22693498806.038708	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-33614064730.693012	-78954369629.28232	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-88044751.639211	-204583525.19228125	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+999781871.9249551	5344741487.206975	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-2413700631.595493	-15464394977.56808	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-25960538515.29978	-6347813554.077146	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+28078233.230660584	56405852.17971186	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+1466837044.2467697	1856331820.5835726	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+892274131.5700563	2294553384.4530587	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+-4326086033.618528	-7918442445.798409	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
+#evaluations=65
+#successes=65
+#complete=1
