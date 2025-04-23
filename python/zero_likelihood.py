@@ -10,11 +10,16 @@ from time import time
 
 
 def setup(options):
-    config = None
+
+    name = options.get_string(option_section, "like_name", 'moped')
+    likelihoods = options.get_string(option_section, "likelihoods").split()
+
+    config = {'name':name, 'likelihoods': likelihoods}
+
     return config
 
 def execute(block, config):
-    block[names.likelihoods, f'zero_like'] = 0
+    block[names.likelihoods, f'{config["name"]}_like'] = 0.0
     return 0
 
 def cleanup(config):
