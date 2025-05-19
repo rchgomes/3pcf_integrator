@@ -105,6 +105,13 @@ def setup(options):
     config['nz_upsampling'] = options.get_int(option_section, "nz_upsampling", default=100)
     config['model_cosmo'] = model_cosmo
 
+    # IA (NLA) modeling choice
+    # If you want to use A1 parameter of IA per bin,
+    # you use this flag=True.
+    # You need to accordingly define the A1_1, A1_2, ...
+    # Also you should fix the A1 = 1.0 and alpha1 = 1.0.
+    config['perbin'] = options.get_bool(option_section, 'perbin', default=False)
+
     return config
 
 def execute(block, config):
@@ -181,11 +188,6 @@ def execute(block, config):
         )
 
     bs.set_cosmology(cosmo)
-    # Intrinsic alignment parameter
-    bs.set_NLA_param({'AIA':block['intrinsic_alignment_parameters', 'a1'], \
-            'alphaIA':block['intrinsic_alignment_parameters', 'alpha1'] , \
-            'z0':block['intrinsic_alignment_parameters', 'z_piv']})
-    bs.config_IA['NLA'] = True
     # set source distribution
     nzbin = block['nz_source', "nbin"]
     bs.set_source_distribution(
@@ -193,6 +195,25 @@ def execute(block, config):
         [block['nz_source', "bin_%d" % (i+1)] for i in range(nzbin)],
         [(i+1) for i in range(nzbin)]
     )
+    # Intrinsic alignment parameter
+    if config['perbin']:
+        NLA_param = {'alphaIA':block['intrinsic_alignment_parameters', 'alpha1'], 
+                     'z0':block['intrinsic_alignment_parameters', 'z_piv'], 
+                     'perbin':True}
+        nzbin = block['nz_source', "nbin"]
+        for i in range(nzbin):
+            # Note that fastnc calls the amplitude param AIA but cosmosis calls it A1.
+            NLA_param[f'AIA_{i+1}'] = block['intrinsic_alignment_parameters', f'A1_{i+1}']
+        print('>>> We are using perbin option for IA NLA!!!!')
+        print('>>> inputs are {}'.format(NLA_param))
+        bs.set_NLA_param(NLA_param)
+        bs.config_IA['NLA'] = True
+    else:
+        bs.set_NLA_param({'AIA':block['intrinsic_alignment_parameters', 'a1'], \
+                'alphaIA':block['intrinsic_alignment_parameters', 'alpha1'] , \
+                'z0':block['intrinsic_alignment_parameters', 'z_piv'], 
+                'perbin':False})
+        bs.config_IA['NLA'] = True
     # set linear matter power spectrum
     bs.set_pklin(
         block[names.matter_power_lin, 'k_h'],
