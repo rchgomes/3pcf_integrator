@@ -138,7 +138,9 @@ def execute(block, config):
         #                     np.conjugate(np.moveaxis(nc.Gamma1, 1,2)), \
         #                     np.conjugate(np.moveaxis(nc.Gamma2, 1,2)), \
         #                     np.conjugate(np.moveaxis(nc.Gamma3, 1,2))])
+
         Gamma =-np.array([nc.Gamma0, nc.Gamma1, nc.Gamma3, nc.Gamma2])
+
         # Note this is equivalent to have
         # Gamma0 -> Gamma0
         # Gamma1 -> Gamma1
