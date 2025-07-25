@@ -38,6 +38,9 @@ def setup(options):
     elif options.get_string(option_section, "bispectrum_model") == 'gilmarin':
         print('Bispectrum model = gilmarin')
         bs = fastnc.bispectrum.BispectrumGilMarin(config_halofit)
+    elif options.get_string(option_section, "bispectrum_model") == 'E_modes_TATT':
+        print('Bispectrum model = E_modes_TATT')
+        bs = fastnc.bispectrum.BispectrumTATT(config_halofit)
     else:
         raise ValueError('Invalid bispectrum model')
     if options.has_value(option_section, "use-pixwin") and options.get_bool(option_section, "use-pixwin"):
@@ -106,7 +109,7 @@ def execute(block, config):
         block[names.matter_power_lin, 'k_h'],
         block[names.matter_power_lin, 'p_k'][0,:]
     )
-    # set lienar growth rate
+    # set linear growth rate
     bs.set_lgr(
         block[names.growth_parameters, "z"],
         block[names.growth_parameters, "d_z"]
