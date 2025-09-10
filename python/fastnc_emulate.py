@@ -219,7 +219,7 @@ def execute(block, config):
         block[names.matter_power_lin, 'k_h'],
         block[names.matter_power_lin, 'p_k'][0,:]
     )
-    # set lienar growth rate
+    # set linear growth rate
     bs.set_lgr(
         block[names.growth_parameters, "z"],
         block[names.growth_parameters, "d_z"]

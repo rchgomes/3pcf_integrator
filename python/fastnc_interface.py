@@ -31,6 +31,8 @@ def setup(options):
                         'Lmax':Lmax,
                       'multipole_type':multipole_type, 
                       'NLA':options.get_bool(option_section, 'NLA', default=True)}
+
+    config['TATT'] = False
     # select model
     if options.get_string(option_section, "bispectrum_model", default = "bihalofit") == "bihalofit":
         print('Bispectrum model = halofit')
@@ -39,13 +41,21 @@ def setup(options):
         print('Bispectrum model = gilmarin')
         bs = fastnc.bispectrum.BispectrumGilMarin(config_halofit)
     elif options.get_string(option_section, "bispectrum_model") == 'E_modes_TATT':
+        #Here we will only compute the bispectrum of IA. We force NLA = False and use the TATT model
         print('Bispectrum model = E_modes_TATT')
+        config_halofit['NLA'] = False
         bs = fastnc.bispectrum.BispectrumTATT(config_halofit)
+        config['TATT'] = True
     else:
         raise ValueError('Invalid bispectrum model')
     if options.has_value(option_section, "use-pixwin") and options.get_bool(option_section, "use-pixwin"):
         bs.set_window_function(get_healpix_window_function(options.get_int(option_section, "nside")))
     config['bispectrum'] = bs
+    if options.has_value(option_section, "select_tatt_component"):
+        #Here we can select to compute only a single component (e.g. ddE, EdE)
+        config['select_tatt_component'] = options.get_string(option_section, "select_tatt_component")
+    else:
+        config['select_tatt_component'] = None
 
     ########################################################################################    
     # 3PCF model (fastnc)
@@ -97,6 +107,19 @@ def execute(block, config):
     bs.set_NLA_param({'AIA':block['intrinsic_alignment_parameters', 'a1'], \
             'alphaIA':block['intrinsic_alignment_parameters', 'alpha1'] , \
             'z0':block['intrinsic_alignment_parameters', 'z_piv']})
+
+    #Set TATT parameters
+    if config['TATT']:
+        bs.set_IA_param({'a1': block['intrinsic_alignment_parameters', 'a1'], \
+                         'alphaIA': block['intrinsic_alignment_parameters', 'alpha1'], \
+                         'a2': block['intrinsic_alignment_parameters', 'a2'], \
+                         'alphaIA_2': block['intrinsic_alignment_parameters', 'a2'], \
+                         'bias_ta': block['intrinsic_alignment_parameters', 'bias_ta'], \
+                         'z0': block['intrinsic_alignment_parameters', 'z_piv']})
+        bs.set_pknl(
+            block[names.matter_power_nl, 'k_h'],
+            block[names.matter_power_nl, 'p_k'][0,:])
+        
     # set source distribution
     nzbin = block['nz_source', "nbin"]
     bs.set_source_distribution(
@@ -118,9 +141,10 @@ def execute(block, config):
     if block.has_value('baryon_parameters', 'fb'):
         fb = block['baryon_parameters', 'fb']
         bs.set_baryon_param({'fb': fb})
+        
     # update the interpolation.
     bs.compute_kernel()
-    bs.interpolate(scombs=block['natural_components', 'sample_combinations'])
+    bs.interpolate(scombs=block['natural_components', 'sample_combinations'], select_tatt_component=config['select_tatt_component'])
     bs.decompose(scombs=block['natural_components', 'sample_combinations'])
 
     # 3PCF ############################################
