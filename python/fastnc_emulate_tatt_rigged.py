@@ -189,7 +189,7 @@ def execute(block, config):
     predictions_rescaled_EEE = np.ndarray(shape=(1, 144))
 
     load_data_file_ddE = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-ddE-lowpivot.txt")
-    load_data_file_dEd = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-EdE-lowpivot.txt")
+    load_data_file_dEd = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-dEd-lowpivot.txt")
     load_data_file_Edd = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-Edd-lowpivot.txt")
     load_data_file_EEd = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-EEd-lowpivot.txt")
     load_data_file_EdE = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-EdE-lowpivot.txt")
@@ -378,7 +378,7 @@ def execute(block, config):
         tmp_EdE = np.einsum('ij,i->ij', predictions_newshape['EdE'], weight_EdE)
         tmp_EEE = np.einsum('ij,i->ij', predictions_newshape['EEE'], weight_EEE)
         tmp = tmp_ddE + tmp_dEd + tmp_Edd + tmp_dEE + tmp_EEd + tmp_EdE + tmp_EEE
-        #tmp = tmp_EEE
+        #tmp = tmp_dEd
 
         map3 = np.trapz(tmp,chi, axis=0)
         block[sctname, f'map3-bin_{name}'] = map3
