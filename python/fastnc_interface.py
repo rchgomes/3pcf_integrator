@@ -33,6 +33,8 @@ def setup(options):
                       'NLA':options.get_bool(option_section, 'NLA', default=True)}
 
     config['TATT'] = False
+    config['remove_alignment'] = False
+
     # select model
     if options.get_string(option_section, "bispectrum_model", default = "bihalofit") == "bihalofit":
         print('Bispectrum model = halofit')
@@ -44,6 +46,8 @@ def setup(options):
         #Here we will only compute the bispectrum of IA. We force NLA = False and use the TATT model
         print('Bispectrum model = E_modes_TATT')
         config_halofit['NLA'] = False
+        if options.has_value(option_section, "remove_alignment") and options.get_bool(option_section, "remove_alignment"):
+            config['remove_alignment'] = True
         bs = fastnc.bispectrum.BispectrumTATT(config_halofit)
         config['TATT'] = True
     else:
@@ -144,7 +148,8 @@ def execute(block, config):
         
     # update the interpolation.
     bs.compute_kernel()
-    bs.interpolate(scombs=block['natural_components', 'sample_combinations'], select_tatt_component=config['select_tatt_component'])
+    bs.interpolate(scombs=block['natural_components', 'sample_combinations'], select_tatt_component=config['select_tatt_component'],
+                   remove_alignment=config['remove_alignment'])
     bs.decompose(scombs=block['natural_components', 'sample_combinations'])
 
     # 3PCF ############################################
