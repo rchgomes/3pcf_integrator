@@ -70,6 +70,27 @@ def upsampling(z, pred, n):
     return z_new, pred_new
 
 
+def interpolate_cosmo(tmp_cosmo, chi_original, chi_tatt):
+
+    if tmp_cosmo.shape[0] != len(chi_original):
+        raise ValueError(
+            f"Length of tmp_cosmo's first dimension ({tmp_cosmo.shape[0]}) must match length of chi_original ({len(chi_original)}).")
+
+    j_dim = tmp_cosmo.shape[1]
+    tmp_cosmo_mod = np.zeros((len(chi_tatt), j_dim))
+    for j in range(j_dim):
+        interp_func = interp1d(
+            chi_original,
+            tmp_cosmo[:, j],
+            kind='cubic',
+            bounds_error=False,
+            fill_value=0.0
+        )
+
+        tmp_cosmo_mod[:, j] = interp_func(chi_tatt)
+    return tmp_cosmo_mod
+
+
 def setup(options):
     # config
     config = {}
@@ -309,6 +330,7 @@ def execute(block, config):
         name = '_'.join([str(s) for s in scomb])
 
         chi = bs.z2chi(zarray)
+        chi_tatt = bs_tatt.z2chi(zarray_tatt)
 
         z2g0 = bs.z2g_dict[scomb[0]]
         z2g1 = bs.z2g_dict[scomb[1]]
@@ -317,9 +339,8 @@ def execute(block, config):
         tmp_cosmo = np.einsum('ij,i->ij', predictions_newshape_cosmo, weight_cosmo)
 
         # Initialize total map3 with the shear-only result
-        total_tmp = tmp_cosmo
+        total_tmp = interpolate_cosmo(tmp_cosmo, chi, chi_tatt)
 
-        chi_tatt = bs_tatt.z2chi(zarray_tatt)
         chi2g0 = bs_tatt.chi2g_dict[scomb[0]]
         chi2g1 = bs_tatt.chi2g_dict[scomb[1]]
         chi2g2 = bs_tatt.chi2g_dict[scomb[2]]
