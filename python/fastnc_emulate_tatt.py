@@ -105,7 +105,9 @@ def setup(options):
     filter_num = len(filter_1)
     model_cosmo = options.get_string(option_section, "cosmo_model", default="wCDM")
     zarray = options.get_double_array_1d(option_section, "z_values")
+    zarray_tatt = options.get_double_array_1d(option_section, "z_values_tatt")
     modes = np.arange(filter_num * len(zarray))
+    modes_tatt = np.arange(filter_num * len(zarray_tatt))
 
     cp_nn_cosmo = cosmopower_NN(
         parameters=['Omega_m', 's8', 'h0', 'Omega_b', 'ns'] + (['w'] if model_cosmo == "wCDM" else []),
@@ -124,7 +126,7 @@ def setup(options):
         tatt_params = ['Omega_m', 's8', 'h0', 'Omega_b', 'ns', 'w', 'a1', 'alpha1', 'a2', 'alpha2', 'bias_ta']
         cp_nn = cosmopower_NN(
             parameters=tatt_params,
-            modes=modes,
+            modes=modes_tatt,
             n_hidden=[128, 256, 1024, 1024, 384],
         )
         model_filename_tatt = options.get_string(option_section, f"model_filename_{name}")
@@ -151,6 +153,7 @@ def setup(options):
 
     config["filter_num"] = filter_num
     config['zarray'] = zarray
+    config['zarray_tatt'] = zarray_tatt
     config['nz_upsampling'] = options.get_int(option_section, "nz_upsampling", default=100)
     config['model_cosmo'] = model_cosmo
 
@@ -160,6 +163,7 @@ def setup(options):
 def execute(block, config):
     filter_num = config["filter_num"]
     zarray = config['zarray']
+    zarray_tatt = config['zarray_tatt']
     cp_nn_cosmo = config['network_cosmo']
     cp_nn_tatt = config['network_tatt']
     model_cosmo = config['model_cosmo']
@@ -216,7 +220,7 @@ def execute(block, config):
         predictions = cp_nn.predictions_np(test_params_dict_tatt)
         predictions_rescaled = post_process(predictions, config['rescaling_features_tatt'][name])
 
-        predictions_newshape_tatt[name] = np.zeros(shape=(len(zarray), filter_num))
+        predictions_newshape_tatt[name] = np.zeros(shape=(len(zarray_tatt), filter_num))
         for i in range(filter_num):
             predictions_newshape_tatt[name][:, i] = predictions_rescaled[:, i::filter_num]
 
@@ -317,6 +321,7 @@ def execute(block, config):
 
         if config['TATT']:
 
+            chi_tatt = bs_tatt.z2chi(zarray_tatt)
             chi2g0 = bs_tatt.chi2g_dict[scomb[0]]
             chi2g1 = bs_tatt.chi2g_dict[scomb[1]]
             chi2g2 = bs_tatt.chi2g_dict[scomb[2]]
@@ -325,13 +330,13 @@ def execute(block, config):
             chi2W2 = bs_tatt.chi2W_dict[scomb[2]]
 
             # TATT weights
-            weight_ddE = chi2g0(chi) * chi2g1(chi) * chi2W2(chi) / chi * (1 + zarray) ** 3
-            weight_dEd = chi2g0(chi) * chi2W1(chi) * chi2g2(chi) / chi * (1 + zarray) ** 3
-            weight_Edd = chi2W0(chi) * chi2g1(chi) * chi2g2(chi) / chi * (1 + zarray) ** 3
-            weight_dEE = chi2g0(chi) * chi2W1(chi) * chi2W2(chi) / chi * (1 + zarray) ** 3
-            weight_EEd = chi2W0(chi) * chi2W1(chi) * chi2g2(chi) / chi * (1 + zarray) ** 3
-            weight_EdE = chi2W0(chi) * chi2g1(chi) * chi2W2(chi) / chi * (1 + zarray) ** 3
-            weight_EEE = chi2W0(chi) * chi2W1(chi) * chi2W2(chi) / chi * (1 + zarray) ** 3
+            weight_ddE = chi2g0(chi_tatt) * chi2g1(chi_tatt) * chi2W2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
+            weight_dEd = chi2g0(chi_tatt) * chi2W1(chi_tatt) * chi2g2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
+            weight_Edd = chi2W0(chi_tatt) * chi2g1(chi_tatt) * chi2g2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
+            weight_dEE = chi2g0(chi_tatt) * chi2W1(chi_tatt) * chi2W2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
+            weight_EEd = chi2W0(chi_tatt) * chi2W1(chi_tatt) * chi2g2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
+            weight_EdE = chi2W0(chi_tatt) * chi2g1(chi_tatt) * chi2W2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
+            weight_EEE = chi2W0(chi_tatt) * chi2W1(chi_tatt) * chi2W2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
 
             # TATT integration
             tmp_ddE = np.einsum('ij,i->ij', predictions_newshape_tatt['ddE'], weight_ddE)
