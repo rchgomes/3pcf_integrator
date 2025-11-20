@@ -319,36 +319,34 @@ def execute(block, config):
         # Initialize total map3 with the shear-only result
         total_tmp = tmp_cosmo
 
-        if config['TATT']:
-
-            chi_tatt = bs_tatt.z2chi(zarray_tatt)
-            chi2g0 = bs_tatt.chi2g_dict[scomb[0]]
-            chi2g1 = bs_tatt.chi2g_dict[scomb[1]]
-            chi2g2 = bs_tatt.chi2g_dict[scomb[2]]
-            chi2W0 = bs_tatt.chi2W_dict[scomb[0]]
-            chi2W1 = bs_tatt.chi2W_dict[scomb[1]]
-            chi2W2 = bs_tatt.chi2W_dict[scomb[2]]
+        chi_tatt = bs_tatt.z2chi(zarray_tatt)
+        chi2g0 = bs_tatt.chi2g_dict[scomb[0]]
+        chi2g1 = bs_tatt.chi2g_dict[scomb[1]]
+        chi2g2 = bs_tatt.chi2g_dict[scomb[2]]
+        chi2W0 = bs_tatt.chi2W_dict[scomb[0]]
+        chi2W1 = bs_tatt.chi2W_dict[scomb[1]]
+        chi2W2 = bs_tatt.chi2W_dict[scomb[2]]
 
             # TATT weights
-            weight_ddE = chi2g0(chi_tatt) * chi2g1(chi_tatt) * chi2W2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
-            weight_dEd = chi2g0(chi_tatt) * chi2W1(chi_tatt) * chi2g2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
-            weight_Edd = chi2W0(chi_tatt) * chi2g1(chi_tatt) * chi2g2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
-            weight_dEE = chi2g0(chi_tatt) * chi2W1(chi_tatt) * chi2W2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
-            weight_EEd = chi2W0(chi_tatt) * chi2W1(chi_tatt) * chi2g2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
-            weight_EdE = chi2W0(chi_tatt) * chi2g1(chi_tatt) * chi2W2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
-            weight_EEE = chi2W0(chi_tatt) * chi2W1(chi_tatt) * chi2W2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
+        weight_ddE = chi2g0(chi_tatt) * chi2g1(chi_tatt) * chi2W2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
+        weight_dEd = chi2g0(chi_tatt) * chi2W1(chi_tatt) * chi2g2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
+        weight_Edd = chi2W0(chi_tatt) * chi2g1(chi_tatt) * chi2g2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
+        weight_dEE = chi2g0(chi_tatt) * chi2W1(chi_tatt) * chi2W2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
+        weight_EEd = chi2W0(chi_tatt) * chi2W1(chi_tatt) * chi2g2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
+        weight_EdE = chi2W0(chi_tatt) * chi2g1(chi_tatt) * chi2W2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
+        weight_EEE = chi2W0(chi_tatt) * chi2W1(chi_tatt) * chi2W2(chi_tatt) / chi_tatt * (1 + zarray_tatt) ** 3
 
             # TATT integration
-            tmp_ddE = np.einsum('ij,i->ij', predictions_newshape_tatt['ddE'], weight_ddE)
-            tmp_dEd = np.einsum('ij,i->ij', predictions_newshape_tatt['dEd'], weight_dEd)
-            tmp_Edd = np.einsum('ij,i->ij', predictions_newshape_tatt['Edd'], weight_Edd)
-            tmp_dEE = np.einsum('ij,i->ij', predictions_newshape_tatt['dEE'], weight_dEE)
-            tmp_EEd = np.einsum('ij,i->ij', predictions_newshape_tatt['EEd'], weight_EEd)
-            tmp_EdE = np.einsum('ij,i->ij', predictions_newshape_tatt['EdE'], weight_EdE)
-            tmp_EEE = np.einsum('ij,i->ij', predictions_newshape_tatt['EEE'], weight_EEE)
+        tmp_ddE = np.einsum('ij,i->ij', predictions_newshape_tatt['ddE'], weight_ddE)
+        tmp_dEd = np.einsum('ij,i->ij', predictions_newshape_tatt['dEd'], weight_dEd)
+        tmp_Edd = np.einsum('ij,i->ij', predictions_newshape_tatt['Edd'], weight_Edd)
+        tmp_dEE = np.einsum('ij,i->ij', predictions_newshape_tatt['dEE'], weight_dEE)
+        tmp_EEd = np.einsum('ij,i->ij', predictions_newshape_tatt['EEd'], weight_EEd)
+        tmp_EdE = np.einsum('ij,i->ij', predictions_newshape_tatt['EdE'], weight_EdE)
+        tmp_EEE = np.einsum('ij,i->ij', predictions_newshape_tatt['EEE'], weight_EEE)
 
             # Sum TATT results and add to total
-            total_tmp += tmp_ddE + tmp_dEd + tmp_Edd + tmp_dEE + tmp_EEd + tmp_EdE + tmp_EEE
+        total_tmp += tmp_ddE + tmp_dEd + tmp_Edd + tmp_dEE + tmp_EEd + tmp_EdE + tmp_EEE
 
         # Final integration (trapz) and write to datablock
         map3 = np.trapz(total_tmp, chi, axis=0)
