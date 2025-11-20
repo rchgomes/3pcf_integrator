@@ -370,7 +370,7 @@ def execute(block, config):
         total_tmp += tmp_ddE + tmp_dEd + tmp_Edd + tmp_dEE + tmp_EEd + tmp_EdE + tmp_EEE
 
         # Final integration (trapz) and write to datablock
-        map3 = np.trapz(total_tmp, chi, axis=0)
+        map3 = np.trapz(total_tmp, chi_tatt, axis=0)
         block[sctname, f'map3-bin_{name}'] = map3
 
     return 0
