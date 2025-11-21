@@ -34,6 +34,7 @@ def get_preset_mapping(names):
             'intrinsic_alignment_parameters--a2':['a2', r'A_2'], \
             'intrinsic_alignment_parameters--alpha1': ['alpha1', r'\alpha_1'], \
             'intrinsic_alignment_parameters--alpha2': ['alpha2', r'\alpha_2'], \
+            'intrinsic_alignment_parameters--bias_ta': ['bias_ta', r'bias_ta'], \
             'DATA_VECTOR--2PT_CHI2': ['2pt_chi2', r'\chi^2_{\rm 2pt}'], \
             'DATA_VECTOR--MAP3_CHI2': ['map3_chi2', r'\chi^2_{\rm map3}']}
     # make output
