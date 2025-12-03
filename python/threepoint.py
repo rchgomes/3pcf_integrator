@@ -975,7 +975,7 @@ class ThreePointDataClass:
                 if t_sidx == 1:
                     ax.set_ylabel(r'$\theta \times \langle \mathcal{M}_{{\rm ap}}^3\rangle(\theta)$', fontsize=fs)
                 else:
-                    ax.set_ylabel(r'$\theta^{} \times \langle \mathcal{{M}}_{{\rm ap}}^3\rangle(\theta)$'.format(t_sidx), fontsize=fs)
+                    ax.set_ylabel(r'$10^{{7}}\theta^{} \times \langle \mathcal{{M}}_{{\rm ap}}^3\rangle(\theta)$'.format(t_sidx), fontsize=fs)
             if i >= ny*(nx-1):
                 ax.set_xlabel(r'$\theta$ [arcmin]', fontsize=fs)
 

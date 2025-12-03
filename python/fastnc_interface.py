@@ -30,9 +30,11 @@ def setup(options):
     config_halofit = {'zmin':1e-4, 'zmid':0.1, 'nzbin_log':70, 'nzbin_lin':100,
                         'Lmax':Lmax,
                       'multipole_type':multipole_type, 
-                      'NLA':options.get_bool(option_section, 'NLA', default=True)}
+                      'NLA':options.get_bool(option_section, 'NLA', default=True),
+                      'nrbin':options.get_int(option_section, "nrbin", default = 35)}
 
     config['TATT'] = False
+    config['puv_grid'] = False
     config['remove_alignment'] = False
 
     # select model
@@ -46,10 +48,12 @@ def setup(options):
         #Here we will only compute the bispectrum of IA. We force NLA = False and use the TATT model
         print('Bispectrum model = E_modes_TATT')
         config_halofit['NLA'] = False
+        config_halofit['puv_grid'] = True
         if options.has_value(option_section, "remove_alignment") and options.get_bool(option_section, "remove_alignment"):
             config['remove_alignment'] = True
         bs = fastnc.bispectrum.BispectrumTATT(config_halofit)
         config['TATT'] = True
+        config['puv_grid'] = True
     else:
         raise ValueError('Invalid bispectrum model')
     if options.has_value(option_section, "use-pixwin") and options.get_bool(option_section, "use-pixwin"):
@@ -149,8 +153,8 @@ def execute(block, config):
     # update the interpolation.
     bs.compute_kernel()
     bs.interpolate(scombs=block['natural_components', 'sample_combinations'], select_tatt_component=config['select_tatt_component'],
-                   remove_alignment=config['remove_alignment'])
-    bs.decompose(scombs=block['natural_components', 'sample_combinations'])
+                   remove_alignment=config['remove_alignment'], puv_grid=config['puv_grid'])
+    bs.decompose(scombs=block['natural_components', 'sample_combinations'], puv_grid=config['puv_grid'])
 
     # 3PCF ############################################
     nc = config['fastnc']

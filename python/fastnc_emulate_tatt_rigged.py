@@ -180,21 +180,30 @@ def execute(block, config):
     #predictions = cp_nn.predictions_np(test_params_dict)
     #predictions_rescaled = post_process(predictions, config['rescaling_features'])
 
-    predictions_rescaled_ddE = np.ndarray(shape=(1,144))
-    predictions_rescaled_dEd = np.ndarray(shape=(1, 144))
-    predictions_rescaled_Edd = np.ndarray(shape=(1, 144))
-    predictions_rescaled_EEd = np.ndarray(shape=(1, 144))
-    predictions_rescaled_EdE = np.ndarray(shape=(1, 144))
-    predictions_rescaled_dEE = np.ndarray(shape=(1, 144))
-    predictions_rescaled_EEE = np.ndarray(shape=(1, 144))
+    #predictions_rescaled_ddE = np.ndarray(shape=(1,144))
+    #predictions_rescaled_dEd = np.ndarray(shape=(1, 144))
+    #predictions_rescaled_Edd = np.ndarray(shape=(1, 144))
+    #predictions_rescaled_EEd = np.ndarray(shape=(1, 144))
+    #predictions_rescaled_EdE = np.ndarray(shape=(1, 144))
+    #predictions_rescaled_dEE = np.ndarray(shape=(1, 144))
+    #predictions_rescaled_EEE = np.ndarray(shape=(1, 144))
 
-    load_data_file_ddE = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-ddE-lowpivot.txt")
-    load_data_file_dEd = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-dEd-lowpivot.txt")
-    load_data_file_Edd = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-Edd-lowpivot.txt")
-    load_data_file_EEd = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-EEd-lowpivot.txt")
-    load_data_file_EdE = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-EdE-lowpivot.txt")
-    load_data_file_dEE = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-dEE-lowpivot.txt")
-    load_data_file_EEE = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-EEE-lowpivot.txt")
+    predictions_rescaled_ddE = np.ndarray(shape=(1, 216))
+    predictions_rescaled_dEd = np.ndarray(shape=(1, 216))
+    predictions_rescaled_Edd = np.ndarray(shape=(1, 216))
+    predictions_rescaled_EEd = np.ndarray(shape=(1, 216))
+    predictions_rescaled_EdE = np.ndarray(shape=(1, 216))
+    predictions_rescaled_dEE = np.ndarray(shape=(1, 216))
+    predictions_rescaled_EEE = np.ndarray(shape=(1, 216))
+
+    load_data_file_ddE = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-ddE-sept-216.txt")
+    load_data_file_dEd = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-dEd-sept-216.txt")
+    load_data_file_Edd = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-Edd-sept-216.txt")
+    load_data_file_EEd = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-EEd-sept-216.txt")
+    load_data_file_EdE = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-EdE-sept-216.txt")
+    load_data_file_dEE = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-dEE-sept-216.txt")
+    load_data_file_EEE = np.loadtxt("/Users/gchgomes/3pcf_integrator/output/emulator-train-tatt-4-EEE-sept-216.txt")
+    print(np.shape(load_data_file_EEE))
 
     # Put all prediction arrays in a dictionary
     predictions_rescaled_dict = {
@@ -224,10 +233,15 @@ def execute(block, config):
         predictions_rescaled = predictions_rescaled_dict[sec]
         load_data_file = load_data_file_dict[sec]
 
-        predictions_rescaled[:, 0::4] = load_data_file[0][26:170:4]
-        predictions_rescaled[:, 1::4] = load_data_file[0][27:170:4]
-        predictions_rescaled[:, 2::4] = load_data_file[0][28:170:4]
-        predictions_rescaled[:, 3::4] = load_data_file[0][29:170:4]
+        #predictions_rescaled[:, 0::4] = load_data_file[0][26:170:4]
+        #predictions_rescaled[:, 1::4] = load_data_file[0][27:170:4]
+        #predictions_rescaled[:, 2::4] = load_data_file[0][28:170:4]
+        #predictions_rescaled[:, 3::4] = load_data_file[0][29:170:4]
+
+        predictions_rescaled[:, 0::4] = load_data_file[0][26:242:4]
+        predictions_rescaled[:, 1::4] = load_data_file[0][27:242:4]
+        predictions_rescaled[:, 2::4] = load_data_file[0][28:242:4]
+        predictions_rescaled[:, 3::4] = load_data_file[0][29:242:4]
 
         predictions_newshape[sec] = np.zeros(shape=(len(zarray),filter_num))
         for i in range(filter_num):
