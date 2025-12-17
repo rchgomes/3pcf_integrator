@@ -36,6 +36,7 @@ def setup(options):
     config['TATT'] = False
     config['puv_grid'] = False
     config['remove_alignment'] = False
+    config['Ct'] = 0.0
 
     # select model
     if options.get_string(option_section, "bispectrum_model", default = "bihalofit") == "bihalofit":
@@ -54,6 +55,7 @@ def setup(options):
         bs = fastnc.bispectrum.BispectrumTATT(config_halofit)
         config['TATT'] = True
         config['puv_grid'] = True
+        config['Ct'] = options.get_double(option_section, "Ct", default = 0.0)
     else:
         raise ValueError('Invalid bispectrum model')
     if options.has_value(option_section, "use-pixwin") and options.get_bool(option_section, "use-pixwin"):
@@ -153,7 +155,7 @@ def execute(block, config):
     # update the interpolation.
     bs.compute_kernel()
     bs.interpolate(scombs=block['natural_components', 'sample_combinations'], select_tatt_component=config['select_tatt_component'],
-                   remove_alignment=config['remove_alignment'], puv_grid=config['puv_grid'])
+                   Ct = config['Ct'], remove_alignment=config['remove_alignment'], puv_grid=config['puv_grid'])
     bs.decompose(scombs=block['natural_components', 'sample_combinations'], puv_grid=config['puv_grid'])
 
     # 3PCF ############################################
