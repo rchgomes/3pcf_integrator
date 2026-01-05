@@ -11,11 +11,11 @@
 ```
 pip install fastnc
 ```
-**Note**: fastnc create cache of mode-coupling function to avoid recomputation. This cache is for now created under package dir, but I eventually want to allow user to specify the dir of cache. The typical file size is <4MB if you use the multipoles only up to L=100 and M=100.
+**Note**: fastnc creates cache of the mode-coupling function to avoid recomputation. This cache is for now created under package dir. The typical file size is <4MB if you use the multipoles only up to L=100 and M=100.
 
 # Tips
 Run the following command before you use the cosmosis modules. 
-This sources the environmental pathes necessary for cosmosis configs.
+This sources the environmental paths necessary for cosmosis configs.
 ```
 source setup-3pcf-path.sh
 ```
