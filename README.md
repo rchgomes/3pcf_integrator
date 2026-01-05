@@ -1,9 +1,9 @@
 # 3PCF integrator
 
 # Contents
-- python: python codes including cosmosis modules.
-- data: source redshift, signal, etc
-- config: config of cosmosis
+- python: cosmoSIS modules and auxilliary python codes.
+- config: cosmoSIS configuration files
+- data: source redshift files, covariances, etc
 - scripts: other python scripts
 
 # Installation
