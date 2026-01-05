@@ -1,3 +1,6 @@
+'''rigged version of the TATT emulator interface,
+to be used only for developing and debugging purposes'''
+
 from cosmosis.datablock import option_section, names
 import numpy as np
 from scipy.interpolate import interp1d
