@@ -6,6 +6,7 @@ from cosmosis.datablock import option_section, names
 import numpy as np
 import os
 import fastnc
+from fastnc.baryon import BaryonBACCOemu
 from astropy.cosmology import wCDM
 
 def get_healpix_window_function(nside):
@@ -67,6 +68,34 @@ def setup(options):
     else:
         config['select_tatt_component'] = None
 
+###############################################################
+    #setup for baryon ratio
+
+    config['baryon_model'] = options.get_string(option_section, "baryon_model", default="none")
+    if config['baryon_model'] == 'baccoemu':
+        print('Baryon model = BACCOemu')
+        # BaryonBACCOemu is instantiated here but needs the bispectrum's cosmo,
+        # so the baryon model is attached to bs in execute() after set_cosmology().
+        # We store a partially-initialised instance with only baryonic params
+        # set from the ini; cosmo is read from bs.cosmo at call time.
+        config['baccoemu_baryon_params'] = dict(
+            M_c=options.get_double(option_section, "bacco_M_c", default=14.0),
+            eta=options.get_double(option_section, "bacco_eta", default=-0.3),
+            beta=options.get_double(option_section, "bacco_beta", default=-0.22),
+            M1_z0_cen=options.get_double(option_section, "bacco_M1_z0_cen", default=10.5),
+            theta_inn=options.get_double(option_section, "bacco_theta_inn", default=-0.86),
+        )
+        # Whether the baryonic params are sampled (read from block each execute)
+        # or fixed (set once from ini and never updated).
+        config['bacco_sample_params'] = options.get_bool(option_section, "bacco_sample_params", default=False)
+    elif config['baryon_model'] == 'takahashi':
+        print('Baryon model = Takahashi TNG fit')
+    elif config['baryon_model'] == 'none':
+        print('Baryon model = none')
+    else:
+        raise ValueError(f"Invalid baryon_model '{config['baryon_model']}'. "
+                         "Choose from: 'takahashi', 'baccoemu', 'none'.")
+
     ########################################################################################    
     # 3PCF model (fastnc)
     t1 = np.logspace(
@@ -108,6 +137,7 @@ def execute(block, config):
                 H0=100*block[names.cosmological_parameters, 'h0'], \
                 Om0=block[names.cosmological_parameters, 'omega_m'], \
                 Ode0=1.0-block[names.cosmological_parameters, 'omega_m'], \
+                Ob0=block[names.cosmological_parameters, 'omega_b'], \
                 w0 = block[names.cosmological_parameters, 'w'], \
                 meta = {'sigma8':block[names.cosmological_parameters, 'sigma_8'], \
                         'n':block[names.cosmological_parameters, 'n_s']}
@@ -148,9 +178,36 @@ def execute(block, config):
         block[names.growth_parameters, "d_z"]
     )
     # set baryon paramter
-    if block.has_value('baryon_parameters', 'fb'):
-        fb = block['baryon_parameters', 'fb']
-        bs.set_baryon_param({'fb': fb})
+    #if block.has_value('baryon_parameters', 'fb'):
+    #    fb = block['baryon_parameters', 'fb']
+    #    bs.set_baryon_param({'fb': fb})
+
+    # Baryon model
+    baryon_model = config['baryon_model']
+    if baryon_model == 'takahashi':
+        if block.has_value('baryon_parameters', 'fb'):
+            fb = block['baryon_parameters', 'fb']
+            bs.set_baryon_param({'fb': fb})
+    elif baryon_model == 'baccoemu':
+        # Build the baryonic params dict: start from ini defaults,
+        # then override with sampled values from the block if requested.
+        baryon_params = dict(config['baccoemu_baryon_params'])
+        if config['bacco_sample_params']:
+            bp = 'baryon_parameters'
+            if block.has_value(bp, 'bacco_M_c'):       baryon_params['M_c'] = block[bp, 'bacco_M_c']
+            if block.has_value(bp, 'bacco_eta'):        baryon_params['eta'] = block[bp, 'bacco_eta']
+            if block.has_value(bp, 'bacco_beta'):       baryon_params['beta'] = block[bp, 'bacco_beta']
+            if block.has_value(bp, 'bacco_M1_z0_cen'): baryon_params['M1_z0_cen'] = block[bp, 'bacco_M1_z0_cen']
+            if block.has_value(bp, 'bacco_theta_inn'):  baryon_params['theta_inn'] = block[bp, 'bacco_theta_inn']
+
+        # Instantiate or update the BaryonBACCOemu model.
+        # We cache it on config so the emulator is not reloaded every execute().
+        if 'baccoemu_instance' not in config:
+            config['baccoemu_instance'] = BaryonBACCOemu(bs, **baryon_params)
+        else:
+            config['baccoemu_instance'].set_baryon_params(**baryon_params)
+        bs.set_baryon_model(config['baccoemu_instance'])
+    # baryon_model == 'none': leave the default BaryonModelBase (returns 1.0)
         
     # update the interpolation.
     bs.compute_kernel()
